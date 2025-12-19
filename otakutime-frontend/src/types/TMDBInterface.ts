@@ -113,7 +113,7 @@ interface TMDBCollection {
   parts: TMDBCollectionPart[];
 }
 
-interface TMDBMediaMinimal {
+export interface TMDBMediaMinimal {
   adult: boolean;
   backdropPath?: string;
   genreIds: number[];

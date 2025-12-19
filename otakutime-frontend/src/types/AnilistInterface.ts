@@ -58,7 +58,7 @@ interface Studios {
   edges: StudioEdge[];
 }
 
-interface AnilistMediaMinimal {
+export interface AnilistMediaMinimal {
   id: number;
   title: Title;
   format?: string;
@@ -77,7 +77,7 @@ interface AnilistMediaMinimal {
   averageScore?: number;
 }
 
-interface AnilistMediaDetailed {
+export interface AnilistMediaDetailed {
   id: number;
   averageScore?: number;
   bannerImage?: string;
@@ -113,7 +113,7 @@ interface AnilistPageInfo {
   total: number;
 }
 
-interface AnilistPagination {
+export interface AnilistPagination {
   results: AnilistMediaMinimal[];
   currentPage: number;
   perPage: number;
