@@ -1,36 +1,69 @@
 export interface MediaMinimal {
-  // Common fields
   id: number;
+  mediaSource: string;
+  mediaType: string;
 
-  // Anilist-specific or shared
-  title?: Title | string;
-  format?: string;
+  title?: string;
   genres?: string[];
+  status?: string;
+  averageScore?: number;
+
+  releaseDate?: string;
+  firstAirDate?: string;
+
+  format?: string;
   episodes?: number;
   duration?: number;
   chapters?: number;
-  status?: string;
-  startDate?: MediaDate | string;
-  endDate?: MediaDate;
-  nextAiringEpisode?: NextAiringEpisode;
+  startDate?: string;
+  endDate?: string;
   mainStudio?: string;
-  coverImage?: CoverImage;
+  coverImage?: string;
   season?: string;
   seasonYear?: number;
-  averageScore?: number;
+}
 
-  // TMDB-specific or shared
-  adult?: boolean;
-  backdropPath?: string;
-  genreIds?: number[];
-  originalLanguage?: string;
-  popularity?: number;
+export interface MediaPagination {
+  results: MediaMinimal[];
+  currentPage: number;
+  perPage?: number;
+  hasNextPage: boolean;
+  total?: number;
+}
+
+export interface MediaDetailed {
+  id: number;
+  mediaSource: string;
   mediaType?: string;
-  voteAverage?: number;
-  originalTitle?: string;
+
+  title?: string;
+  genres?: string[];
+  status?: string;
+  averageScore?: number;
+  description?: string;
+
+  isAdult?: boolean;
+  source?: string;
+  format?: string;
+  episodes?: number;
+  seasons?: number;
+  duration?: number;
+  volumes?: number;
+  chapters?: number;
+  countryOfOrigin?: string;
+  synonyms?: string[];
+  tags?: string[];
+
   releaseDate?: string;
-  name?: string;
-  originalName?: string;
   firstAirDate?: string;
-  originCountry?: string[];
+  startDate?: string;
+  endDate?: string;
+  season?: string;
+  seasonYear?: number;
+
+  coverImage?: string;
+  bannerImage?: string;
+
+  mainStudio?: string;
+  studios?: string[];
 }
