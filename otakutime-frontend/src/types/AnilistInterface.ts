@@ -121,3 +121,10 @@ export interface AnilistPagination {
   hasNextPage: boolean;
   total: number;
 }
+
+export interface FeaturedAnilistResponse {
+  trending: AnilistMediaMinimal[];
+  popularSeason: AnilistMediaMinimal[];
+  upcoming: AnilistMediaMinimal[];
+  allTime: AnilistMediaMinimal[];
+}

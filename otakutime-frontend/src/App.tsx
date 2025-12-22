@@ -1,5 +1,5 @@
 import { Route, Routes } from 'react-router-dom';
-import FeatureAnime from './pages/FeaturedMedia';
+import FeatureAnime from './pages/AnimeBrowse';
 
 function App() {
   return (
