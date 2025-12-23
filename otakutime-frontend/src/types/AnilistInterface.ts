@@ -1,3 +1,5 @@
+import type { MediaMinimal } from "./MediaInterface";
+
 export interface Title {
   english?: string;
   romaji?: string;
@@ -123,8 +125,8 @@ export interface AnilistPagination {
 }
 
 export interface FeaturedAnilistResponse {
-  trending: AnilistMediaMinimal[];
-  popularSeason: AnilistMediaMinimal[];
-  upcoming: AnilistMediaMinimal[];
-  allTime: AnilistMediaMinimal[];
+  trending: MediaMinimal[];
+  popularSeason: MediaMinimal[];
+  upcoming: MediaMinimal[];
+  allTime: MediaMinimal[];
 }

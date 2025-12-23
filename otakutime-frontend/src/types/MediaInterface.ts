@@ -3,24 +3,26 @@ export interface MediaMinimal {
   mediaSource: string;
   mediaType: string;
 
-  title?: string;
+  // shared
+  title: string;
+  format?: string;
   genres?: string[];
   status?: string;
+  coverImage?: string;
   averageScore?: number;
 
-  releaseDate?: string;
-  firstAirDate?: string;
-
-  format?: string;
+  // anime
   episodes?: number;
-  duration?: number;
-  chapters?: number;
-  startDate?: string;
-  endDate?: string;
   mainStudio?: string;
-  coverImage?: string;
-  season?: string;
-  seasonYear?: number;
+
+  // manga
+  chapters?: number;
+
+  // movie
+  releaseDate?: string;
+
+  // tv
+  firstAirDate?: string;
 }
 
 export interface MediaPagination {
