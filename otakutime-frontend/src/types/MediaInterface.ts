@@ -69,3 +69,11 @@ export interface MediaDetailed {
   mainStudio?: string;
   studios?: string[];
 }
+
+export interface MediaFeaturedBulk {
+  trending?: MediaMinimal[] | null;
+  popularSeason?: MediaMinimal[] | null;
+  upcoming?: MediaMinimal[] | null;
+  allTime?: MediaMinimal[] | null;
+  allTimeManhwa?: MediaMinimal[] | null;
+}

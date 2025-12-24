@@ -1,10 +1,12 @@
 import { Route, Routes } from 'react-router-dom';
-import FeatureAnime from './pages/AnimeBrowse';
+import AnimeSearch from './pages/AnimeSearch';
+import MangaSearch from './pages/MangaSearch';
 
 function App() {
   return (
     <Routes>
-      <Route path="/featured" element={<FeatureAnime />} />
+      <Route path="/anime/search" element={<AnimeSearch />} />
+      <Route path="/manga/search" element={<MangaSearch />} />
     </Routes>
   );
 }

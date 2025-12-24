@@ -1,4 +1,5 @@
 import type { AnilistMediaDetailed, AnilistMediaMinimal, AnilistPagination, FeaturedAnilistResponse } from '../types/AnilistInterface';
+import type { MediaFeaturedBulk } from '../types/MediaInterface';
 import backendApi from './backendApi';
 
 interface SearchAnilistParams {
@@ -27,8 +28,11 @@ interface GetFeaturedParams {
   mediaType?: string;
 }
 
-export const getFeaturedAnilistBulk = async (): Promise<FeaturedAnilistResponse> => {
-  const res = await backendApi.get('/anilist/featured/bulk');
+export type AnilistMediaType = "ANIME" | "MANGA"
+
+export const getFeaturedAnilistBulk = async (mediaType: AnilistMediaType): Promise<MediaFeaturedBulk> => {
+  
+  const res = await backendApi.get(`/anilist/featured/bulk/${mediaType}`);
   return res.data
 };
 
