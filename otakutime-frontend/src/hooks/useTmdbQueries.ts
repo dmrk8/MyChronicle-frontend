@@ -1,0 +1,94 @@
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import type { MediaPagination, MediaDetailed, MediaFeaturedBulk } from '../types/MediaInterface';
+import {
+  searchTmdbMovie,
+  searchTmdbTv,
+  getTmdbMovieDetail,
+  getTmdbTvDetail,
+  getTmdbFeaturedBulk,
+  type TmdbMediaType,
+  type SearchTmdbMovieParams,
+  type SearchTmdbTvParams,
+} from '../api/tmdbApi';
+
+
+export function useTmdbFeaturedBulk(mediaType: TmdbMediaType, options?: { enabled?: boolean }) {
+  return useQuery<MediaFeaturedBulk>({
+    queryKey: ['tmdb', 'featured-bulk', mediaType] as const,
+    queryFn: () => getTmdbFeaturedBulk(mediaType),
+    staleTime: 10 * 60 * 1000,
+    ...options,
+  });
+}
+
+export function useSearchTmdbMovie(params: SearchTmdbMovieParams, options?: { enabled?: boolean }) {
+  const { page: _page, ...keyParams } = params;
+
+  return useInfiniteQuery<MediaPagination>({
+    queryKey: ['tmdb', 'search', 'movie', keyParams] as const,
+    queryFn: ({ pageParam }) =>
+      searchTmdbMovie({
+        ...params,
+        page: typeof pageParam === 'number' ? pageParam : 1,
+      }),
+    initialPageParam: params.page ?? 1,
+    getNextPageParam: (lastPage) => {
+      return lastPage.hasNextPage ? lastPage.currentPage + 1 : undefined;
+    },
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: options?.enabled ?? Boolean(params.search?.trim()),
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+}
+
+export function useSearchTmdbTv(params: SearchTmdbTvParams, options?: { enabled?: boolean }) {
+  const { page: _page, ...keyParams } = params;
+
+  return useInfiniteQuery<MediaPagination>({
+    queryKey: ['tmdb', 'search', 'tv', keyParams] as const,
+    queryFn: ({ pageParam }) =>
+      searchTmdbTv({
+        ...params,
+        page: typeof pageParam === 'number' ? pageParam : 1,
+      }),
+    initialPageParam: params.page ?? 1,
+    getNextPageParam: (lastPage) => {
+      return lastPage.hasNextPage ? lastPage.currentPage + 1 : undefined;
+    },
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: options?.enabled ?? Boolean(params.search?.trim()),
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+}
+
+export function useTmdbMovieDetail(movieId?: number, language?: string, options?: { enabled?: boolean }) {
+  return useQuery<MediaDetailed>({
+    queryKey: ['tmdb', 'movie', movieId, language] as const,
+    queryFn: () => {
+      if (!movieId) throw new Error('movieId is required');
+      return getTmdbMovieDetail(movieId, language);
+    },
+    enabled: options?.enabled ?? (typeof movieId === 'number' && movieId > 0),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+}
+
+export function useTmdbTvDetail(tvId?: number, language?: string, options?: { enabled?: boolean }) {
+  return useQuery<MediaDetailed>({
+    queryKey: ['tmdb', 'tv', tvId, language] as const,
+    queryFn: () => {
+      if (!tvId) throw new Error('tvId is required');
+      return getTmdbTvDetail(tvId, language);
+    },
+    enabled: options?.enabled ?? (typeof tvId === 'number' && tvId > 0),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+}

@@ -8,15 +8,16 @@ import {
 } from "../api/anilistApi";
 import type { MediaDetailed, MediaFeaturedBulk, MediaPagination } from "../types/MediaInterface";
 
-export function useFeaturedMediaAnilist(mediaType: AnilistMediaType) {
+export function useFeaturedMediaAnilist(mediaType: AnilistMediaType, options?: { enabled?: boolean }) {
   return useQuery<MediaFeaturedBulk>({
     queryKey: ["anilist", "featured", mediaType] as const,
     queryFn: () => getFeaturedAnilistBulk(mediaType),
     staleTime: 10 * 60 * 1000,
+    ...options,
   });
 }
 
-export function useSearchAnilist(params: SearchAnilistParams) {
+export function useSearchAnilist(params: SearchAnilistParams, options?: { enabled?: boolean }) {
   const { page: _page, ...keyParams } = params;
 
   return useInfiniteQuery<MediaPagination>({
@@ -32,22 +33,21 @@ export function useSearchAnilist(params: SearchAnilistParams) {
     },
     staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    enabled: Boolean(params.search?.trim()),
+    enabled: options?.enabled ?? Boolean(params.search?.trim()),
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
   });
 }
 
-
-export function useAnilistMediaDetail(mediaId?: number) {
+export function useAnilistMediaDetail(mediaId?: number, options?: { enabled?: boolean }) {
   return useQuery<MediaDetailed>({
     queryKey: ["anilist", "media", mediaId] as const,
     queryFn: () => {
       if (!mediaId) throw new Error("mediaId is required");
       return getMediaDetail(mediaId);
     },
-    enabled: typeof mediaId === "number" && mediaId > 0,
+    enabled: options?.enabled ?? (typeof mediaId === "number" && mediaId > 0),
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
