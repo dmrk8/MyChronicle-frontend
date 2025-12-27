@@ -3,7 +3,7 @@ import MediaGrid from '../components/GridRowMediaDisplay';
 import {
   useTmdbPopularSeason,
   useTmdbTrendingMedia,
-} from '../queries/useTmdbQueries';
+} from '../hooks/useTmdbQueries';
 
 const TvSearch: React.FC = () => {
   const trendingQuery = useTmdbTrendingMedia('tv');

@@ -1,8 +1,8 @@
-import { useFeaturedMediaAnilist } from '../queries/useFeaturedMediaAnilist';
+import { useFeaturedMediaAnilist } from '../hooks/useAnilistQueries';
 import MediaGrid from '../components/GridRowMediaDisplay';
 
 const MangaSearch: React.FC = () => {
-  const { data, isLoading, isError } = useFeaturedMediaAnilist("MANGA");
+  const { data, isLoading, isError } = useFeaturedMediaAnilist('MANGA');
 
   if (isLoading) {
     return <div className="text-center py-10">Loading...</div>;
@@ -15,7 +15,7 @@ const MangaSearch: React.FC = () => {
       </div>
     );
   }
-  
+
   const trending = data.trending ?? [];
   const allTimeManhwa = data.allTimeManhwa ?? [];
   const allTime = data.allTime ?? [];
