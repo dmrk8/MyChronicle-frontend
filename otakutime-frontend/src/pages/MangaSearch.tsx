@@ -1,4 +1,4 @@
-import MediaSearch from './MediaSearch';
+import MediaSearch from '../components/MediaSearch';
 
 const MangaSearch = () => <MediaSearch mediaType="manga" />;
 

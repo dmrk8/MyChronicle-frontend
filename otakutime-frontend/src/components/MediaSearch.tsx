@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
-import MediaGrid from '../components/GridRowMediaDisplay';
+import MediaGrid from './GridRowMediaDisplay';
 import type { MediaType } from '../types/MediaInterface';
 import { useFeaturedMedia, useMediaSearch } from '../hooks/useMediaQueries';
 
@@ -62,7 +62,7 @@ const MediaSearch = ({ mediaType }: { mediaType: MediaType }) => {
     anilistParams,
     tmdbMovieParams,
     tmdbTvParams,
-    { enabled: displaySearchResults } 
+    { enabled: displaySearchResults }
   );
 
   const searchResults = searchData?.pages.flatMap((page) => page.results) ?? [];
