@@ -1,78 +1,65 @@
 import { useEffect, useRef } from 'react';
 
 interface UseInfiniteScrollProps {
-  callback: () => void;
-  isLoading: boolean;
+  fetchNextPage: () => void;
   hasNextPage: boolean;
-  container?: HTMLElement | null;
+  isFetchingNextPage: boolean;
+  rootMargin?: string;
   threshold?: number;
+  enabled?: boolean;
 }
 
 export function useInfiniteScroll({
-  callback,
-  isLoading,
+  fetchNextPage,
   hasNextPage,
-  container,
-  threshold = 200,
+  isFetchingNextPage,
+  rootMargin = '200px',
+  threshold = 0.1,
+  enabled = true,
 }: UseInfiniteScrollProps) {
-  const callbackRef = useRef(callback);
-  const isFetchingRef = useRef(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  // Update callback ref when it changes
   useEffect(() => {
-    callbackRef.current = callback;
-  }, [callback]);
-
-  // Reset fetching flag when loading completes
-  useEffect(() => {
-    if (!isLoading) {
-      isFetchingRef.current = false;
+    // Don't setup observer if disabled or no more pages
+    if (!enabled || !hasNextPage) {
+      return;
     }
-  }, [isLoading]);
 
-  useEffect(() => {
-    if (!hasNextPage) return;
+    // Disconnect previous observer
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
 
-    const target = container || window;
-    let ticking = false;
-
-    const handleScroll = () => {
-      // Prevent multiple calls per scroll
-      if (ticking) return;
-      
-      ticking = true;
-      requestAnimationFrame(() => {
-        // Don't trigger if already fetching, loading, or no more pages
-        if (isFetchingRef.current || isLoading || !hasNextPage) {
-          ticking = false;
-          return;
+    // Create new observer
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        
+        // Trigger fetch when sentinel is visible and not already fetching
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
         }
+      },
+      {
+        rootMargin,
+        threshold,
+      }
+    );
 
-        const scrollPosition = container
-          ? container.scrollTop + container.clientHeight
-          : window.innerHeight + window.scrollY;
+    // Observe the sentinel element
+    const currentSentinel = sentinelRef.current;
+    if (currentSentinel) {
+      observerRef.current.observe(currentSentinel);
+    }
 
-        const bottomPosition = container
-          ? container.scrollHeight
-          : document.documentElement.scrollHeight;
-
-        // Trigger when within threshold pixels of bottom
-        if (scrollPosition >= bottomPosition - threshold) {
-          isFetchingRef.current = true;
-          callbackRef.current();
-        }
-
-        ticking = false;
-      });
-    };
-
-    // Check on mount in case already at bottom
-    handleScroll();
-
-    target.addEventListener('scroll', handleScroll, { passive: true });
-
+    // Cleanup
     return () => {
-      target.removeEventListener('scroll', handleScroll);
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
     };
-  }, [isLoading, hasNextPage, container, threshold]);
+  }, [enabled, hasNextPage, isFetchingNextPage, fetchNextPage, rootMargin, threshold]);
+
+  return sentinelRef;
 }

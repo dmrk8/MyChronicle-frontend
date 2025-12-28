@@ -6,9 +6,9 @@ import { useSearchTmdbMovie } from "./useTmdbQueries";
 import { useAnilistMediaDetail } from "./useAnilistQueries";
 import { useTmdbMovieDetail } from "./useTmdbQueries";
 import { useTmdbTvDetail } from "./useTmdbQueries";
+import type { AnilistMediaType, SearchAnilistParams } from "../api/anilistApi";
+import type { SearchTmdbMovieParams, SearchTmdbTvParams, TmdbMediaType } from "../api/tmdbApi";
 import type { MediaType } from "../types/MediaInterface";
-import type { AnilistMediaType } from "../api/anilistApi";
-import type { TmdbMediaType } from "../api/tmdbApi";
 
     
 export function useFeaturedMedia(mediaType: MediaType, mediaSource?: MediaSource) {
@@ -20,25 +20,33 @@ export function useFeaturedMedia(mediaType: MediaType, mediaSource?: MediaSource
   return source === "anilist" ? anilistQuery : tmdbQuery;
 }
 
-export function useMediaSearch(params: {
-  mediaType: MediaType;
-  search: string;
-  mediaSource?: MediaSource;
-}) {
-  const { mediaType, search, mediaSource } = params;
+export function useMediaSearch(
+  mediaType: MediaType,
+  mediaSource?: MediaSource,
+  anilistParams?: SearchAnilistParams,
+  tmdbMovieParams?: SearchTmdbMovieParams,
+  tmdbTvParams?: SearchTmdbTvParams,
+  options?: { enabled?: boolean } 
+) {
   const source = mediaSource || (mediaType === "anime" || mediaType === "manga" ? "anilist" : "tmdb");
   
-  const anilistQuery = useSearchAnilist({
-    mediaType: mediaType as "anime" | "manga",
-    search,
-  }, { enabled: source === "anilist" });
+  const anilistQuery = useSearchAnilist(
+    anilistParams || {search: "", mediaType: mediaType as "anime" | "manga"}, 
+    { enabled: (options?.enabled ?? true) && source === "anilist" }
+  );
   
-  const tmdbMovieQuery = useSearchTmdbMovie({ search }, { enabled: source === "tmdb" && mediaType === "movie" });
-  const tmdbTvQuery = useSearchTmdbTv({ search }, { enabled: source === "tmdb" && mediaType === "tv" });
+  const tmdbMovieQuery = useSearchTmdbMovie(
+    tmdbMovieParams || { search: "" }, 
+    { enabled: (options?.enabled ?? true) && source === "tmdb" && mediaType === "movie" }
+  );
   
-  const tmdbQuery = mediaType === "movie" ? tmdbMovieQuery : tmdbTvQuery;
+  const tmdbTvQuery = useSearchTmdbTv(
+    tmdbTvParams || { search: "" }, 
+    { enabled: (options?.enabled ?? true) && source === "tmdb" && mediaType === "tv" }
+  );
   
-  return source === "anilist" ? anilistQuery : tmdbQuery;
+  if (source === "anilist") return anilistQuery;
+  return mediaType === "movie" ? tmdbMovieQuery : tmdbTvQuery;
 }
 
 

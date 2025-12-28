@@ -21,7 +21,7 @@ export function useSearchAnilist(params: SearchAnilistParams, options?: { enable
   const { page: _page, ...keyParams } = params;
 
   return useInfiniteQuery<MediaPagination>({
-    queryKey: ["anilist", "search", keyParams] as const,
+    queryKey: ["anilist", "search", params.mediaType, keyParams] as const,
     queryFn: ({ pageParam }) =>
       searchAnilist({
         ...params,

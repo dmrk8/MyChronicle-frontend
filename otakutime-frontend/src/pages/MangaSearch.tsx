@@ -1,34 +1,5 @@
-import { useFeaturedMediaAnilist } from '../hooks/useAnilistQueries';
-import MediaGrid from '../components/GridRowMediaDisplay';
+import MediaSearch from './MediaSearch';
 
-const MangaSearch: React.FC = () => {
-  const { data, isLoading, isError } = useFeaturedMediaAnilist('MANGA');
-
-  if (isLoading) {
-    return <div className="text-center py-10">Loading...</div>;
-  }
-
-  if (isError || !data) {
-    return (
-      <div className="text-center text-red-500 py-10">
-        {'No data available'}
-      </div>
-    );
-  }
-
-  const trending = data.trending ?? [];
-  const allTimeManhwa = data.allTimeManhwa ?? [];
-  const allTime = data.allTime ?? [];
-
-  return (
-    <div className="max-w-full mx-80">
-      <MediaGrid title="Trending Manga" mediaList={trending} />
-
-      <MediaGrid title="All Time Manga" mediaList={allTime} />
-
-      <MediaGrid title="All Time Manhwa" mediaList={allTimeManhwa} />
-    </div>
-  );
-};
+const MangaSearch = () => <MediaSearch mediaType="manga" />;
 
 export default MangaSearch;

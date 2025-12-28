@@ -17,6 +17,13 @@ export function useTmdbFeaturedBulk(mediaType: TmdbMediaType, options?: { enable
     queryKey: ['tmdb', 'featured-bulk', mediaType] as const,
     queryFn: () => getTmdbFeaturedBulk(mediaType),
     staleTime: 10 * 60 * 1000,
+    select: (data) => ({
+      trending: data.trending?.slice(0, 6),
+      popularSeason: data.popularSeason?.slice(0, 6),
+      upcoming: data.upcoming?.slice(0, 6),
+      allTime: data.allTime?.slice(0, 6),
+      allTimeManhwa: data.allTimeManhwa?.slice(0, 6),
+    }),
     ...options,
   });
 }
