@@ -50,7 +50,7 @@ export interface MediaDetailed {
   mediaSource: string;
   mediaType: string;
 
-  // shared
+  // shared core info
   title: string;
   format?: string | null;
   genres?: string[] | null;
@@ -59,10 +59,12 @@ export interface MediaDetailed {
   averageScore?: number | null;
   description?: string | null;
   bannerImage?: string | null;
-
+  
+  // shared
+  studios?: string[] | null;
+  isAdult?: boolean | null;
   // anime
   episodes?: number | null;
-  studios?: string[] | null;
   duration?: number | null;
   season?: string | null;
   seasonYear?: number | null;
@@ -72,7 +74,6 @@ export interface MediaDetailed {
   
   //anilist shared
   countryOfOrigin?: string | null;
-  isAdult?: boolean | null;
   source?: string | null;
   synonyms?: string[] | null;
 
