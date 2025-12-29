@@ -1,5 +1,5 @@
 import backendApi from './backendApi';
-import type { MediaPagination, MediaDetailed, MediaFeaturedBulk } from '../types/MediaInterface';
+import type { MediaPagination, MediaDetailed, MediaFeaturedBulk } from '../types/Media';
 
 export type TmdbMediaType = 'movie' | 'tv';
 

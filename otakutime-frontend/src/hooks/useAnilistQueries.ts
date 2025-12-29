@@ -6,7 +6,7 @@ import {
   type AnilistMediaType,
   type SearchAnilistParams,
 } from "../api/anilistApi";
-import type { MediaDetailed, MediaFeaturedBulk, MediaPagination } from "../types/MediaInterface";
+import type { MediaDetailed, MediaFeaturedBulk, MediaPagination } from "../types/Media";
 
 export function useFeaturedMediaAnilist(mediaType: AnilistMediaType, options?: { enabled?: boolean }) {
   return useQuery<MediaFeaturedBulk>({

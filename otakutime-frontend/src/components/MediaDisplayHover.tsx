@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { MediaMinimal } from '../types/MediaInterface';
+import type { MediaMinimal } from '../types/Media';
 
 type Placement = 'right' | 'left';
 

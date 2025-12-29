@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import type { MediaPagination, MediaDetailed, MediaFeaturedBulk } from '../types/MediaInterface';
+import type { MediaPagination, MediaDetailed, MediaFeaturedBulk } from '../types/Media';
 import {
   searchTmdbMovie,
   searchTmdbTv,

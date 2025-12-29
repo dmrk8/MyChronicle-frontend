@@ -8,7 +8,7 @@ import { useTmdbMovieDetail } from "./useTmdbQueries";
 import { useTmdbTvDetail } from "./useTmdbQueries";
 import type { AnilistMediaType, SearchAnilistParams } from "../api/anilistApi";
 import type { SearchTmdbMovieParams, SearchTmdbTvParams, TmdbMediaType } from "../api/tmdbApi";
-import type { MediaType } from "../types/MediaInterface";
+import type { MediaType } from "../types/Media";
 
     
 export function useFeaturedMedia(mediaType: MediaType, mediaSource?: MediaSource) {

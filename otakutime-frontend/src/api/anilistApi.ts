@@ -1,5 +1,5 @@
 import backendApi from './backendApi';
-import type { MediaPagination, MediaFeaturedBulk, MediaDetailed } from '../types/MediaInterface';
+import type { MediaPagination, MediaFeaturedBulk, MediaDetailed } from '../types/Media';
 import type { AnilistMediaDetailed } from '../types/AnilistInterface';
 
 export interface SearchAnilistParams {

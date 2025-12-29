@@ -1,4 +1,4 @@
-import type { MediaMinimal } from '../types/MediaInterface';
+import type { MediaMinimal } from '../types/Media';
 import MediaDisplayHover from './MediaDisplayHover';
 
 interface MediaGridProps {
