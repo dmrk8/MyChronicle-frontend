@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMediaDetail } from '../hooks/useMediaQueries';
-import type { MediaType } from '../types/MediaInterface';
+import type { MediaType } from '../types/Media';
 
 const MediaDetailPage = () => {
   const { mediaType, id } = useParams<{ mediaType: MediaType; id: string }>();
@@ -80,16 +80,16 @@ const MediaDetailPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-black text-white">
+    <div className="min-h-screen bg-linear-to-b from-zinc-900 to-black text-white">
       {/* Banner Section */}
-      {media.bannerImage && (
+      {(media.bannerImage || media.coverImage) && (
         <div className="relative h-96 w-full">
           <img
-            src={media.bannerImage}
+            src={media.bannerImage || media.coverImage || ''}
             alt={media.title}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/50 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-zinc-900 via-zinc-900/50 to-transparent" />
         </div>
       )}
 
@@ -97,7 +97,7 @@ const MediaDetailPage = () => {
         {/* Main Content */}
         <div className="flex flex-col md:flex-row gap-8">
           {/* Left Sidebar - Cover Image, Buttons, and Info */}
-          <div className="flex-shrink-0 w-full md:w-64">
+          <div className="shrink-0 w-full md:w-64">
             {/* Cover Image */}
             <img
               src={media.coverImage || ''}
@@ -336,7 +336,6 @@ const MediaDetailPage = () => {
             {/* Description */}
             {media.description && (
               <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-3">Synopsis</h2>
                 <p
                   className="text-zinc-300 leading-relaxed"
                   dangerouslySetInnerHTML={{ __html: media.description }}
@@ -380,7 +379,9 @@ const InfoItem = ({
   return (
     <div className="border-b border-zinc-700/50 pb-2 last:border-b-0">
       <div className="text-zinc-400 text-xs mb-1">{label}</div>
-      <div className="text-white text-sm font-medium break-words">{value}</div>
+      <div className="text-white text-sm font-medium wrap-break-word">
+        {value}
+      </div>
     </div>
   );
 };
