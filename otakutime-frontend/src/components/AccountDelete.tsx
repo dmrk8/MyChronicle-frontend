@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDeleteUser } from '../hooks/useUserQueries';
+import { useDeleteUser } from '../hooks/useUser';
 import { useAuth } from '../hooks/useAuth';
 
 const AccountDelete: React.FC = () => {

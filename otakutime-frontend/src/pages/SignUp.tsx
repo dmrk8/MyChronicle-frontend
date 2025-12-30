@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCreateUser } from '../hooks/useUserQueries';
+import { useCreateUser } from '../hooks/useUser';
 import { useAuth } from '../hooks/useAuth';
 
 const SignUpPage: React.FC = () => {

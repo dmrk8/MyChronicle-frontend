@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMediaDetail } from '../hooks/useMediaQueries';
+import { useMediaDetail } from '../hooks/useMedia';
 import type { MediaType } from '../types/Media';
 
 const MediaDetailPage = () => {

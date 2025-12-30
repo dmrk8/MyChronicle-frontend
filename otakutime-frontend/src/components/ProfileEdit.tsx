@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { useUpdateUser } from '../hooks/useUserQueries';
+import { useUpdateUser } from '../hooks/useUser';
 import type { UserUpdateRequest } from '../types/User';
 
 const ProfileEdit: React.FC = () => {
