@@ -1,10 +1,37 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import {
+  FaHeart,
+  FaRegHeart,
+  FaChevronDown,
+  FaPlus,
+  FaClock,
+  FaPlay,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaTimes,
+} from 'react-icons/fa';
 import { useMediaDetail } from '../hooks/useMedia';
+import {
+  useGetUserMediaEntryByExternalId,
+  useCreateUserMediaEntry,
+  useUpdateUserMediaEntry,
+  useDeleteUserMediaEntry,
+} from '../hooks/useUserMediaEntry';
+import {
+  ReviewStatus,
+  ReviewMediaSource,
+  ReviewMediaType,
+} from '../types/UserMediaEntry';
 import type { MediaType } from '../types/Media';
+import React from 'react';
+import { getUserMediaEntryByExternalId } from '../api/userMediaEntryApi';
 
 const MediaDetailPage = () => {
   const { mediaType, id } = useParams<{ mediaType: MediaType; id: string }>();
   const navigate = useNavigate();
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const mediaId = id ? parseInt(id, 10) : undefined;
 
@@ -16,6 +43,165 @@ const MediaDetailPage = () => {
     mediaId,
     mediaType: mediaType as MediaType,
   });
+
+  // Get user media entry
+  const { data: userEntryData } = useGetUserMediaEntryByExternalId(
+    mediaId || 0
+  );
+  const userEntry =
+    userEntryData?.data && !Array.isArray(userEntryData.data)
+      ? userEntryData.data
+      : null;
+
+  const createEntry = useCreateUserMediaEntry();
+  const updateEntry = useUpdateUserMediaEntry();
+  const deleteEntry = useDeleteUserMediaEntry();
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowStatusDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Map media type to ReviewMediaType
+  const getReviewMediaType = (type: MediaType): ReviewMediaType => {
+    const mapping: Record<MediaType, ReviewMediaType> = {
+      anime: ReviewMediaType.ANIME,
+      manga: ReviewMediaType.MANGA,
+      movie: ReviewMediaType.MOVIE,
+      tv: ReviewMediaType.TV,
+    };
+    return mapping[type];
+  };
+
+  // Map media type to ReviewMediaSource
+  const getReviewMediaSource = (type: MediaType): ReviewMediaSource => {
+    if (type === 'anime' || type === 'manga') return ReviewMediaSource.ANILIST;
+    return ReviewMediaSource.TMDB;
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!mediaId) return;
+
+    if (userEntry) {
+      // Check if this is the only property set (besides id, userId, etc.)
+      const isFavoriteOnly = userEntry.isFavorite && !userEntry.inLibrary;
+
+      if (isFavoriteOnly) {
+        // Delete the entry entirely if favorite is the only thing set and we're unfavoriting
+        await deleteEntry.mutateAsync({
+          entryId: userEntry.id!,
+          externalId: mediaId,
+        });
+      } else {
+        // Update existing entry - toggle favorite
+        await updateEntry.mutateAsync({
+          entryId: userEntry.id!,
+          update: {
+            isFavorite: !userEntry.isFavorite,
+          },
+          externalId: mediaId,
+        });
+      }
+    } else {
+      // Create new entry with favorite
+      await createEntry.mutateAsync({
+        externalId: mediaId,
+        externalSource: getReviewMediaSource(mediaType as MediaType),
+        mediaType: getReviewMediaType(mediaType as MediaType),
+        isFavorite: true,
+        inLibrary: false,
+      });
+    }
+  };
+
+  const handleStatusChange = async (
+    status: (typeof ReviewStatus)[keyof typeof ReviewStatus]
+  ) => {
+    if (!mediaId) return;
+
+    if (userEntry) {
+      // Update existing entry
+      await updateEntry.mutateAsync({
+        entryId: userEntry.id!,
+        update: {
+          status,
+          inLibrary: true,
+        },
+        externalId: mediaId, // Pass externalId
+      });
+    } else {
+      // Create new entry with status
+      await createEntry.mutateAsync({
+        externalId: mediaId,
+        externalSource: getReviewMediaSource(mediaType as MediaType),
+        mediaType: getReviewMediaType(mediaType as MediaType),
+        status,
+        inLibrary: true,
+      });
+    }
+    setShowStatusDropdown(false);
+  };
+
+  const handleLibraryClick = () => {
+    setShowStatusDropdown(!showStatusDropdown);
+  };
+
+  const handleRemoveFromLibrary = async () => {
+    if (!userEntry?.id) return;
+
+    // Check if favorite is set
+    if (userEntry.isFavorite) {
+      // Just remove from library but keep as favorite
+      await updateEntry.mutateAsync({
+        entryId: userEntry.id,
+        update: {
+          inLibrary: false,
+          status: undefined,
+        },
+        externalId: mediaId,
+      });
+    } else {
+      // Delete the entry entirely if not favorited
+      await deleteEntry.mutateAsync({
+        entryId: userEntry.id,
+        externalId: mediaId,
+      });
+    }
+    setShowStatusDropdown(false);
+  };
+
+  const statusConfig = {
+    [ReviewStatus.PLANNING]: {
+      label: 'Planning',
+      color: 'text-yellow-400',
+      icon: FaClock,
+    },
+    [ReviewStatus.CURRENT]: {
+      label: 'Current',
+      color: 'text-blue-400',
+      icon: FaPlay,
+    },
+    [ReviewStatus.COMPLETED]: {
+      label: 'Completed',
+      color: 'text-green-400',
+      icon: FaCheckCircle,
+    },
+    [ReviewStatus.DROPPED]: {
+      label: 'Dropped',
+      color: 'text-red-400',
+      icon: FaTimesCircle,
+    },
+  };
 
   if (isLoading) {
     return (
@@ -60,15 +246,6 @@ const MediaDetailPage = () => {
     return 'text-orange-400';
   };
 
-  const formatDate = (date?: string | null) => {
-    if (!date) return null;
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
-
   const formatCurrency = (amount?: number | null) => {
     if (!amount) return null;
     return new Intl.NumberFormat('en-US', {
@@ -107,22 +284,125 @@ const MediaDetailPage = () => {
 
             {/* Action Buttons */}
             <div className="flex gap-2 mb-4">
-              <button
-                className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors"
-                onClick={() => {
-                  /* Add to library functionality */
-                }}
+              {/* Library Button with Dropdown */}
+              <div
+                className={`relative transition-all duration-300 ${
+                  userEntry?.inLibrary ? 'flex-1' : 'w-full'
+                }`}
+                ref={dropdownRef}
               >
-                Add to Library
-              </button>
-              <button
-                className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
-                onClick={() => {
-                  /* Favorite functionality */
-                }}
+                <button
+                  className={`w-full px-4 py-2.5 font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 border ${
+                    userEntry?.inLibrary
+                      ? 'bg-zinc-800/80 hover:bg-zinc-700 border-zinc-700 text-white'
+                      : 'bg-zinc-800/50 hover:bg-zinc-800 border-zinc-700/50 hover:border-zinc-600 text-zinc-300'
+                  }`}
+                  onClick={handleLibraryClick}
+                >
+                  {userEntry?.inLibrary && userEntry.status ? (
+                    <>
+                      <span className={statusConfig[userEntry.status].color}>
+                        {React.createElement(
+                          statusConfig[userEntry.status].icon,
+                          { size: 14 }
+                        )}
+                      </span>
+                      <span className="text-sm">
+                        {statusConfig[userEntry.status].label}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <FaPlus size={14} />
+                      <span className="text-sm">Add to Library</span>
+                    </>
+                  )}
+                  <FaChevronDown
+                    size={10}
+                    className={`transition-transform duration-200 ${
+                      showStatusDropdown ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {/* Dropdown Menu */}
+                {showStatusDropdown && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 rounded-lg shadow-2xl border border-zinc-700 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    {Object.entries(statusConfig).map(([status, config]) => (
+                      <button
+                        key={status}
+                        onClick={() =>
+                          handleStatusChange(
+                            status as (typeof ReviewStatus)[keyof typeof ReviewStatus]
+                          )
+                        }
+                        className={`w-full px-4 py-2.5 text-left hover:bg-zinc-700 transition-colors flex items-center gap-3 ${
+                          userEntry?.status === status ? 'bg-zinc-700/50' : ''
+                        }`}
+                      >
+                        <span className={config.color}>
+                          {React.createElement(config.icon, { size: 14 })}
+                        </span>
+                        <span className="text-white text-sm font-medium">
+                          {config.label}
+                        </span>
+                        {userEntry?.status === status && (
+                          <FaCheckCircle
+                            size={12}
+                            className="ml-auto text-green-400"
+                          />
+                        )}
+                      </button>
+                    ))}
+
+                    {/* Remove from Library Option */}
+                    {userEntry?.inLibrary && (
+                      <>
+                        <div className="border-t border-zinc-700" />
+                        <button
+                          onClick={handleRemoveFromLibrary}
+                          className="w-full px-4 py-2.5 text-left hover:bg-zinc-700 transition-colors flex items-center gap-3 text-red-400"
+                        >
+                          <FaTimes size={14} />
+                          <span className="text-sm font-medium">
+                            Remove from Library
+                          </span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Favorite Button - Only show when in library */}
+              <div
+                className={`transition-all duration-300 overflow-hidden ${
+                  userEntry?.inLibrary
+                    ? 'w-12 opacity-100'
+                    : 'w-0 opacity-0 pointer-events-none'
+                }`}
               >
-                ❤️
-              </button>
+                <button
+                  className={`w-12 h-full px-3 py-2.5 rounded-lg transition-all duration-200 border ${
+                    userEntry?.isFavorite
+                      ? 'bg-red-500/20 hover:bg-red-500/30 border-red-500/50 hover:border-red-500 text-red-400'
+                      : 'bg-zinc-800/50 hover:bg-zinc-800 border-zinc-700/50 hover:border-zinc-600 text-zinc-400'
+                  }`}
+                  onClick={handleToggleFavorite}
+                  title={
+                    userEntry?.isFavorite
+                      ? 'Remove from favorites'
+                      : 'Add to favorites'
+                  }
+                  disabled={!userEntry?.inLibrary}
+                >
+                  {userEntry?.isFavorite ? (
+                    <FaHeart size={16} />
+                  ) : (
+                    <FaRegHeart size={16} />
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Media Information */}
@@ -159,16 +439,10 @@ const MediaDetailPage = () => {
                     />
                   )}
                   {media.startDate && (
-                    <InfoItem
-                      label="Start Date"
-                      value={formatDate(media.startDate)}
-                    />
+                    <InfoItem label="Start Date" value={media.startDate} />
                   )}
                   {media.endDate && (
-                    <InfoItem
-                      label="End Date"
-                      value={formatDate(media.endDate)}
-                    />
+                    <InfoItem label="End Date" value={media.endDate} />
                   )}
                   {media.source && (
                     <InfoItem label="Source" value={media.source} />
