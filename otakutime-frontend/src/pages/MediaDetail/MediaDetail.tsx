@@ -30,6 +30,7 @@ import { MainMediaInfo } from './components/MainMediaInfo';
 import { MediaNotesCarousel } from './components/MediaNotesCarousel';
 import {
   useCreateReview,
+  useDeleteReview,
   useGetReviewsByUserMediaEntryId,
   useUpdateReview,
 } from '../../hooks/useReview';
@@ -71,6 +72,7 @@ const MediaDetailPage = () => {
 
   const createReview = useCreateReview();
   const updateReview = useUpdateReview();
+  const deleteReview = useDeleteReview();
 
   const handleSaveNotes = async (
     reviewId: string | undefined,
@@ -83,17 +85,39 @@ const MediaDetailPage = () => {
         // Update existing review
         await updateReview.mutateAsync({
           reviewId,
-          update
+          update,
         });
       } else {
         // Create new review
         await createReview.mutateAsync({
           userMediaEntryId: userEntry.id,
-          ...update
+          ...update,
         });
       }
     } catch (error) {
       console.error('Failed to save review:', error);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!userEntry?.id) return;
+
+    try {
+      await deleteReview.mutateAsync({
+        reviewId,
+        userMediaEntryId: userEntry.id,
+      });
+    } catch (error) {
+      console.error('Failed to delete review:', error);
+    }
+
+    try {
+      await deleteReview.mutateAsync({
+        reviewId,
+        userMediaEntryId: userEntry.id,
+      });
+    } catch (error) {
+      console.error('Failed to delete review:', error);
     }
   };
 
@@ -430,14 +454,14 @@ const MediaDetailPage = () => {
           <div className="flex-1 space-y-6">
             <MainMediaInfo media={media} />
 
-            
-            {(
+            {
               <MediaNotesCarousel
                 mediaNotes={reviews || []}
                 onSave={handleSaveNotes}
                 mediaTitle={media.title}
+                onDelete={handleDeleteReview}
               />
-            )}
+            }
           </div>
         </div>
       </div>

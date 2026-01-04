@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { FaChevronLeft, FaChevronRight, FaCircle } from 'react-icons/fa';
+import {
+  FaChevronLeft,
+  FaChevronRight,
+  FaCircle,
+  FaPlus,
+} from 'react-icons/fa';
 import { MediaNotes } from './MediaNotes';
 import type { Review, ReviewUpdate } from '../../../types/Review';
 
@@ -7,6 +12,7 @@ interface MediaNotesCarouselProps {
   mediaTitle: string;
   mediaNotes: Review[];
   onSave: (reviewId: string | undefined, update: ReviewUpdate) => Promise<void>;
+  onDelete: (reviewId: string) => Promise<void>;
   onNavigate?: (currentIndex: number) => void;
 }
 
@@ -14,27 +20,24 @@ export const MediaNotesCarousel = ({
   mediaNotes,
   mediaTitle,
   onSave,
+  onDelete,
   onNavigate,
 }: MediaNotesCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showNewReview, setShowNewReview] = useState(false);
 
-  if (!mediaNotes || mediaNotes.length === 0) {
-    return <MediaNotes onSave={onSave} mediaTitle={mediaTitle} />;
-  }
-
-  const currentNote = mediaNotes[currentIndex];
-  const hasMultipleNotes = mediaNotes.length > 1;
+  const hasReviews = mediaNotes && mediaNotes.length > 0;
+  const totalSlots = hasReviews ? mediaNotes.length + 1 : 1; // Reviews + new slot
+  const isOnNewReviewSlot = hasReviews && currentIndex === mediaNotes.length;
 
   const handlePrevious = () => {
-    const newIndex =
-      currentIndex > 0 ? currentIndex - 1 : mediaNotes.length - 1;
+    const newIndex = currentIndex > 0 ? currentIndex - 1 : totalSlots - 1;
     setCurrentIndex(newIndex);
     onNavigate?.(newIndex);
   };
 
   const handleNext = () => {
-    const newIndex =
-      currentIndex < mediaNotes.length - 1 ? currentIndex + 1 : 0;
+    const newIndex = currentIndex < totalSlots - 1 ? currentIndex + 1 : 0;
     setCurrentIndex(newIndex);
     onNavigate?.(newIndex);
   };
@@ -44,39 +47,64 @@ export const MediaNotesCarousel = ({
     onNavigate?.(index);
   };
 
+  const handleSaveNew = async (
+    reviewId: string | undefined,
+    update: ReviewUpdate
+  ) => {
+    await onSave(reviewId, update);
+    // After saving, navigate to the first review
+    setCurrentIndex(0);
+    setShowNewReview(false);
+  };
+
+  const currentNote =
+    hasReviews && !isOnNewReviewSlot ? mediaNotes[currentIndex] : undefined;
+
   return (
     <div className="space-y-4">
       {/* Navigation Header */}
-      {hasMultipleNotes && (
-        <div className="flex items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-zinc-400">
-              Review {currentIndex + 1} of {mediaNotes.length}
-            </span>
-          </div>
+      <div className="flex items-center justify-between px-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-zinc-400">
+            {hasReviews
+              ? isOnNewReviewSlot
+                ? `New Review`
+                : `Review ${currentIndex + 1} of ${mediaNotes.length}`
+              : 'New Review'}
+          </span>
+        </div>
 
-          <div className="flex items-center gap-4">
-            {/* Dot Indicators */}
-            {mediaNotes.length <= 10 && (
-              <div className="flex items-center gap-2">
-                {mediaNotes.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleDotClick(index)}
-                    className={`transition-all duration-200 ${
-                      index === currentIndex
-                        ? 'text-blue-400 scale-125'
-                        : 'text-zinc-600 hover:text-zinc-400'
-                    }`}
-                    aria-label={`Go to review ${index + 1}`}
-                  >
+        <div className="flex items-center gap-4">
+          {/* Dot Indicators */}
+          {hasReviews && totalSlots <= 11 && (
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalSlots }).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleDotClick(index)}
+                  className={`transition-all duration-200 ${
+                    index === currentIndex
+                      ? 'text-blue-400 scale-125'
+                      : 'text-zinc-600 hover:text-zinc-400'
+                  }`}
+                  aria-label={
+                    index === mediaNotes.length
+                      ? 'New review'
+                      : `Go to review ${index + 1}`
+                  }
+                >
+                  {index === mediaNotes.length ? (
+                    <FaPlus size={8} />
+                  ) : (
                     <FaCircle size={8} />
-                  </button>
-                ))}
-              </div>
-            )}
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
 
-            {/* Arrow Navigation */}
+          {/* Arrow Navigation */}
+          {hasReviews && (
             <div className="flex items-center gap-2">
               <button
                 onClick={handlePrevious}
@@ -93,24 +121,36 @@ export const MediaNotesCarousel = ({
                 <FaChevronRight size={16} />
               </button>
             </div>
-          </div>
+          )}
         </div>
-      )}
-
-      {/* Current Review */}
-      <div className="relative">
-        <MediaNotes
-          review={currentNote}
-          onSave={onSave}
-          mediaTitle={mediaTitle}
-        />
-
       </div>
 
-      {/* Keyboard Navigation Hint */}
-      {hasMultipleNotes && (
+      {/* Current Review or New Review Form */}
+      <div className="relative">
+        {isOnNewReviewSlot || !hasReviews ? (
+          <MediaNotes
+            key="new-review"
+            mediaTitle={mediaTitle}
+            onSave={hasReviews ? handleSaveNew : onSave}
+            showDelete={false}
+          />
+        ) : (
+          <MediaNotes
+            key={currentNote?.id || currentIndex}
+            review={currentNote}
+            onSave={onSave}
+            mediaTitle={mediaTitle}
+            onDelete={onDelete}
+            showDelete={true}
+          />
+        )}
+      </div>
+
+      {/* Navigation Hint */}
+      {hasReviews && (
         <div className="text-center text-xs text-zinc-600 mt-2">
-          Use ← → arrow keys or swipe to navigate between reviews
+          Use ← → arrow keys or dots to navigate between reviews • Last slot is
+          for creating new reviews
         </div>
       )}
     </div>

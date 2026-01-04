@@ -31,6 +31,7 @@ export const MediaNotes = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -65,13 +66,12 @@ export const MediaNotes = ({
   const handleDelete = async () => {
     if (!review?.id || !onDelete) return;
 
-    if (window.confirm('Are you sure you want to delete this review?')) {
-      setIsDeleting(true);
-      try {
-        await onDelete(review.id);
-      } finally {
-        setIsDeleting(false);
-      }
+    setIsDeleting(true);
+    try {
+      await onDelete(review.id);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -98,9 +98,45 @@ export const MediaNotes = ({
 
   return (
     <div className="relative group">
-      <div className="bg-gradient-to-br from-zinc-800/60 to-zinc-900/60 rounded-xl border-2 border-zinc-700/50 shadow-xl backdrop-blur-sm overflow-hidden transition-all duration-300 hover:shadow-2xl hover:border-zinc-600/50">
-        {/* Notepad Header */}
-        <div className="bg-gradient-to-r from-zinc-800/80 to-zinc-800/60 px-5 py-4 border-b-2 border-zinc-700/50 flex items-center justify-between">
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-2xl border-2 border-zinc-700 shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-gradient-to-r from-red-500/20 to-orange-500/20 border-b border-red-500/30 px-6 py-4">
+              <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                <FaTrash className="text-red-400" />
+                Delete Review?
+              </h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-zinc-300 text-sm">
+                Are you sure you want to permanently delete this review? This
+                action cannot be undone.
+              </p>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-zinc-700 disabled:to-zinc-700 text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-red-500/20 transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed"
+                >
+                  {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-3 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-all duration-200 font-semibold shadow-lg transform hover:scale-105"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 rounded-2xl border-2 border-zinc-700/50 shadow-2xl backdrop-blur-sm overflow-hidden transition-all duration-300 hover:shadow-blue-500/10 hover:border-zinc-600/60">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-zinc-800/90 to-zinc-800/70 px-6 py-4 border-b-2 border-zinc-700/50 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-zinc-700 rounded-lg">
               <FaStickyNote className="text-blue-400" size={18} />
@@ -126,12 +162,12 @@ export const MediaNotes = ({
               </button>
               {showDelete && review && onDelete && (
                 <button
-                  onClick={handleDelete}
+                  onClick={() => setShowDeleteConfirm(true)}
                   disabled={isDeleting}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-zinc-700 text-white rounded-lg transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-4 py-2 bg-zinc-600 hover:bg-red-600 disabled:bg-zinc-700 text-zinc-200 hover:text-white rounded-lg transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:cursor-not-allowed"
                 >
                   <FaTrash size={13} />
-                  {isDeleting ? 'Deleting...' : 'Delete'}
+                  Delete
                 </button>
               )}
             </div>
@@ -240,7 +276,6 @@ export const MediaNotes = ({
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
