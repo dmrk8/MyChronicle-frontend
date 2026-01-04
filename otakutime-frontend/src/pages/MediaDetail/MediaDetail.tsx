@@ -27,6 +27,13 @@ import type { MediaType } from '../../types/Media';
 import React from 'react';
 import { MediaInfo } from './components/MediaInfo';
 import { MainMediaInfo } from './components/MainMediaInfo';
+import { MediaNotesCarousel } from './components/MediaNotesCarousel';
+import {
+  useCreateReview,
+  useGetReviewsByUserMediaEntryId,
+  useUpdateReview,
+} from '../../hooks/useReview';
+import type { ReviewUpdate } from '../../types/Review';
 
 const MediaDetailPage = () => {
   const { mediaType, id } = useParams<{ mediaType: MediaType; id: string }>();
@@ -45,7 +52,7 @@ const MediaDetailPage = () => {
     mediaType: mediaType as MediaType,
   });
 
-  // Get user media entry
+  //user media entry
   const { data: userEntryData } = useGetUserMediaEntryByExternalId(
     mediaId || 0
   );
@@ -54,9 +61,41 @@ const MediaDetailPage = () => {
       ? userEntryData.data
       : null;
 
+  const { data: reviews } = useGetReviewsByUserMediaEntryId(
+    userEntry?.id || ''
+  );
+
   const createEntry = useCreateUserMediaEntry();
   const updateEntry = useUpdateUserMediaEntry();
   const deleteEntry = useDeleteUserMediaEntry();
+
+  const createReview = useCreateReview();
+  const updateReview = useUpdateReview();
+
+  const handleSaveNotes = async (
+    reviewId: string | undefined,
+    update: ReviewUpdate
+  ) => {
+    if (!userEntry?.id) return;
+
+    try {
+      if (reviewId) {
+        // Update existing review
+        await updateReview.mutateAsync({
+          reviewId,
+          update
+        });
+      } else {
+        // Create new review
+        await createReview.mutateAsync({
+          userMediaEntryId: userEntry.id,
+          ...update
+        });
+      }
+    } catch (error) {
+      console.error('Failed to save review:', error);
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -236,7 +275,7 @@ const MediaDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-zinc-900 to-black text-white">
+    <div className="min-h-screen bg-linear-to-b from-zinc-900 to-black text-white mb-30">
       {/* Banner Section */}
       {(media.bannerImage || media.coverImage) && (
         <div className="relative h-96 w-full">
@@ -387,7 +426,19 @@ const MediaDetailPage = () => {
             <MediaInfo media={media} />
           </div>
 
-          <MainMediaInfo media={media} />
+          {/* Right Side - Main Content */}
+          <div className="flex-1 space-y-6">
+            <MainMediaInfo media={media} />
+
+            
+            {(
+              <MediaNotesCarousel
+                mediaNotes={reviews || []}
+                onSave={handleSaveNotes}
+                mediaTitle={media.title}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
