@@ -35,7 +35,7 @@ export interface UserMediaEntryCreate {
   inLibrary?: boolean;
 }
 
-export interface UserMediaEntryDB extends UserMediaEntryCreate {
+export interface UserMediaEntry extends UserMediaEntryCreate {
   id?: string;
   userId: string;
   createdAt: string;
@@ -49,14 +49,8 @@ export interface UserMediaEntryUpdate {
   inLibrary?: boolean;
 }
 
-export interface UserMediaEntryResponse {
-  message: string;
-  data?: UserMediaEntryDB | UserMediaEntryDB[];
-  acknowledged?: boolean;
-}
-
 export interface UserMediaEntryPagination {
-  results: UserMediaEntryDB[];
+  results: UserMediaEntry[];
   page: number;
   perPage: number;
   hasNextPage: boolean;

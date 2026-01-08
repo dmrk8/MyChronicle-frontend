@@ -1,5 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { FaEdit, FaSave, FaStickyNote, FaTrash } from 'react-icons/fa';
+import {
+  FaEdit,
+  FaSave,
+  FaStickyNote,
+  FaTrash,
+  FaCalendarAlt,
+  FaPlayCircle,
+} from 'react-icons/fa';
 import type { Review, ReviewUpdate } from '../../../types/Review';
 
 interface MediaNotesProps {
@@ -27,7 +34,11 @@ export const MediaNotes = ({
 }: MediaNotesProps) => {
   const [notes, setNotes] = useState(review?.review || '');
   const [rating, setRating] = useState(review?.rating || 0);
-  const [isEditing, setIsEditing] = useState(!review); // Auto-edit if new
+  const [reviewProgress, setReviewProgress] = useState(
+    review?.reviewProgress || 0
+  );
+  const [writtenAt, setWrittenAt] = useState(review?.writtenAt || '');
+  const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -36,9 +47,12 @@ export const MediaNotes = ({
 
   useEffect(() => {
     setHasChanges(
-      notes !== (review?.review || '') || rating !== (review?.rating || 0)
+      notes !== (review?.review || '') ||
+        rating !== (review?.rating || 0) ||
+        reviewProgress !== (review?.reviewProgress || 0) ||
+        writtenAt !== (review?.writtenAt || '')
     );
-  }, [notes, rating, review]);
+  }, [notes, rating, reviewProgress, writtenAt, review]);
 
   useEffect(() => {
     if (isEditing && textareaRef.current) {
@@ -55,7 +69,12 @@ export const MediaNotes = ({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await onSave(review?.id, { review: notes, rating });
+      await onSave(review?.id, {
+        review: notes,
+        rating,
+        reviewProgress,
+        writtenAt: writtenAt || undefined,
+      });
       setIsEditing(false);
       setHasChanges(false);
     } finally {
@@ -78,6 +97,8 @@ export const MediaNotes = ({
   const handleCancel = () => {
     setNotes(review?.review || '');
     setRating(review?.rating || 0);
+    setReviewProgress(review?.reviewProgress || 0);
+    setWrittenAt(review?.writtenAt || '');
     setIsEditing(false);
     setHasChanges(false);
   };
@@ -94,6 +115,25 @@ export const MediaNotes = ({
     } else if (e.target.value === '') {
       setRating(0);
     }
+  };
+
+  const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value >= 0) {
+      setReviewProgress(value);
+    } else if (e.target.value === '') {
+      setReviewProgress(0);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
   };
 
   return (
@@ -194,10 +234,11 @@ export const MediaNotes = ({
 
         {/* Rating Section */}
         <div className="px-5 py-4 bg-zinc-800/30 border-b border-zinc-700/30">
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-semibold text-white">My Rating:</span>
-
+          <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-white">
+                My Rating:
+              </span>
               {isEditing ? (
                 <input
                   type="number"
@@ -226,13 +267,58 @@ export const MediaNotes = ({
                 </div>
               )}
             </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-white flex items-center gap-2">
+                <FaPlayCircle className="text-purple-400" size={14} />
+                Progress:
+              </span>
+              {isEditing ? (
+                <input
+                  type="number"
+                  min="0"
+                  value={reviewProgress || ''}
+                  onChange={handleProgressChange}
+                  className="w-24 px-3 py-2 bg-zinc-900 border-2 border-zinc-600 rounded-lg text-white text-base font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  placeholder="0"
+                />
+              ) : (
+                <div className="px-4 py-2 bg-gradient-to-r from-zinc-700 to-zinc-800 rounded-lg shadow-md">
+                  <span className="text-lg font-bold text-purple-400">
+                    {reviewProgress > 0 ? reviewProgress : '—'}
+                  </span>
+                  {reviewProgress > 0 && (
+                    <span className="text-sm font-medium text-zinc-400 ml-1">
+                      ep
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-white flex items-center gap-2">
+                <FaCalendarAlt className="text-blue-400" size={13} />
+                Written:
+              </span>
+              {isEditing ? (
+                <input
+                  type="date"
+                  value={writtenAt || ''}
+                  onChange={(e) => setWrittenAt(e.target.value)}
+                  className="px-3 py-2 bg-zinc-900 border-2 border-zinc-600 rounded-lg text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              ) : (
+                <div className="px-4 py-2 bg-gradient-to-r from-zinc-700 to-zinc-800 rounded-lg shadow-md">
+                  <span className="text-sm font-semibold text-blue-400">
+                    {writtenAt ? formatDate(writtenAt) : '—'}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
-          {isEditing && (
-            <p className="text-xs text-zinc-400 mt-2">
-              Enter a rating between 0.0 and 10.0
-            </p>
-          )}
+          
         </div>
 
         {/* Notes Area */}

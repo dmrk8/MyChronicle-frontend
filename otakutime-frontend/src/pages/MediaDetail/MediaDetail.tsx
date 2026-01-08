@@ -54,13 +54,7 @@ const MediaDetailPage = () => {
   });
 
   //user media entry
-  const { data: userEntryData } = useGetUserMediaEntryByExternalId(
-    mediaId || 0
-  );
-  const userEntry =
-    userEntryData?.data && !Array.isArray(userEntryData.data)
-      ? userEntryData.data
-      : null;
+  const { data: userEntry } = useGetUserMediaEntryByExternalId(mediaId || 0);
 
   const { data: reviews } = useGetReviewsByUserMediaEntryId(
     userEntry?.id || ''
@@ -155,37 +149,14 @@ const MediaDetailPage = () => {
 
   const handleToggleFavorite = async () => {
     if (!mediaId) return;
+    if (!userEntry) return;
 
-    if (userEntry) {
-      // Check if this is the only property set (besides id, userId, etc.)
-      const isFavoriteOnly = userEntry.isFavorite && !userEntry.inLibrary;
-
-      if (isFavoriteOnly) {
-        // Delete the entry entirely if favorite is the only thing set and we're unfavoriting
-        await deleteEntry.mutateAsync({
-          entryId: userEntry.id!,
-          externalId: mediaId,
-        });
-      } else {
-        // Update existing entry - toggle favorite
-        await updateEntry.mutateAsync({
-          entryId: userEntry.id!,
-          update: {
-            isFavorite: !userEntry.isFavorite,
-          },
-          externalId: mediaId,
-        });
+    await updateEntry.mutateAsync({
+      entryId: userEntry.id!,
+      update: {
+        isFavorite: !userEntry.isFavorite,
       }
-    } else {
-      // Create new entry with favorite
-      await createEntry.mutateAsync({
-        externalId: mediaId,
-        externalSource: getReviewMediaSource(mediaType as MediaType),
-        mediaType: getReviewMediaType(mediaType as MediaType),
-        isFavorite: true,
-        inLibrary: false,
-      });
-    }
+    });
   };
 
   const handleStatusChange = async (
@@ -194,17 +165,13 @@ const MediaDetailPage = () => {
     if (!mediaId) return;
 
     if (userEntry) {
-      // Update existing entry
       await updateEntry.mutateAsync({
         entryId: userEntry.id!,
         update: {
           status,
-          inLibrary: true,
         },
-        externalId: mediaId, // Pass externalId
       });
     } else {
-      // Create new entry with status
       await createEntry.mutateAsync({
         externalId: mediaId,
         externalSource: getReviewMediaSource(mediaType as MediaType),
@@ -223,24 +190,10 @@ const MediaDetailPage = () => {
   const handleRemoveFromLibrary = async () => {
     if (!userEntry?.id) return;
 
-    // Check if favorite is set
-    if (userEntry.isFavorite) {
-      // Just remove from library but keep as favorite
-      await updateEntry.mutateAsync({
-        entryId: userEntry.id,
-        update: {
-          inLibrary: false,
-          status: undefined,
-        },
-        externalId: mediaId,
-      });
-    } else {
-      // Delete the entry entirely if not favorited
-      await deleteEntry.mutateAsync({
-        entryId: userEntry.id,
-        externalId: mediaId,
-      });
-    }
+    await deleteEntry.mutateAsync({
+      entryId: userEntry.id,
+      externalId: mediaId,
+    });
     setShowStatusDropdown(false);
   };
 
@@ -329,19 +282,19 @@ const MediaDetailPage = () => {
               {/* Library Button with Dropdown */}
               <div
                 className={`relative transition-all duration-300 ${
-                  userEntry?.inLibrary ? 'flex-1' : 'w-full'
+                  userEntry ? 'flex-1' : 'w-full'
                 }`}
                 ref={dropdownRef}
               >
                 <button
                   className={`w-full px-4 py-2.5 font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 border ${
-                    userEntry?.inLibrary
+                    userEntry
                       ? 'bg-zinc-800/80 hover:bg-zinc-700 border-zinc-700 text-white'
                       : 'bg-zinc-800/50 hover:bg-zinc-800 border-zinc-700/50 hover:border-zinc-600 text-zinc-300'
                   }`}
                   onClick={handleLibraryClick}
                 >
-                  {userEntry?.inLibrary && userEntry.status ? (
+                  {userEntry && userEntry.status ? (
                     <>
                       <span className={statusConfig[userEntry.status].color}>
                         {React.createElement(
@@ -398,7 +351,7 @@ const MediaDetailPage = () => {
                     ))}
 
                     {/* Remove from Library Option */}
-                    {userEntry?.inLibrary && (
+                    {userEntry && (
                       <>
                         <div className="border-t border-zinc-700" />
                         <button

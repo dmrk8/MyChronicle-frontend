@@ -17,9 +17,9 @@ export const useCreateUserMediaEntry = () => {
 
   return useMutation({
     mutationFn: (entry: UserMediaEntryCreate) => createUserMediaEntry(entry),
-    onSuccess: (data, variables) => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ 
-          queryKey: ["userMediaEntry", "external", variables.externalId] 
+          queryKey: ["userMediaEntry", "external", data.externalId] 
         });
     },
   });
@@ -33,13 +33,12 @@ export const useUpdateUserMediaEntry = () => {
       entryId,
       update,
     }: {
-      externalId?: number;
       entryId: string;
       update: UserMediaEntryUpdate;
     }) => updateUserMediaEntry(entryId, update),
-    onSuccess: (data, variables) => {
+    onSuccess: (data) => {
         queryClient.invalidateQueries({ 
-          queryKey: ["userMediaEntry", "external", variables.externalId] 
+          queryKey: ["userMediaEntry", "external", data.externalId] 
         });
     },
   });
@@ -51,8 +50,8 @@ export const useDeleteUserMediaEntry = () => {
   return useMutation({
     mutationFn: ({ entryId }: { entryId: string; externalId?: number }) => 
       deleteUserMediaEntry(entryId),
-    onSuccess: (data, variables) => {
-        queryClient.invalidateQueries({ 
+    onSuccess: (_data, variables) => {
+        queryClient.removeQueries({ 
           queryKey: ["userMediaEntry", "external", variables.externalId] 
         });
     },

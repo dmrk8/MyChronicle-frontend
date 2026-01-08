@@ -24,7 +24,6 @@ export const MediaNotesCarousel = ({
   onNavigate,
 }: MediaNotesCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [showNewReview, setShowNewReview] = useState(false);
 
   const hasReviews = mediaNotes && mediaNotes.length > 0;
   const totalSlots = hasReviews ? mediaNotes.length + 1 : 1; // Reviews + new slot
@@ -54,7 +53,6 @@ export const MediaNotesCarousel = ({
     await onSave(reviewId, update);
     // After saving, navigate to the first review
     setCurrentIndex(0);
-    setShowNewReview(false);
   };
 
   const currentNote =
@@ -145,14 +143,7 @@ export const MediaNotesCarousel = ({
           />
         )}
       </div>
-
-      {/* Navigation Hint */}
-      {hasReviews && (
-        <div className="text-center text-xs text-zinc-600 mt-2">
-          Use ← → arrow keys or dots to navigate between reviews • Last slot is
-          for creating new reviews
-        </div>
-      )}
+      
     </div>
   );
 };
