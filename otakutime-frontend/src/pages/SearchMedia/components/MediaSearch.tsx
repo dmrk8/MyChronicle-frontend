@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
-import MediaGrid from './MediaGrid';
-import type { MediaType } from '../types/Media';
-import { useFeaturedMedia, useMediaSearch } from '../hooks/useMedia';
+import { useInfiniteScroll } from '../../../hooks/useInfiniteScroll';
+import MediaGrid from '../../../components/MediaGrid';
+import type { MediaType } from '../../../types/Media';
+import { useFeaturedMedia, useMediaSearch } from '../../../hooks/useMedia';
 
 const MediaSearch = ({ mediaType }: { mediaType: MediaType }) => {
   const navigate = useNavigate();
