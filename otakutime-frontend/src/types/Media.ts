@@ -41,9 +41,6 @@ export interface MediaFeaturedBulk {
   allTimeManhwa?: MediaMinimal[] | null;
 }
 
-export type MediaType = "anime" | "manga" | "tv" | "movie";
-export type MediaSource = "anilist" | "tmdb"
-
 // Matches backend MediaDetailed (Pydantic) aliases (camelCase)
 export interface MediaDetailed {
   id: number;

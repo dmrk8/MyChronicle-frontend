@@ -2,7 +2,7 @@ import backendApi from './backendApi';
 import type { MediaPagination, MediaFeaturedBulk, MediaDetailed } from '../types/Media';
 
 export interface SearchAnilistParams {
-  mediaType: 'anime' | 'manga';
+  mediaType: AnilistMediaType;
   page?: number;
   perPage?: number;
   search?: string;

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInfiniteScroll } from '../../../hooks/useInfiniteScroll';
 import MediaGrid from '../../../components/MediaGrid';
-import type { MediaType } from '../../../types/Media';
+import { MediaType } from '../../../constants/mediaConstants';
 import { useFeaturedMedia, useMediaSearch } from '../../../hooks/useMedia';
 
 const MediaSearch = ({ mediaType }: { mediaType: MediaType }) => {
@@ -27,23 +27,23 @@ const MediaSearch = ({ mediaType }: { mediaType: MediaType }) => {
   const displaySearchResults = debouncedSearchQuery.trim().length > 0;
 
   const anilistParams =
-    mediaType === 'anime' || mediaType === 'manga'
+    mediaType === MediaType.ANIME || mediaType === MediaType.MANGA
       ? {
           search: debouncedSearchQuery,
-          mediaType: mediaType as 'anime' | 'manga',
+          mediaType: mediaType,
           perPage: 20,
         }
       : undefined;
 
   const tmdbMovieParams =
-    mediaType === 'movie'
+    mediaType === MediaType.MOVIE
       ? {
           search: debouncedSearchQuery,
         }
       : undefined;
 
   const tmdbTvParams =
-    mediaType === 'tv'
+    mediaType === MediaType.TV
       ? {
           search: debouncedSearchQuery,
         }
@@ -55,14 +55,9 @@ const MediaSearch = ({ mediaType }: { mediaType: MediaType }) => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useMediaSearch(
-    mediaType,
-    undefined,
-    anilistParams,
-    tmdbMovieParams,
-    tmdbTvParams,
-    { enabled: displaySearchResults }
-  );
+  } = useMediaSearch(mediaType, anilistParams, tmdbMovieParams, tmdbTvParams, {
+    enabled: displaySearchResults,
+  });
 
   const searchResults = searchData?.pages.flatMap((page) => page.results) ?? [];
 

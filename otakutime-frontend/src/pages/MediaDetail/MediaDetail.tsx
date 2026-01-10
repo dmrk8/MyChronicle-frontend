@@ -15,12 +15,7 @@ import {
   useUpdateUserMediaEntry,
   useDeleteUserMediaEntry,
 } from '../../hooks/useUserMediaEntry';
-import {
-  ReviewStatus,
-  ReviewMediaSource,
-  ReviewMediaType,
-} from '../../types/UserMediaEntry';
-import type { MediaType } from '../../types/Media';
+import { type MediaType } from '../../constants/mediaConstants';
 import { MediaInfo } from './components/MediaInfo';
 import { MainMediaInfo } from './components/MainMediaInfo';
 import { MediaNotesCarousel } from './components/MediaNotesCarousel';
@@ -31,6 +26,7 @@ import {
   useUpdateReview,
 } from '../../hooks/useReview';
 import type { ReviewUpdate } from '../../types/Review';
+import { UserMediaEntryStatus } from '../../types/UserMediaEntry';
 
 const MediaDetailPage = () => {
   const { mediaType, id } = useParams<{ mediaType: MediaType; id: string }>();
@@ -126,23 +122,6 @@ const MediaDetailPage = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Map media type to ReviewMediaType
-  const getReviewMediaType = (type: MediaType): ReviewMediaType => {
-    const mapping: Record<MediaType, ReviewMediaType> = {
-      anime: ReviewMediaType.ANIME,
-      manga: ReviewMediaType.MANGA,
-      movie: ReviewMediaType.MOVIE,
-      tv: ReviewMediaType.TV,
-    };
-    return mapping[type];
-  };
-
-  // Map media type to ReviewMediaSource
-  const getReviewMediaSource = (type: MediaType): ReviewMediaSource => {
-    if (type === 'anime' || type === 'manga') return ReviewMediaSource.ANILIST;
-    return ReviewMediaSource.TMDB;
-  };
-
   const handleToggleFavorite = async () => {
     if (!mediaId) return;
     if (!userEntry) return;
@@ -155,9 +134,7 @@ const MediaDetailPage = () => {
     });
   };
 
-  const handleStatusChange = async (
-    status: (typeof ReviewStatus)[keyof typeof ReviewStatus]
-  ) => {
+  const handleStatusChange = async (status: UserMediaEntryStatus) => {
     if (!mediaId) return;
 
     if (userEntry) {
@@ -170,8 +147,7 @@ const MediaDetailPage = () => {
     } else {
       await createEntry.mutateAsync({
         externalId: mediaId,
-        externalSource: getReviewMediaSource(mediaType as MediaType),
-        mediaType: getReviewMediaType(mediaType as MediaType),
+        mediaType: media.mediaType,
         status,
         inLibrary: true,
       });
@@ -199,23 +175,23 @@ const MediaDetailPage = () => {
   };
 
   const statusConfig = {
-    [ReviewStatus.PLANNING]: {
+    [UserMediaEntryStatus.PLANNING]: {
       label: 'Planning',
       color: 'text-yellow-400',
     },
-    [ReviewStatus.CURRENT]: {
+    [UserMediaEntryStatus.CURRENT]: {
       label: 'Current',
       color: 'text-blue-400',
     },
-    [ReviewStatus.ON_HOLD]: {
+    [UserMediaEntryStatus.ON_HOLD]: {
       label: 'On Hold',
       color: 'text-orange-400',
     },
-    [ReviewStatus.COMPLETED]: {
+    [UserMediaEntryStatus.COMPLETED]: {
       label: 'Completed',
       color: 'text-green-400',
     },
-    [ReviewStatus.DROPPED]: {
+    [UserMediaEntryStatus.DROPPED]: {
       label: 'Dropped',
       color: 'text-red-400',
     },
@@ -322,9 +298,7 @@ const MediaDetailPage = () => {
                       <button
                         key={status}
                         onClick={() =>
-                          handleStatusChange(
-                            status as (typeof ReviewStatus)[keyof typeof ReviewStatus]
-                          )
+                          handleStatusChange(status as UserMediaEntryStatus)
                         }
                         className={`w-full px-4 py-2.5 text-left hover:bg-zinc-700 transition-colors flex items-center gap-3 ${
                           userEntry?.status === status ? 'bg-zinc-700/50' : ''
