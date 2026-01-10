@@ -5,10 +5,7 @@ import {
   FaRegHeart,
   FaChevronDown,
   FaPlus,
-  FaClock,
-  FaPlay,
   FaCheckCircle,
-  FaTimesCircle,
   FaTimes,
 } from 'react-icons/fa';
 import { useMediaDetail } from '../../hooks/useMedia';
@@ -24,7 +21,6 @@ import {
   ReviewMediaType,
 } from '../../types/UserMediaEntry';
 import type { MediaType } from '../../types/Media';
-import React from 'react';
 import { MediaInfo } from './components/MediaInfo';
 import { MainMediaInfo } from './components/MainMediaInfo';
 import { MediaNotesCarousel } from './components/MediaNotesCarousel';
@@ -206,22 +202,22 @@ const MediaDetailPage = () => {
     [ReviewStatus.PLANNING]: {
       label: 'Planning',
       color: 'text-yellow-400',
-      icon: FaClock,
     },
     [ReviewStatus.CURRENT]: {
       label: 'Current',
       color: 'text-blue-400',
-      icon: FaPlay,
+    },
+    [ReviewStatus.ON_HOLD]: {
+      label: 'On Hold',
+      color: 'text-orange-400',
     },
     [ReviewStatus.COMPLETED]: {
       label: 'Completed',
       color: 'text-green-400',
-      icon: FaCheckCircle,
     },
     [ReviewStatus.DROPPED]: {
       label: 'Dropped',
       color: 'text-red-400',
-      icon: FaTimesCircle,
     },
   };
 
@@ -302,12 +298,6 @@ const MediaDetailPage = () => {
                   {userEntry && userEntry.status ? (
                     <>
                       <span className={statusConfig[userEntry.status].color}>
-                        {React.createElement(
-                          statusConfig[userEntry.status].icon,
-                          { size: 14 }
-                        )}
-                      </span>
-                      <span className="text-sm">
                         {statusConfig[userEntry.status].label}
                       </span>
                     </>
@@ -340,12 +330,7 @@ const MediaDetailPage = () => {
                           userEntry?.status === status ? 'bg-zinc-700/50' : ''
                         }`}
                       >
-                        <span className={config.color}>
-                          {React.createElement(config.icon, { size: 14 })}
-                        </span>
-                        <span className="text-white text-sm font-medium">
-                          {config.label}
-                        </span>
+                        <span className={config.color}>{config.label}</span>
                         {userEntry?.status === status && (
                           <FaCheckCircle
                             size={12}
@@ -439,9 +424,9 @@ const MediaDetailPage = () => {
             <div className="p-6 space-y-4">
               <p className="text-zinc-300 text-sm">
                 Are you sure you want to remove{' '}
-                <span className="font-semibold text-white">{media?.title}</span> from
-                your library? This will also delete all associated reviews and
-                progress data. This action cannot be undone.
+                <span className="font-semibold text-white">{media?.title}</span>{' '}
+                from your library? This will also delete all associated reviews
+                and progress data. This action cannot be undone.
               </p>
               <div className="flex gap-3 pt-2">
                 <button

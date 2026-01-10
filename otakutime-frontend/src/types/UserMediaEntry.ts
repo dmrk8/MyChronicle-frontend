@@ -1,26 +1,27 @@
 export const ReviewMediaType = {
-  ANIME: 1,
-  MANGA: 2,
-  GAME: 3,
-  MOVIE: 4,
-  TV: 5,
+  ANIME: "anime",
+  MANGA: "manga",
+  GAME: "game",
+  MOVIE: "movie",
+  TV: "tv",
 } as const;
 
 export type ReviewMediaType = typeof ReviewMediaType[keyof typeof ReviewMediaType];
 
 export const ReviewMediaSource = {
-  ANILIST: 1,
-  TMDB: 2,
-  IGDB: 3,
+  ANILIST: "anilist",
+  TMDB: "tmdb",
+  IGDB: "igdb",
 } as const;
 
 export type ReviewMediaSource = typeof ReviewMediaSource[keyof typeof ReviewMediaSource];
 
 export const ReviewStatus = {
-  PLANNING: "planning",
-  CURRENT: "current",
-  COMPLETED: "completed",
-  DROPPED: "dropped",
+  PLANNING: "planning",  
+  CURRENT: "current",    
+  ON_HOLD: "on_hold",   
+  COMPLETED: "completed", 
+  DROPPED: "dropped",    
 } as const;
 
 export type ReviewStatus = typeof ReviewStatus[keyof typeof ReviewStatus];
