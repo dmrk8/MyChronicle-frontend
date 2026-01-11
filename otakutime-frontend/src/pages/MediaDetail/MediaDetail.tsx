@@ -147,7 +147,7 @@ const MediaDetailPage = () => {
     } else {
       await createEntry.mutateAsync({
         externalId: mediaId,
-        mediaType: media.mediaType,
+        ...media,
         status,
         inLibrary: true,
       });
