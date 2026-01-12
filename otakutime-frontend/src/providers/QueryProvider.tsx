@@ -13,10 +13,12 @@ const queryClient = new QueryClient({
 });
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
+  const isDev = import.meta.env.DEV;
+
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      <ReactQueryDevtools initialIsOpen={false} position="bottom" />
+      {isDev && <ReactQueryDevtools initialIsOpen={false} position="bottom" />}
     </QueryClientProvider>
   );
 }
