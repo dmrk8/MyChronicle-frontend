@@ -1,36 +1,22 @@
-export const ReviewMediaType = {
-  ANIME: "anime",
-  MANGA: "manga",
-  GAME: "game",
-  MOVIE: "movie",
-  TV: "tv",
+import { MediaType, MediaExternalSource } from '../constants/mediaConstants';
+
+export const UserMediaEntryStatus = {
+  PLANNING: "PLANNING",  
+  CURRENT: "CURRENT",    
+  ON_HOLD: "ON_HOLD",   
+  COMPLETED: "COMPLETED", 
+  DROPPED: "DROPPED",    
 } as const;
 
-export type ReviewMediaType = typeof ReviewMediaType[keyof typeof ReviewMediaType];
-
-export const ReviewMediaSource = {
-  ANILIST: "anilist",
-  TMDB: "tmdb",
-  IGDB: "igdb",
-} as const;
-
-export type ReviewMediaSource = typeof ReviewMediaSource[keyof typeof ReviewMediaSource];
-
-export const ReviewStatus = {
-  PLANNING: "planning",  
-  CURRENT: "current",    
-  ON_HOLD: "on_hold",   
-  COMPLETED: "completed", 
-  DROPPED: "dropped",    
-} as const;
-
-export type ReviewStatus = typeof ReviewStatus[keyof typeof ReviewStatus];
+export type UserMediaEntryStatus = typeof UserMediaEntryStatus[keyof typeof UserMediaEntryStatus];
 
 export interface UserMediaEntryCreate {
   externalId: number;
-  externalSource: ReviewMediaSource;
-  mediaType: ReviewMediaType;
-  status?: ReviewStatus;
+  externalSource: MediaExternalSource;
+  mediaType: MediaType;
+  title: string;
+  coverImage?: string;
+  status?: UserMediaEntryStatus;
   repeatCount?: number;
   isFavorite?: boolean;
   inLibrary?: boolean;
@@ -44,7 +30,7 @@ export interface UserMediaEntry extends UserMediaEntryCreate {
 }
 
 export interface UserMediaEntryUpdate {
-  status?: ReviewStatus;
+  status?: UserMediaEntryStatus;
   repeatCount?: number;
   isFavorite?: boolean;
   inLibrary?: boolean;
@@ -57,3 +43,25 @@ export interface UserMediaEntryPagination {
   hasNextPage: boolean;
   total: number;
 }
+
+export const UserMediaEntrySortFields = {
+  CREATED_AT: "created_at",
+  UPDATED_AT: "updated_at",
+  TITLE: "title",
+  //RATING: "rating",
+} as const;
+
+export type UserMediaEntrySortFields = typeof UserMediaEntrySortFields[keyof typeof UserMediaEntrySortFields];
+
+export const UserMediaEntrySortOptions = {
+  CREATED_AT_ASC: 1,
+  CREATED_AT_DESC: -1,
+  UPDATED_AT_ASC: 1,
+  UPDATED_AT_DESC: -1,
+  TITLE_ASC: 1,
+  TITLE_DESC: -1,
+  //RATING_ASC: 1,
+  //RATING_DESC: -1,
+} as const;
+
+export type UserMediaEntrySortOptions = typeof UserMediaEntrySortOptions[keyof typeof UserMediaEntrySortOptions];

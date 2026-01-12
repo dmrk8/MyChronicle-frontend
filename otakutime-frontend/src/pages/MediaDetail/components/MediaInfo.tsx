@@ -1,5 +1,6 @@
 import React from 'react';
 import type { MediaDetailed } from '../../../types/Media';
+import { MediaType } from '../../../constants/mediaConstants';
 
 interface InfoItemProps {
   label: string;
@@ -26,9 +27,9 @@ interface MediaInfoProps {
 
 export const MediaInfo = ({ media }: MediaInfoProps) => {
   const mediaType = media.mediaType;
-  const isAnimeOrManga = mediaType === 'ANIME' || mediaType === 'manga';
-  const isMovie = mediaType === 'movie';
-  const isTv = mediaType === 'tv';
+  const isAnimeOrManga = mediaType === MediaType.ANIME || mediaType === MediaType.MANGA;
+  const isMovie = mediaType === MediaType.MOVIE;
+  const isTv = mediaType === MediaType.TV;
 
   const formatCurrency = (amount?: number | null) => {
     if (!amount) return null;

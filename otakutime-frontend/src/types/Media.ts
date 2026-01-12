@@ -1,6 +1,6 @@
 export interface MediaMinimal {
   id: number;
-  mediaSource: string;
+  externalSource: string;
   mediaType: string;
 
   // shared
@@ -9,6 +9,7 @@ export interface MediaMinimal {
   genres?: string[];
   status?: string;
   coverImage?: string;
+  bannerImage?: string;
   averageScore?: number;
 
   // anime
@@ -44,7 +45,7 @@ export interface MediaFeaturedBulk {
 // Matches backend MediaDetailed (Pydantic) aliases (camelCase)
 export interface MediaDetailed {
   id: number;
-  mediaSource: string;
+  externalSource: string;
   mediaType: string;
 
   // shared core info

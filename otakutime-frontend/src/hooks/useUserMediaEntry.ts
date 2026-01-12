@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createUserMediaEntry,
   updateUserMediaEntry,
@@ -72,8 +72,13 @@ export const useGetUserMediaEntryByExternalId = (externalId: number) => {
 export const useGetUserMediaEntriesPaginated = (
   params: GetUserMediaEntriesParams
 ) => {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ["userMediaEntries", "paginated", params],
-    queryFn: () => getUserMediaEntriesPaginated(params),
+    queryFn: ({ pageParam = 1 }) => 
+      getUserMediaEntriesPaginated({ ...params, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+       return lastPage.hasNextPage ? lastPage.page + 1 : undefined;
+    },
   });
 };
