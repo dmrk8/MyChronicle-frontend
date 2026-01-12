@@ -40,7 +40,7 @@ const Footer = () => {
                 <span className="text-2xl">⏱️</span>
               </div>
               <span className="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-600">
-                OtakuTime
+                MyChronicle
               </span>
             </div>
             <p className="text-zinc-400 text-sm mb-4 max-w-sm">
@@ -112,7 +112,7 @@ const Footer = () => {
         <div className="border-t border-zinc-800 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-zinc-500 text-sm text-center md:text-left">
-              © {currentYear} OtakuTime.
+              © {currentYear} MyChronicle.
             </p>
             {/*
             <div className="flex items-center gap-6">

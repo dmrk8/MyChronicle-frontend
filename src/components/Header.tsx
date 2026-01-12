@@ -30,18 +30,12 @@ const Header = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/home" className="flex items-center gap-3 group">
-            <div className="relative">
-              <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-md opacity-75 group-hover:opacity-100 transition-opacity" />
-              <div className="relative w-12 h-12 bg-linear-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
-                <span className="text-2xl font-black text-white">OT</span>
-              </div>
-            </div>
             <div className="flex flex-col">
               <span className="text-2xl font-black tracking-tight">
                 <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-600">
-                  Otaku
+                  My
                 </span>
-                <span className="text-white">Time</span>
+                <span className="text-white">Chronicle</span>
               </span>
               <span className="text-[10px] font-medium text-zinc-500 tracking-widest uppercase -mt-1">
                 Your Media Hub

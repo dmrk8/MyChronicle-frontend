@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCreateUser } from '../hooks/useUser';
 import { useAuth } from '../hooks/useAuth';
+import { AxiosError } from 'axios';
 
 const SignUpPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -103,16 +104,11 @@ const SignUpPage: React.FC = () => {
       // Auto-login after successful registration
       await login({ username, password });
       navigate('/home');
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.detail;
-
-      // Handle specific backend errors
-      if (typeof errorMessage === 'string') {
-        if (errorMessage.toLowerCase().includes('username')) {
-          setFieldErrors((prev) => ({ ...prev, username: errorMessage }));
-        } else {
-          setError(errorMessage);
-        }
+    } catch (err) {
+      if (err instanceof AxiosError && err.response) {
+        setError(
+          err.response?.data?.detail || 'Sign up failed. Please try again.'
+        );
       } else {
         setError('Sign up failed. Please try again.');
       }
@@ -126,7 +122,7 @@ const SignUpPage: React.FC = () => {
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-600 mb-2">
-            Join OtakuTime
+            Join MyChronicle
           </h1>
           <p className="text-zinc-400 text-sm">
             Create your account and start tracking

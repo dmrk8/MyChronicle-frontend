@@ -45,7 +45,7 @@ const LoginPage: React.FC = () => {
         {/* Logo/Brand */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-600 mb-2">
-            OtakuTime
+            MyChronicle
           </h1>
           <p className="text-zinc-400 text-sm">Your anime & media companion</p>
         </div>
