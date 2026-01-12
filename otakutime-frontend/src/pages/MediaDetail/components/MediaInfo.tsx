@@ -1,4 +1,3 @@
-import React from 'react';
 import type { MediaDetailed } from '../../../types/Media';
 import { MediaType } from '../../../constants/mediaConstants';
 

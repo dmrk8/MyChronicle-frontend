@@ -82,18 +82,18 @@ const MediaSearch = ({ mediaType }: { mediaType: MediaType }) => {
   const popularManhwaTitle = 'Popular Manhwas';
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-black to-zinc-900">
+    <div className="min-h-screen bg-linear-to-b from-zinc-900 via-black to-zinc-900">
       {/* Hero Section with Search */}
       <div className="relative overflow-hidden">
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-600/10 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-b from-blue-600/10 via-transparent to-transparent" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
           {/* Page Title */}
           <div className="text-center mb-10">
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
               Discover{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-600">
                 {mediaType.charAt(0).toUpperCase() + mediaType.slice(1)}
               </span>
             </h1>
@@ -105,7 +105,7 @@ const MediaSearch = ({ mediaType }: { mediaType: MediaType }) => {
           {/* Search Bar */}
           <div className="max-w-3xl mx-auto">
             <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+              <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
               <div className="relative flex items-center">
                 <span className="absolute left-5 text-zinc-400 text-xl">
                   🔍
@@ -202,7 +202,6 @@ const MediaSearch = ({ mediaType }: { mediaType: MediaType }) => {
                 {/* End of Results */}
                 {!hasNextPage && searchResults.length > 0 && (
                   <div className="text-center py-12 border-t border-zinc-800 mt-8">
-                    <div className="text-4xl mb-3">✨</div>
                     <p className="text-lg font-medium text-zinc-300">
                       You've reached the end!
                     </p>

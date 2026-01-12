@@ -64,7 +64,7 @@ export const SlidingMediaRow = ({
           {duplicatedList.map((media, index) => (
             <div
               key={`${media.id}-${index}`}
-              className="flex-shrink-0 w-[150px] md:w-[200px] lg:w-[240px]"
+              className="shrink-0 w-37.5 md:w-50 lg:w-60"
               onMouseEnter={() => setHoveredId(media.id)}
               onMouseLeave={() => setHoveredId(null)}
             >
@@ -77,7 +77,7 @@ export const SlidingMediaRow = ({
                 }`}
               >
                 {/* Poster */}
-                <div className="relative aspect-[2/3] rounded-md overflow-hidden bg-zinc-900 shadow-lg">
+                <div className="relative aspect-2/3 rounded-md overflow-hidden bg-zinc-900 shadow-lg">
                   {media.coverImage ? (
                     <img
                       src={media.coverImage}
@@ -109,7 +109,7 @@ export const SlidingMediaRow = ({
 
                   {/* Hover Overlay */}
                   {hoveredId === media.id && (
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent flex items-end p-4">
+                    <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent flex items-end p-4">
                       <div className="w-full">
                         <h3 className="text-white font-semibold text-sm mb-2 line-clamp-2">
                           {media.title}

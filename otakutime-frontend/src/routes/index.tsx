@@ -2,13 +2,14 @@ import { Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import LoginPage from '../pages/Login';
 import SignUpPage from '../pages/SignUp';
-import AnimeSearch from '../pages/AnimeSearch';
-import MangaSearch from '../pages/MangaSearch';
-import MovieSearch from '../pages/MovieSearch';
-import TvSearch from '../pages/TvSearch';
-import MediaDetailPage from '../pages/MediaDetail';
+import AnimeSearch from '../pages/SearchMedia/AnimeSearch';
+import MangaSearch from '../pages/SearchMedia/MangaSearch';
+import TvSearch from '../pages/SearchMedia/TvSearch';
+import MovieSearch from '../pages/SearchMedia/MovieSearch';
+import MediaDetailPage from '../pages/MediaDetail/MediaDetail';
 import ProfilePage from '../pages/Profile';
 import HomePage from '../pages/Home';
+import LibraryPage from '../pages/Library';
 
 export const AppRoutes = () => {
   return (
@@ -27,6 +28,15 @@ export const AppRoutes = () => {
       <Route path="/:mediaType/:id" element={<MediaDetailPage />} />
 
       <Route
+        path="/library"
+        element={
+          <ProtectedRoute>
+            <LibraryPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/profile"
         element={
           <ProtectedRoute>
@@ -34,7 +44,6 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
     </Routes>
   );
 };

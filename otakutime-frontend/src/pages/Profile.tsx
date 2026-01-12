@@ -7,7 +7,7 @@ const ProfilePage: React.FC = () => {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-black to-zinc-900 py-12">
+    <div className="min-h-screen bg-linear-to-b from-zinc-900 via-black to-zinc-900 py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -22,7 +22,7 @@ const ProfilePage: React.FC = () => {
         {/* User Info Card */}
         <div className="bg-zinc-900/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-zinc-800 p-8 mb-8">
           <div className="flex items-center gap-4">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+            <div className="w-20 h-20 bg-linear-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-3xl">
                 {user?.username.charAt(0).toUpperCase()}
               </span>

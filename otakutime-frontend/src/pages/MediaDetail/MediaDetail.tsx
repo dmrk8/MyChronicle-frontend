@@ -15,7 +15,10 @@ import {
   useUpdateUserMediaEntry,
   useDeleteUserMediaEntry,
 } from '../../hooks/useUserMediaEntry';
-import { type MediaType } from '../../constants/mediaConstants';
+import {
+  MediaExternalSource,
+  type MediaType,
+} from '../../constants/mediaConstants';
 import { MediaInfo } from './components/MediaInfo';
 import { MainMediaInfo } from './components/MainMediaInfo';
 import { MediaNotesCarousel } from './components/MediaNotesCarousel';
@@ -135,7 +138,7 @@ const MediaDetailPage = () => {
   };
 
   const handleStatusChange = async (status: UserMediaEntryStatus) => {
-    if (!mediaId) return;
+    if (!mediaId || !media) return;
 
     if (userEntry) {
       await updateEntry.mutateAsync({
@@ -147,7 +150,9 @@ const MediaDetailPage = () => {
     } else {
       await createEntry.mutateAsync({
         externalId: mediaId,
-        ...media,
+        mediaType: media?.mediaType as MediaType,
+        title: media?.title,
+        externalSource: media?.externalSource as MediaExternalSource,
         status,
         inLibrary: true,
       });
@@ -388,8 +393,8 @@ const MediaDetailPage = () => {
 
       {showRemoveConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-2xl border-2 border-zinc-700 shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="bg-gradient-to-r from-red-500/20 to-orange-500/20 border-b border-red-500/30 px-6 py-4">
+          <div className="bg-linear-to-br from-zinc-800 to-zinc-900 rounded-2xl border-2 border-zinc-700 shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-linear-to-r from-red-500/20 to-orange-500/20 border-b border-red-500/30 px-6 py-4">
               <h3 className="text-xl font-bold text-white flex items-center gap-3">
                 <FaTimes className="text-red-400" />
                 Remove from Library?
@@ -406,7 +411,7 @@ const MediaDetailPage = () => {
                 <button
                   onClick={handleRemoveFromLibrary}
                   disabled={deleteEntry.isPending}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-zinc-700 disabled:to-zinc-700 text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-red-500/20 transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3 bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-zinc-700 disabled:to-zinc-700 text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-red-500/20 transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed"
                 >
                   {deleteEntry.isPending ? 'Removing...' : 'Yes, Remove'}
                 </button>

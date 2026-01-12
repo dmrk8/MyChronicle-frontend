@@ -17,15 +17,6 @@ export interface SearchAnilistParams {
   countryOfOrigin?: string;
 }
 
-interface GetFeaturedParams {
-  page?: number;
-  perPage?: number;
-  season?: string;
-  seasonYear?: number;
-  sort?: string;
-  mediaType?: string;
-}
-
 export type AnilistMediaType = "ANIME" | "MANGA"
 
 export const getFeaturedAnilistBulk = async (mediaType: AnilistMediaType): Promise<MediaFeaturedBulk> => {

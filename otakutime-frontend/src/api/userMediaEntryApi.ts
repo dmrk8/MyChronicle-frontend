@@ -4,6 +4,8 @@ import type {
     UserMediaEntryUpdate,
     UserMediaEntryPagination,
     UserMediaEntry,
+    UserMediaEntrySortFields,
+    UserMediaEntrySortOptions,
 } from "../types/UserMediaEntry";
 
 export const createUserMediaEntry = async (
@@ -52,8 +54,8 @@ export const getUserMediaEntryByExternalId = async (
 export interface GetUserMediaEntriesParams {
   page?: number;
   perPage?: number;
-  sortBy?: string;
-  sortOrder?: number;
+  sortBy?: UserMediaEntrySortFields;
+  sortOrder?: UserMediaEntrySortOptions;
   inLibrary?: boolean;
   isFavorite?: boolean;
   status?: string;

@@ -141,8 +141,8 @@ export const MediaNotes = ({
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-2xl border-2 border-zinc-700 shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="bg-gradient-to-r from-red-500/20 to-orange-500/20 border-b border-red-500/30 px-6 py-4">
+          <div className="bg-linear-to-br from-zinc-800 to-zinc-900 rounded-2xl border-2 border-zinc-700 shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-linear-to-r from-red-500/20 to-orange-500/20 border-b border-red-500/30 px-6 py-4">
               <h3 className="text-xl font-bold text-white flex items-center gap-3">
                 <FaTrash className="text-red-400" />
                 Delete Review?
@@ -157,7 +157,7 @@ export const MediaNotes = ({
                 <button
                   onClick={handleDelete}
                   disabled={isDeleting}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-zinc-700 disabled:to-zinc-700 text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-red-500/20 transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3 bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-zinc-700 disabled:to-zinc-700 text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-red-500/20 transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed"
                 >
                   {isDeleting ? 'Deleting...' : 'Yes, Delete'}
                 </button>
@@ -174,9 +174,9 @@ export const MediaNotes = ({
         </div>
       )}
 
-      <div className="bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 rounded-2xl border-2 border-zinc-700/50 shadow-2xl backdrop-blur-sm overflow-hidden transition-all duration-300 hover:shadow-blue-500/10 hover:border-zinc-600/60">
+      <div className="bg-linear-to-br from-zinc-800/80 to-zinc-900/80 rounded-2xl border-2 border-zinc-700/50 shadow-2xl backdrop-blur-sm overflow-hidden transition-all duration-300 hover:shadow-blue-500/10 hover:border-zinc-600/60">
         {/* Header */}
-        <div className="bg-gradient-to-r from-zinc-800/90 to-zinc-800/70 px-6 py-4 border-b-2 border-zinc-700/50 flex items-center justify-between">
+        <div className="bg-linear-to-r from-zinc-800/90 to-zinc-800/70 px-6 py-4 border-b-2 border-zinc-700/50 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-zinc-700 rounded-lg">
               <FaStickyNote className="text-blue-400" size={18} />
@@ -195,7 +195,7 @@ export const MediaNotes = ({
             <div className="flex gap-2">
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
               >
                 <FaEdit size={13} />
                 Edit
@@ -216,7 +216,7 @@ export const MediaNotes = ({
               <button
                 onClick={handleSave}
                 disabled={isSaving || !hasChanges}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-zinc-700 disabled:to-zinc-700 text-white rounded-lg transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg disabled:cursor-not-allowed disabled:hover:shadow-md transform hover:-translate-y-0.5 disabled:transform-none"
+                className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-zinc-700 disabled:to-zinc-700 text-white rounded-lg transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg disabled:cursor-not-allowed disabled:hover:shadow-md transform hover:-translate-y-0.5 disabled:transform-none"
               >
                 <FaSave size={13} />
                 {isSaving ? 'Saving...' : 'Save'}
@@ -252,7 +252,7 @@ export const MediaNotes = ({
                 />
               ) : (
                 <div
-                  className={`px-4 py-2 bg-gradient-to-r from-zinc-700 to-zinc-800 rounded-lg shadow-md ${
+                  className={`px-4 py-2 bg-linear-to-r from-zinc-700 to-zinc-800 rounded-lg shadow-md ${
                     rating > 0 ? '' : 'opacity-50'
                   }`}
                 >
@@ -283,7 +283,7 @@ export const MediaNotes = ({
                   placeholder="0"
                 />
               ) : (
-                <div className="px-4 py-2 bg-gradient-to-r from-zinc-700 to-zinc-800 rounded-lg shadow-md">
+                <div className="px-4 py-2 bg-linear-to-r from-zinc-700 to-zinc-800 rounded-lg shadow-md">
                   <span className="text-lg font-bold text-purple-400">
                     {reviewProgress > 0 ? reviewProgress : '—'}
                   </span>
@@ -309,7 +309,7 @@ export const MediaNotes = ({
                   className="px-3 py-2 bg-zinc-900 border-2 border-zinc-600 rounded-lg text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ) : (
-                <div className="px-4 py-2 bg-gradient-to-r from-zinc-700 to-zinc-800 rounded-lg shadow-md">
+                <div className="px-4 py-2 bg-linear-to-r from-zinc-700 to-zinc-800 rounded-lg shadow-md">
                   <span className="text-sm font-semibold text-blue-400">
                     {writtenAt ? formatDate(writtenAt) : '—'}
                   </span>
@@ -329,12 +329,12 @@ export const MediaNotes = ({
               value={notes}
               onChange={handleTextareaChange}
               placeholder={`Share your personal thoughts about ${mediaTitle}...\n\nWhat resonated with you? Any memorable moments?\nWould you recommend it to others?`}
-              className="w-full min-h-[240px] px-4 py-3 bg-zinc-900/60 border-2 border-zinc-700 rounded-xl text-gray-200 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all font-sans text-sm leading-relaxed shadow-inner"
+              className="w-full min-h-60 px-4 py-3 bg-zinc-900/60 border-2 border-zinc-700 rounded-xl text-gray-200 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all font-sans text-sm leading-relaxed shadow-inner"
               maxLength={5000}
             />
           ) : (
             <div
-              className="min-h-[240px] px-4 py-3 text-gray-200 whitespace-pre-wrap font-sans text-sm leading-relaxed cursor-text hover:bg-zinc-800/30 rounded-xl transition-colors"
+              className="min-h-60 px-4 py-3 text-gray-200 whitespace-pre-wrap font-sans text-sm leading-relaxed cursor-text hover:bg-zinc-800/30 rounded-xl transition-colors"
               onClick={() => setIsEditing(true)}
             >
               {notes || (

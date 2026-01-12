@@ -76,9 +76,9 @@ const HomePage = () => {
               style={{ objectPosition: '50% 35%' }}
             />
             {/* Enhanced multi-layer gradients for better visibility */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/30" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black via-black/95 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black via-black/70 to-black/30" />
+            <div className="absolute inset-0 bg-linear-to-r from-black/80 via-black/40 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-48 bg-linear-to-t from-black via-black/95 to-transparent" />
           </div>
 
           {/* Hero Content */}
@@ -168,7 +168,7 @@ const HomePage = () => {
           </div>
 
           {/* Enhanced fade to black at bottom */}
-          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none" />
+          <div className="absolute bottom-0 left-0 right-0 h-40 bg-linear-to-t from-black via-black/80 to-transparent pointer-events-none" />
         </div>
       )}
 
@@ -207,7 +207,7 @@ const HomePage = () => {
               {/* Promotional Section - Netflix Style */}
               <div className="relative mt-20 mb-12 rounded-2xl overflow-hidden">
                 {/* Background with gradient */}
-                <div className="relative bg-gradient-to-br from-red-600 via-purple-600 to-blue-600 p-12 md:p-16">
+                <div className="relative bg-linear-to-br from-red-600 via-purple-600 to-blue-600 p-12 md:p-16">
                   <div className="absolute inset-0 bg-black/20" />
 
                   <div className="relative z-10 max-w-4xl mx-auto text-center">
