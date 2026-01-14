@@ -151,7 +151,8 @@ const MediaDetailPage = () => {
       await createEntry.mutateAsync({
         externalId: mediaId,
         mediaType: media?.mediaType as MediaType,
-        title: media?.title,
+        title: media?.title ?? undefined,
+        coverImage: media.coverImage ?? undefined,
         externalSource: media?.externalSource as MediaExternalSource,
         status,
         inLibrary: true,
