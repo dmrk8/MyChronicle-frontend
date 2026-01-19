@@ -36,9 +36,7 @@ const Footer = () => {
               onClick={() => navigate('/')}
               className="flex items-center gap-2 mb-4 cursor-pointer"
             >
-              <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-2xl">⏱️</span>
-              </div>
+              
               <span className="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-600">
                 MyChronicle
               </span>

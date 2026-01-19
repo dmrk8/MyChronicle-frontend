@@ -21,7 +21,14 @@ import { MediaNotesCarousel } from './components/MediaNotesCarousel';
 import { UserMediaEntryStatus } from '../../types/UserMediaEntry';
 import { useAnimeDetail, useMangaDetail } from '../../hooks/useAnilist';
 import { useTmdbMovieDetail, useTmdbTvDetail } from '../../hooks/useTmdb';
-import type { AnimeDetailed, MangaDetailed, MovieDetailed, TVDetailed } from '../../types/Media';
+import type {
+  AnimeDetailed,
+  MangaDetailed,
+  MovieDetailed,
+  TVDetailed,
+} from '../../types/Media';
+import { MediaTags } from './components/MediaTags';
+import { MediaAlternativeTitles } from './components/MediaAlternativeTitles';
 
 const MediaDetailPage = () => {
   const { mediaType, id } = useParams<{ mediaType: MediaType; id: string }>();
@@ -344,6 +351,40 @@ const MediaDetailPage = () => {
                 mediaType === MediaType.MOVIE
                   ? (media as MovieDetailed)
                   : undefined
+              }
+              tv={
+                mediaType === MediaType.TV ? (media as TVDetailed) : undefined
+              }
+            />
+            <MediaTags
+              anime={
+                mediaType === MediaType.ANIME
+                  ? (media as AnimeDetailed)
+                  : undefined
+              }
+              manga={
+                mediaType === MediaType.MANGA
+                  ? (media as MangaDetailed)
+                  : undefined
+              }
+              movie={
+                mediaType === MediaType.MOVIE
+                  ? (media as MovieDetailed)
+                  : undefined
+              }
+              tv={
+                mediaType === MediaType.TV ? (media as TVDetailed) : undefined
+              }
+            />
+            <MediaAlternativeTitles
+              anime={
+                mediaType === MediaType.ANIME ? (media as AnimeDetailed) : undefined
+              }
+              manga={
+                mediaType === MediaType.MANGA ? (media as MangaDetailed) : undefined
+              }
+              movie={
+                mediaType === MediaType.MOVIE ? (media as MovieDetailed) : undefined
               }
               tv={
                 mediaType === MediaType.TV ? (media as TVDetailed) : undefined
