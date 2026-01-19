@@ -8,28 +8,20 @@ import {
   FaCheckCircle,
   FaTimes,
 } from 'react-icons/fa';
-import { useMediaDetail } from '../../hooks/useMedia';
 import {
   useGetUserMediaEntryByExternalId,
   useCreateUserMediaEntry,
   useUpdateUserMediaEntry,
   useDeleteUserMediaEntry,
 } from '../../hooks/useUserMediaEntry';
-import {
-  MediaExternalSource,
-  type MediaType,
-} from '../../constants/mediaConstants';
+import { MediaExternalSource, MediaType } from '../../constants/mediaConstants';
 import { MediaInfo } from './components/MediaInfo';
 import { MainMediaInfo } from './components/MainMediaInfo';
 import { MediaNotesCarousel } from './components/MediaNotesCarousel';
-import {
-  useCreateReview,
-  useDeleteReview,
-  useGetReviewsByUserMediaEntryId,
-  useUpdateReview,
-} from '../../hooks/useReview';
-import type { ReviewUpdate } from '../../types/Review';
 import { UserMediaEntryStatus } from '../../types/UserMediaEntry';
+import { useAnimeDetail, useMangaDetail } from '../../hooks/useAnilist';
+import { useTmdbMovieDetail, useTmdbTvDetail } from '../../hooks/useTmdb';
+import type { AnimeDetailed, MangaDetailed, MovieDetailed, TVDetailed } from '../../types/Media';
 
 const MediaDetailPage = () => {
   const { mediaType, id } = useParams<{ mediaType: MediaType; id: string }>();
@@ -40,77 +32,41 @@ const MediaDetailPage = () => {
 
   const mediaId = id ? parseInt(id, 10) : undefined;
 
-  const {
-    data: media,
-    isLoading,
-    isError,
-  } = useMediaDetail({
-    mediaId,
-    mediaType: mediaType as MediaType,
+  const animeQuery = useAnimeDetail(mediaId, {
+    enabled: mediaType === MediaType.ANIME,
+  });
+  const mangaQuery = useMangaDetail(mediaId, {
+    enabled: mediaType === MediaType.MANGA,
+  });
+  const movieQuery = useTmdbMovieDetail(mediaId, undefined, {
+    enabled: mediaType === MediaType.MOVIE,
+  });
+  const tvQuery = useTmdbTvDetail(mediaId, undefined, {
+    enabled: mediaType === MediaType.TV,
   });
 
-  //user media entry
-  const { data: userEntry } = useGetUserMediaEntryByExternalId(mediaId || 0);
+  const activeQuery =
+    mediaType === MediaType.ANIME
+      ? animeQuery
+      : mediaType === MediaType.MANGA
+        ? mangaQuery
+        : mediaType === MediaType.MOVIE
+          ? movieQuery
+          : mediaType === MediaType.TV
+            ? tvQuery
+            : { data: null, isLoading: false, isError: true };
+
+  const { data: media, isLoading, isError } = activeQuery;
+
+  const { data: userEntry } = useGetUserMediaEntryByExternalId(
+    mediaId,
+    media?.externalSource,
+  );
 
   const createEntry = useCreateUserMediaEntry();
   const updateEntry = useUpdateUserMediaEntry();
   const deleteEntry = useDeleteUserMediaEntry();
 
-  //review data
-  const { data: reviews } = useGetReviewsByUserMediaEntryId(
-    userEntry?.id || ''
-  );
-
-  const createReview = useCreateReview();
-  const updateReview = useUpdateReview();
-  const deleteReview = useDeleteReview();
-
-  const handleSaveNotes = async (
-    reviewId: string | undefined,
-    update: ReviewUpdate
-  ) => {
-    if (!userEntry?.id) return;
-
-    try {
-      if (reviewId) {
-        await updateReview.mutateAsync({
-          reviewId,
-          update,
-        });
-      } else {
-        await createReview.mutateAsync({
-          userMediaEntryId: userEntry.id,
-          ...update,
-        });
-      }
-    } catch (error) {
-      console.error('Failed to save review:', error);
-    }
-  };
-
-  const handleDeleteReview = async (reviewId: string) => {
-    if (!userEntry?.id) return;
-
-    try {
-      await deleteReview.mutateAsync({
-        reviewId,
-        userMediaEntryId: userEntry.id,
-      });
-    } catch (error) {
-      console.error('Failed to delete review:', error);
-    }
-
-    try {
-      await deleteReview.mutateAsync({
-        reviewId,
-        userMediaEntryId: userEntry.id,
-      });
-    } catch (error) {
-      console.error('Failed to delete review:', error);
-    }
-  };
-
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -373,19 +329,35 @@ const MediaDetailPage = () => {
               </div>
             </div>
 
-            <MediaInfo media={media} />
+            <MediaInfo
+              anime={
+                mediaType === MediaType.ANIME
+                  ? (media as AnimeDetailed)
+                  : undefined
+              }
+              manga={
+                mediaType === MediaType.MANGA
+                  ? (media as MangaDetailed)
+                  : undefined
+              }
+              movie={
+                mediaType === MediaType.MOVIE
+                  ? (media as MovieDetailed)
+                  : undefined
+              }
+              tv={
+                mediaType === MediaType.TV ? (media as TVDetailed) : undefined
+              }
+            />
           </div>
 
           {/* Right Side - Main Content */}
           <div className="flex-1 space-y-6">
             <MainMediaInfo media={media} />
-
             {
               <MediaNotesCarousel
-                mediaNotes={reviews || []}
-                onSave={handleSaveNotes}
                 mediaTitle={media.title}
-                onDelete={handleDeleteReview}
+                userMediaEntryId={userEntry?.id}
               />
             }
           </div>

@@ -6,51 +6,100 @@ import {
   FaPlus,
 } from 'react-icons/fa';
 import { MediaNotes } from './MediaNotes';
-import type { Review, ReviewUpdate } from '../../../types/Review';
+import type { ReviewUpdate } from '../../../types/Review';
+import {
+  useCreateReview,
+  useDeleteReview,
+  useGetReviewsByUserMediaEntryId,
+  useUpdateReview,
+} from '../../../hooks/useReview';
 
 interface MediaNotesCarouselProps {
   mediaTitle: string;
-  mediaNotes: Review[];
-  onSave: (reviewId: string | undefined, update: ReviewUpdate) => Promise<void>;
-  onDelete: (reviewId: string) => Promise<void>;
-  onNavigate?: (currentIndex: number) => void;
+  userMediaEntryId?: string;
 }
 
 export const MediaNotesCarousel = ({
-  mediaNotes,
   mediaTitle,
-  onSave,
-  onDelete,
-  onNavigate,
+  userMediaEntryId,
 }: MediaNotesCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  const { data: mediaNotes } = useGetReviewsByUserMediaEntryId(
+    userMediaEntryId || '',
+  );
+  const createReview = useCreateReview();
+  const updateReview = useUpdateReview();
+  const deleteReview = useDeleteReview();
 
   const hasReviews = mediaNotes && mediaNotes.length > 0;
   const totalSlots = hasReviews ? mediaNotes.length + 1 : 1; // Reviews + new slot
   const isOnNewReviewSlot = hasReviews && currentIndex === mediaNotes.length;
 
+  const handleSaveNotes = async (
+    reviewId: string | undefined,
+    update: ReviewUpdate,
+  ) => {
+    if (!userMediaEntryId) return;
+
+    try {
+      if (reviewId) {
+        await updateReview.mutateAsync({
+          reviewId,
+          update,
+        });
+      } else {
+        await createReview.mutateAsync({
+          userMediaEntryId: userMediaEntryId,
+          ...update,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to save review:', error);
+    }
+  };
+
+  const handleDeleteNotes = async (reviewId: string) => {
+    if (!userMediaEntryId) return;
+
+    try {
+      await deleteReview.mutateAsync({
+        reviewId,
+        userMediaEntryId: userMediaEntryId,
+      });
+    } catch (error) {
+      console.error('Failed to delete review:', error);
+    }
+
+    try {
+      await deleteReview.mutateAsync({
+        reviewId,
+        userMediaEntryId: userMediaEntryId,
+      });
+    } catch (error) {
+      console.error('Failed to delete review:', error);
+    }
+  };
+
   const handlePrevious = () => {
     const newIndex = currentIndex > 0 ? currentIndex - 1 : totalSlots - 1;
     setCurrentIndex(newIndex);
-    onNavigate?.(newIndex);
   };
 
   const handleNext = () => {
     const newIndex = currentIndex < totalSlots - 1 ? currentIndex + 1 : 0;
     setCurrentIndex(newIndex);
-    onNavigate?.(newIndex);
   };
 
   const handleDotClick = (index: number) => {
     setCurrentIndex(index);
-    onNavigate?.(index);
   };
 
   const handleSaveNew = async (
     reviewId: string | undefined,
-    update: ReviewUpdate
+    update: ReviewUpdate,
   ) => {
-    await onSave(reviewId, update);
+    await handleSaveNotes(reviewId, update);
     // After saving, navigate to the first review
     setCurrentIndex(0);
   };
@@ -129,21 +178,20 @@ export const MediaNotesCarousel = ({
           <MediaNotes
             key="new-review"
             mediaTitle={mediaTitle}
-            onSave={hasReviews ? handleSaveNew : onSave}
+            onSave={hasReviews ? handleSaveNew : handleSaveNotes}
             showDelete={false}
           />
         ) : (
           <MediaNotes
             key={currentNote?.id || currentIndex}
             review={currentNote}
-            onSave={onSave}
+            onSave={handleSaveNotes}
             mediaTitle={mediaTitle}
-            onDelete={onDelete}
+            onDelete={handleDeleteNotes}
             showDelete={true}
           />
         )}
       </div>
-      
     </div>
   );
 };

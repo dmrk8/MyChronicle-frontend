@@ -1,5 +1,5 @@
 import backendApi from './backendApi';
-import type { MediaPagination, MediaDetailed, MediaFeaturedBulk } from '../types/Media';
+import type { MediaPagination, MediaFeaturedBulk, MovieDetailed, TVDetailed } from '../types/Media';
 
 export type TmdbMediaType = 'movie' | 'tv';
 
@@ -48,12 +48,12 @@ export const searchTmdbTv = async (params: SearchTmdbTvParams): Promise<MediaPag
   return res.data;
 };
 
-export const getTmdbMovieDetail = async (movieId: number, language?: string): Promise<MediaDetailed> => {
+export const getTmdbMovieDetail = async (movieId: number, language?: string): Promise<MovieDetailed> => {
   const res = await backendApi.get(`/tmdb/media/movie/${movieId}`, { params: { language } });
   return res.data;
 };
 
-export const getTmdbTvDetail = async (tvId: number, language?: string): Promise<MediaDetailed> => {
+export const getTmdbTvDetail = async (tvId: number, language?: string): Promise<TVDetailed> => {
   const res = await backendApi.get(`/tmdb/media/tv/${tvId}`, { params: { language } });
   return res.data;
 };

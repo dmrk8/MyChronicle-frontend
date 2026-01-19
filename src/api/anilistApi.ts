@@ -1,5 +1,5 @@
 import backendApi from './backendApi';
-import type { MediaPagination, MediaFeaturedBulk, MediaDetailed } from '../types/Media';
+import type { MediaPagination, MediaFeaturedBulk, AnimeDetailed, MangaDetailed } from '../types/Media';
 
 export interface SearchAnilistParams {
   mediaType: AnilistMediaType;
@@ -35,8 +35,13 @@ export const searchAnilist = async (params: SearchAnilistParams): Promise<MediaP
 };
 
 
-export const getMediaDetail = async (mediaId: number): Promise<MediaDetailed> => {
-  const res = await backendApi.get(`/anilist/media/${mediaId}`);
+export const getAnimeDetail = async (animeId: number): Promise<AnimeDetailed> => {
+  const res = await backendApi.get(`/anilist/anime/${animeId}`);
+  return res.data;
+};
+
+export const getMangaDetail = async (mangaId: number): Promise<MangaDetailed> => {
+  const res = await backendApi.get(`/anilist/manga/${mangaId}`);
   return res.data;
 };
 

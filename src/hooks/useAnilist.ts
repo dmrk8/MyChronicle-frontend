@@ -1,12 +1,13 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
+  getAnimeDetail,
   getFeaturedAnilistBulk,
+  getMangaDetail,
   searchAnilist,
-  getMediaDetail,
   type AnilistMediaType,
   type SearchAnilistParams,
 } from "../api/anilistApi";
-import type { MediaDetailed, MediaFeaturedBulk, MediaPagination } from "../types/Media";
+import type { AnimeDetailed, MangaDetailed, MediaFeaturedBulk, MediaPagination } from "../types/Media";
 
 export function useFeaturedMediaAnilist(mediaType: AnilistMediaType, options?: { enabled?: boolean }) {
   return useQuery<MediaFeaturedBulk>({
@@ -40,14 +41,27 @@ export function useSearchAnilist(params: SearchAnilistParams, options?: { enable
   });
 }
 
-export function useAnilistMediaDetail(mediaId?: number, options?: { enabled?: boolean }) {
-  return useQuery<MediaDetailed>({
-    queryKey: ["anilist", "media", mediaId] as const,
+export function useAnimeDetail(animeId?: number, options?: { enabled?: boolean }) {
+  return useQuery<AnimeDetailed>({
+    queryKey: ["anilist", "anime", animeId] as const,
     queryFn: () => {
-      if (!mediaId) throw new Error("mediaId is required");
-      return getMediaDetail(mediaId);
+      if (!animeId) throw new Error("animeId is required");
+      return getAnimeDetail(animeId);
     },
-    enabled: options?.enabled ?? (typeof mediaId === "number" && mediaId > 0),
+    enabled: options?.enabled ?? (typeof animeId === "number" && animeId > 0),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+}
+
+export function useMangaDetail(mangaId?: number, options?: { enabled?: boolean }) {
+  return useQuery<MangaDetailed>({
+    queryKey: ["anilist", "manga", mangaId] as const,
+    queryFn: () => {
+      if (!mangaId) throw new Error("mangaId is required");
+      return getMangaDetail(mangaId);
+    },
+    enabled: options?.enabled ?? (typeof mangaId === "number" && mangaId > 0),
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });

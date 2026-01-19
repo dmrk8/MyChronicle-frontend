@@ -19,7 +19,7 @@ export const useCreateUserMediaEntry = () => {
     mutationFn: (entry: UserMediaEntryCreate) => createUserMediaEntry(entry),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ 
-          queryKey: ["userMediaEntry", "external", data.externalId] 
+          queryKey: ["userMediaEntry", "external", data.externalSource, data.externalId] 
         });
     },
   });
@@ -38,7 +38,7 @@ export const useUpdateUserMediaEntry = () => {
     }) => updateUserMediaEntry(entryId, update),
     onSuccess: (data) => {
         queryClient.invalidateQueries({ 
-          queryKey: ["userMediaEntry", "external", data.externalId] 
+          queryKey: ["userMediaEntry", "external", data.externalSource, data.externalId] 
         });
     },
   });
@@ -48,22 +48,21 @@ export const useDeleteUserMediaEntry = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ entryId }: { entryId: string; externalId?: number }) => 
+    mutationFn: ({ entryId }: { entryId: string; externalId?: number; externalSource?: string }) => 
       deleteUserMediaEntry(entryId),
     onSuccess: (_data, variables) => {
         queryClient.removeQueries({ 
-          queryKey: ["userMediaEntry", "external", variables.externalId] 
+          queryKey: ["userMediaEntry", "external", variables.externalSource, variables.externalId] 
         });
     },
   });
 };
 
-
-export const useGetUserMediaEntryByExternalId = (externalId: number) => {
+export const useGetUserMediaEntryByExternalId = (externalId: number, externalSource: string) => {
   return useQuery({
-    queryKey: ["userMediaEntry", "external", externalId],
-    queryFn: () => getUserMediaEntryByExternalId(externalId),
-    enabled: !!externalId && externalId > 0,
+    queryKey: ["userMediaEntry", "external", externalSource, externalId],
+    queryFn: () => getUserMediaEntryByExternalId(externalId, externalSource),
+    enabled: !!externalId && externalId > 0 && !!externalSource,
     staleTime: 0, // Always refetch to ensure fresh data
     refetchOnMount: true,
   });

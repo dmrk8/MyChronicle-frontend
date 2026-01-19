@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import type { MediaPagination, MediaDetailed, MediaFeaturedBulk } from '../types/Media';
+import type { MediaPagination, MediaFeaturedBulk, MovieDetailed, TVDetailed } from '../types/Media';
 import {
   searchTmdbMovie,
   searchTmdbTv,
@@ -75,7 +75,7 @@ export function useSearchTmdbTv(params: SearchTmdbTvParams, options?: { enabled?
 }
 
 export function useTmdbMovieDetail(movieId?: number, language?: string, options?: { enabled?: boolean }) {
-  return useQuery<MediaDetailed>({
+  return useQuery<MovieDetailed>({
     queryKey: ['tmdb', 'movie', movieId, language] as const,
     queryFn: () => {
       if (!movieId) throw new Error('movieId is required');
@@ -88,7 +88,7 @@ export function useTmdbMovieDetail(movieId?: number, language?: string, options?
 }
 
 export function useTmdbTvDetail(tvId?: number, language?: string, options?: { enabled?: boolean }) {
-  return useQuery<MediaDetailed>({
+  return useQuery<TVDetailed>({
     queryKey: ['tmdb', 'tv', tvId, language] as const,
     queryFn: () => {
       if (!tvId) throw new Error('tvId is required');

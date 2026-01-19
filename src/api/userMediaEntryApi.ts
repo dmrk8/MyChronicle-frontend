@@ -43,10 +43,11 @@ export const getUserMediaEntries = async (): Promise<UserMediaEntry[]> => {
 };
 
 export const getUserMediaEntryByExternalId = async (
-  externalId: number
+  externalId: number,
+  externalSource: string
 ): Promise<UserMediaEntry> => {
   const response = await backendApi.get(
-    `/user-media-entry/by-external/${externalId}`
+    `/user-media-entry/by-external/${externalSource}/${externalId}`
   );
   return response.data;
 };
