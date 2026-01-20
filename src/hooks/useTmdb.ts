@@ -1,11 +1,12 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import type { MediaPagination, MediaFeaturedBulk, MovieDetailed, TVDetailed } from '../types/Media';
+import type { MediaPagination, MediaFeaturedBulk, MovieDetailed, TVDetailed, CollectionDetailed } from '../types/Media';
 import {
   searchTmdbMovie,
   searchTmdbTv,
   getTmdbMovieDetail,
   getTmdbTvDetail,
   getTmdbFeaturedBulk,
+  getTmdbCollectionDetail,
   type TmdbMediaType,
   type SearchTmdbMovieParams,
   type SearchTmdbTvParams,
@@ -95,6 +96,19 @@ export function useTmdbTvDetail(tvId?: number, language?: string, options?: { en
       return getTmdbTvDetail(tvId, language);
     },
     enabled: options?.enabled ?? (typeof tvId === 'number' && tvId > 0),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+}
+
+export function useTmdbCollectionDetail(collectionId?: number, language?: string, options?: { enabled?: boolean }) {
+  return useQuery<CollectionDetailed>({
+    queryKey: ['tmdb', 'collection', collectionId, language] as const,
+    queryFn: () => {
+      if (!collectionId) throw new Error('collectionId is required');
+      return getTmdbCollectionDetail(collectionId, language);
+    },
+    enabled: options?.enabled ?? (typeof collectionId === 'number' && collectionId > 0),
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });

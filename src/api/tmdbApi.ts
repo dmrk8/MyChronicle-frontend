@@ -1,5 +1,5 @@
 import backendApi from './backendApi';
-import type { MediaPagination, MediaFeaturedBulk, MovieDetailed, TVDetailed } from '../types/Media';
+import type { MediaPagination, MediaFeaturedBulk, MovieDetailed, TVDetailed, CollectionDetailed } from '../types/Media';
 
 export type TmdbMediaType = 'movie' | 'tv';
 
@@ -60,5 +60,10 @@ export const getTmdbTvDetail = async (tvId: number, language?: string): Promise<
 
 export const getTmdbFeaturedBulk = async (mediaType: TmdbMediaType): Promise<MediaFeaturedBulk> => {
   const res = await backendApi.get('/tmdb/featured-bulk', { params: { mediaType } });
+  return res.data;
+};
+
+export const getTmdbCollectionDetail = async (collectionId: number, language?: string): Promise<CollectionDetailed> => {
+  const res = await backendApi.get(`/tmdb/collection/${collectionId}`, { params: { language } });
   return res.data;
 };

@@ -30,26 +30,33 @@ import { MediaTags } from './components/MediaTags';
 import { MediaAlternativeTitles } from './components/MediaAlternativeTitles';
 import { MediaTabs } from './components/MediaTabs';
 
-const MediaDetailPage = () => {
-  const { mediaType, id } = useParams<{ mediaType: MediaType; id: string }>();
+export const MediaDetailPage = () => {
+  const { mediaType: rawMediaType, id } = useParams<{
+    mediaType: string;
+    id: string;
+  }>();
   const navigate = useNavigate();
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const mediaType = rawMediaType?.toUpperCase() as MediaType;
   const mediaId = id ? parseInt(id, 10) : undefined;
 
+  const validMediaTypes = Object.values(MediaType);
+  const isValidMediaType = mediaType && validMediaTypes.includes(mediaType);
+
   const animeQuery = useAnimeDetail(mediaId, {
-    enabled: mediaType === MediaType.ANIME,
+    enabled: mediaType === MediaType.ANIME && isValidMediaType,
   });
   const mangaQuery = useMangaDetail(mediaId, {
-    enabled: mediaType === MediaType.MANGA,
+    enabled: mediaType === MediaType.MANGA && isValidMediaType,
   });
   const movieQuery = useTmdbMovieDetail(mediaId, undefined, {
-    enabled: mediaType === MediaType.MOVIE,
+    enabled: mediaType === MediaType.MOVIE && isValidMediaType,
   });
   const tvQuery = useTmdbTvDetail(mediaId, undefined, {
-    enabled: mediaType === MediaType.TV,
+    enabled: mediaType === MediaType.TV && isValidMediaType,
   });
 
   const activeQuery =
@@ -191,6 +198,24 @@ const MediaDetailPage = () => {
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
           >
             Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // NOW you can have early returns
+  if (!isValidMediaType) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">❌</div>
+          <div className="text-xl text-red-500">Invalid media type</div>
+          <button
+            onClick={() => navigate('/home')}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Go Home
           </button>
         </div>
       </div>

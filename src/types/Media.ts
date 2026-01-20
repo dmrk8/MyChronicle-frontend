@@ -1,3 +1,5 @@
+import type { MediaType } from "../constants/mediaConstants";
+
 export interface MediaMinimal {
   id: number;
   externalSource: string;
@@ -62,6 +64,23 @@ export interface MediaBelongsToCollection {
   backdropPath?: string;
 }
 
+export interface CollectionPart {
+  backdropPath?: string;
+  posterPath?: string;
+  id: number;
+  title: string;
+  mediaType: string;
+  releaseDate?: string;
+}
+
+export interface CollectionDetailed {
+  id: number;
+  name: string;
+  overview?: string;
+  posterPath?: string;
+  backdropPath?: string;
+  parts?: CollectionPart[];
+}
 
 export interface TMDBLastEpisodeToAir {
   name: string;
@@ -89,7 +108,6 @@ export interface MediaSeason {
   posterPath?: string;
   seasonNumber: number;
 }
-
 
 // Base interface
 export interface MediaBase {
@@ -121,12 +139,14 @@ export interface MediaRelation {
   format?: string;
   status?: string;
   coverImage?: string;
+  mediaType: MediaType;
 }
 
 export interface MediaRecommendation {
   id: number;
   title: string;
   coverImage?: string;
+  mediaType: MediaType;
 }
 
 export interface MediaVoiceActor {
