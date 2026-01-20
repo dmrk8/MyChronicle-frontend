@@ -19,7 +19,7 @@ export const MediaCharacters = ({ characters }: MediaCharactersProps) => {
             <div className="flex justify-between">
               {/* Left side - Character */}
               <div className="flex flex-1 min-w-0">
-                <div className="w-16 h-24 flex-shrink-0">
+                <div className="w-16 h-24 shrink-0">
                   <img
                     src={character.image || '/placeholder-character.png'}
                     alt={character.name}
@@ -47,7 +47,7 @@ export const MediaCharacters = ({ characters }: MediaCharactersProps) => {
                       Voice Actor
                     </div>
                   </div>
-                  <div className="w-16 h-24 flex-shrink-0">
+                  <div className="w-16 h-24 shrink-0">
                     <img
                       src={
                         character.voiceActor.image || '/placeholder-actor.png'

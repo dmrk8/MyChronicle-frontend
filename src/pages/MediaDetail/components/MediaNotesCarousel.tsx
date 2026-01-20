@@ -100,7 +100,6 @@ export const MediaNotesCarousel = ({
     update: ReviewUpdate,
   ) => {
     await handleSaveNotes(reviewId, update);
-    // After saving, navigate to the first review
     setCurrentIndex(0);
   };
 

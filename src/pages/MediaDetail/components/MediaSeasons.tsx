@@ -31,10 +31,10 @@ export const MediaSeasons = ({ seasons }: MediaSeasonsProps) => {
               <img
                 src={lastSeason.posterPath}
                 alt={lastSeason.name}
-                className="w-24 h-36 object-cover rounded flex-shrink-0"
+                className="w-24 h-36 object-cover rounded shrink-0"
               />
             ) : (
-              <div className="w-24 h-36 bg-zinc-800 flex items-center justify-center rounded flex-shrink-0">
+              <div className="w-24 h-36 bg-zinc-800 flex items-center justify-center rounded shrink-0">
                 <span className="text-zinc-600 text-3xl">📺</span>
               </div>
             )}
@@ -77,10 +77,10 @@ export const MediaSeasons = ({ seasons }: MediaSeasonsProps) => {
                   <img
                     src={season.posterPath}
                     alt={season.name}
-                    className="w-20 h-30 object-cover rounded flex-shrink-0"
+                    className="w-20 h-30 object-cover rounded shrink-0"
                   />
                 ) : (
-                  <div className="w-20 h-30 bg-zinc-800 flex items-center justify-center rounded flex-shrink-0">
+                  <div className="w-20 h-30 bg-zinc-800 flex items-center justify-center rounded shrink-0">
                     <span className="text-zinc-600 text-2xl">📺</span>
                   </div>
                 )}

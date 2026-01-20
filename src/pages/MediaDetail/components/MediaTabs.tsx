@@ -57,7 +57,7 @@ export const MediaTabs = ({
       </div>
 
       {/* Tab Content */}
-      <div className="min-h-[400px]">
+      <div className="min-h-100">
         {activeTab === 'overview' && (
           <div className="animate-in fade-in duration-200">
             <MediaOverview

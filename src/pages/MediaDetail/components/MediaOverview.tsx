@@ -10,6 +10,7 @@ import { MediaCharacters } from './MediaCharacters';
 import { MediaCredits } from './MediaCredits';
 import { MediaSeasons } from './MediaSeasons';
 import { MediaCollection } from './MediaCollection';
+import { MediaRecommendations } from './MediaRecommendations';
 
 interface MediaOverviewProps {
   anime?: AnimeDetailed;
@@ -31,7 +32,7 @@ export const MediaOverview = ({
 
   return (
     <div className="space-y-6">
-      {/* Anime/Manga: Relations → Characters */}
+      {/* Anime/Manga: Relations → Characters → Recommendations */}
       {(mediaType === MediaType.ANIME || mediaType === MediaType.MANGA) && (
         <>
           {anime?.relations && anime.relations.length > 0 && (
@@ -46,10 +47,16 @@ export const MediaOverview = ({
           {manga?.characters && manga.characters.length > 0 && (
             <MediaCharacters characters={manga.characters} />
           )}
+          {anime?.recommendations && anime.recommendations.length > 0 && (
+            <MediaRecommendations recommendations={anime.recommendations} />
+          )}
+          {manga?.recommendations && manga.recommendations.length > 0 && (
+            <MediaRecommendations recommendations={manga.recommendations} />
+          )}
         </>
       )}
 
-      {/* Movie: Collection → Credits */}
+      {/* Movie: Collection → Credits → Recommendations */}
       {mediaType === MediaType.MOVIE && movie && (
         <>
           {movie.belongsToCollection && (
@@ -58,10 +65,13 @@ export const MediaOverview = ({
           {movie.credits && movie.credits.length > 0 && (
             <MediaCredits credits={movie.credits} />
           )}
+          {movie.recommendations && movie.recommendations.length > 0 && (
+            <MediaRecommendations recommendations={movie.recommendations} />
+          )}
         </>
       )}
 
-      {/* TV: Seasons → Credits */}
+      {/* TV: Seasons → Credits → Recommendations */}
       {mediaType === MediaType.TV && tv && (
         <>
           {tv.seasons && tv.seasons.length > 0 && (
@@ -69,6 +79,9 @@ export const MediaOverview = ({
           )}
           {tv.credits && tv.credits.length > 0 && (
             <MediaCredits credits={tv.credits} />
+          )}
+          {tv.recommendations && tv.recommendations.length > 0 && (
+            <MediaRecommendations recommendations={tv.recommendations} />
           )}
         </>
       )}

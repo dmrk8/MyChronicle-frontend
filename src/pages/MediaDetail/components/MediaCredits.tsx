@@ -18,7 +18,7 @@ export const MediaCredits = ({ credits }: MediaCreditsProps) => {
           >
             <div className="flex">
               {/* Actor Image */}
-              <div className="w-20 h-24 flex-shrink-0 bg-zinc-800">
+              <div className="w-20 h-24 shrink-0 bg-zinc-800">
                 {cast.castImage ? (
                   <img
                     src={cast.castImage}
