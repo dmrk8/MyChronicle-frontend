@@ -17,7 +17,6 @@ import {
 import { MediaExternalSource, MediaType } from '../../constants/mediaConstants';
 import { MediaInfo } from './components/MediaInfo';
 import { MainMediaInfo } from './components/MainMediaInfo';
-import { MediaNotesCarousel } from './components/MediaNotesCarousel';
 import { UserMediaEntryStatus } from '../../types/UserMediaEntry';
 import { useAnimeDetail, useMangaDetail } from '../../hooks/useAnilist';
 import { useTmdbMovieDetail, useTmdbTvDetail } from '../../hooks/useTmdb';
@@ -29,6 +28,7 @@ import type {
 } from '../../types/Media';
 import { MediaTags } from './components/MediaTags';
 import { MediaAlternativeTitles } from './components/MediaAlternativeTitles';
+import { MediaTabs } from './components/MediaTabs';
 
 const MediaDetailPage = () => {
   const { mediaType, id } = useParams<{ mediaType: MediaType; id: string }>();
@@ -378,13 +378,19 @@ const MediaDetailPage = () => {
             />
             <MediaAlternativeTitles
               anime={
-                mediaType === MediaType.ANIME ? (media as AnimeDetailed) : undefined
+                mediaType === MediaType.ANIME
+                  ? (media as AnimeDetailed)
+                  : undefined
               }
               manga={
-                mediaType === MediaType.MANGA ? (media as MangaDetailed) : undefined
+                mediaType === MediaType.MANGA
+                  ? (media as MangaDetailed)
+                  : undefined
               }
               movie={
-                mediaType === MediaType.MOVIE ? (media as MovieDetailed) : undefined
+                mediaType === MediaType.MOVIE
+                  ? (media as MovieDetailed)
+                  : undefined
               }
               tv={
                 mediaType === MediaType.TV ? (media as TVDetailed) : undefined
@@ -395,12 +401,30 @@ const MediaDetailPage = () => {
           {/* Right Side - Main Content */}
           <div className="flex-1 space-y-6">
             <MainMediaInfo media={media} />
-            {
-              <MediaNotesCarousel
-                mediaTitle={media.title}
-                userMediaEntryId={userEntry?.id}
-              />
-            }
+
+            <MediaTabs
+              anime={
+                mediaType === MediaType.ANIME
+                  ? (media as AnimeDetailed)
+                  : undefined
+              }
+              manga={
+                mediaType === MediaType.MANGA
+                  ? (media as MangaDetailed)
+                  : undefined
+              }
+              movie={
+                mediaType === MediaType.MOVIE
+                  ? (media as MovieDetailed)
+                  : undefined
+              }
+              tv={
+                mediaType === MediaType.TV ? (media as TVDetailed) : undefined
+              }
+              mediaType={mediaType!}
+              mediaTitle={media.title}
+              userMediaEntryId={userEntry?.id}
+            />
           </div>
         </div>
       </div>

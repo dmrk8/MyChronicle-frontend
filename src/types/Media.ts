@@ -55,12 +55,13 @@ export interface Tag {
   rank: number;
 }
 
-export interface TMDBBelongsToCollection {
+export interface MediaBelongsToCollection {
   id: number;
   name: string;
   posterPath?: string;
   backdropPath?: string;
 }
+
 
 export interface TMDBLastEpisodeToAir {
   name: string;
@@ -80,7 +81,7 @@ export interface TMDBNextEpisodeToAir {
   seasonNumber: number;
 }
 
-export interface TMDBSeason {
+export interface MediaSeason {
   airDate?: string;
   episodeCount: number;
   name: string;
@@ -88,6 +89,7 @@ export interface TMDBSeason {
   posterPath?: string;
   seasonNumber: number;
 }
+
 
 // Base interface
 export interface MediaBase {
@@ -118,6 +120,7 @@ export interface MediaRelation {
   title: string;
   format?: string;
   status?: string;
+  coverImage?: string;
 }
 
 export interface MediaRecommendation {
@@ -126,10 +129,16 @@ export interface MediaRecommendation {
   coverImage?: string;
 }
 
+export interface MediaVoiceActor {
+  image: string;
+  name: string;
+}
+
 export interface MediaCharacter {
   role: string;
   image: string;
   name: string;
+  voiceActor?: MediaVoiceActor;
 }
 
 export interface MediaCast {
@@ -176,7 +185,7 @@ export interface MovieDetailed extends MediaBase {
   runtime?: number;
   originCountry: string[];
   originalLanguage?: string;
-  belongsToCollection?: TMDBBelongsToCollection;
+  belongsToCollection?: MediaBelongsToCollection;
   productionCompanies?: string[];
   keywords?: string[];
   recommendations?: MediaRecommendation[];
@@ -192,7 +201,7 @@ export interface TVDetailed extends MediaBase {
   numberOfEpisodes?: number;
   numberOfSeasons?: number;
   nextEpisodeToAir?: TMDBNextEpisodeToAir;
-  seasons?: TMDBSeason[];
+  seasons?: MediaSeason[];
   type?: string;
   originalLanguage?: string;
   inProduction?: boolean;
