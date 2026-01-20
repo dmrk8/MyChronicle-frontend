@@ -58,11 +58,15 @@ export const useDeleteUserMediaEntry = () => {
   });
 };
 
-export const useGetUserMediaEntryByExternalId = (externalId: number, externalSource: string) => {
+export const useGetUserMediaEntryByExternalId = (
+  externalId: number | undefined, 
+  externalSource: string,
+  options?: { enabled?: boolean }
+) => {
   return useQuery({
     queryKey: ["userMediaEntry", "external", externalSource, externalId],
-    queryFn: () => getUserMediaEntryByExternalId(externalId, externalSource),
-    enabled: !!externalId && externalId > 0 && !!externalSource,
+    queryFn: () => getUserMediaEntryByExternalId(externalId!, externalSource),
+    enabled: (options?.enabled ?? true) && !!externalId && externalId > 0 && !!externalSource,
     staleTime: 0, // Always refetch to ensure fresh data
     refetchOnMount: true,
   });

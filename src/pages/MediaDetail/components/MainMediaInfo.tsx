@@ -1,4 +1,11 @@
-import type { MediaDetailed } from "../../../types/Media";
+import type {
+  AnimeDetailed,
+  MangaDetailed,
+  MovieDetailed,
+  TVDetailed,
+} from '../../../types/Media';
+
+type MediaDetailed = AnimeDetailed | MangaDetailed | MovieDetailed | TVDetailed;
 
 interface MainMediaInfoProps {
   media: MediaDetailed;
@@ -22,7 +29,7 @@ export const MainMediaInfo = ({ media }: MainMediaInfoProps) => {
           <div className="flex items-center gap-2">
             <span
               className={`text-2xl font-bold ${getScoreColor(
-                media.averageScore
+                media.averageScore,
               )}`}
             >
               ★ {media.averageScore}
@@ -42,9 +49,9 @@ export const MainMediaInfo = ({ media }: MainMediaInfoProps) => {
         {media.format && (
           <span className="px-3 py-1 bg-purple-500/20 border border-purple-500/50 rounded-full text-sm">
             {media.format.toUpperCase()}
-            {media.mediaType === 'MANGA' && media.countryOfOrigin && (
-              <> ({media.countryOfOrigin})</>
-            )}
+            {media.mediaType === 'MANGA' &&
+              'countryOfOrigin' in media &&
+              media.countryOfOrigin && <> ({media.countryOfOrigin})</>}
           </span>
         )}
         {media.isAdult && (

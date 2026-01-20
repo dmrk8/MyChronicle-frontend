@@ -41,22 +41,22 @@ export const MediaDetailPage = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const mediaType = rawMediaType?.toUpperCase() as MediaType;
-  const mediaId = id ? parseInt(id, 10) : undefined;
+  const mediaId = id ? parseInt(id, 10) : undefined; 
 
   const validMediaTypes = Object.values(MediaType);
   const isValidMediaType = mediaType && validMediaTypes.includes(mediaType);
 
   const animeQuery = useAnimeDetail(mediaId, {
-    enabled: mediaType === MediaType.ANIME && isValidMediaType,
+    enabled: mediaType === MediaType.ANIME && isValidMediaType && !!mediaId, 
   });
   const mangaQuery = useMangaDetail(mediaId, {
-    enabled: mediaType === MediaType.MANGA && isValidMediaType,
+    enabled: mediaType === MediaType.MANGA && isValidMediaType && !!mediaId, 
   });
   const movieQuery = useTmdbMovieDetail(mediaId, undefined, {
-    enabled: mediaType === MediaType.MOVIE && isValidMediaType,
+    enabled: mediaType === MediaType.MOVIE && isValidMediaType && !!mediaId,
   });
   const tvQuery = useTmdbTvDetail(mediaId, undefined, {
-    enabled: mediaType === MediaType.TV && isValidMediaType,
+    enabled: mediaType === MediaType.TV && isValidMediaType && !!mediaId, 
   });
 
   const activeQuery =
@@ -74,7 +74,8 @@ export const MediaDetailPage = () => {
 
   const { data: userEntry } = useGetUserMediaEntryByExternalId(
     mediaId,
-    media?.externalSource,
+    media?.externalSource || '',
+    { enabled: !!media && !!mediaId && !!media.externalSource },
   );
 
   const createEntry = useCreateUserMediaEntry();
