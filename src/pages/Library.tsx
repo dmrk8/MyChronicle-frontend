@@ -14,14 +14,16 @@ import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 const LibraryPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [selectedType, setSelectedType] = useState<MediaType | 'all'>('all');
+  const [selectedType, setSelectedType] = useState<MediaType>(MediaType.ANIME);
   const [selectedStatus, setSelectedStatus] = useState<
     UserMediaEntryStatus | 'all'
   >('all');
+  const [isFavorite, setIsFavorite] = useState<boolean | undefined>(undefined);
   const [sortBy, setSortBy] = useState<UserMediaEntrySortFields>(
-    UserMediaEntrySortFields.CREATED_AT
+    UserMediaEntrySortFields.UPDATED_AT,
   );
   const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('DESC');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const sortKey =
     `${sortBy.toUpperCase()}_${sortDirection}` as keyof typeof UserMediaEntrySortOptions;
@@ -36,10 +38,12 @@ const LibraryPage = () => {
     isLoading,
     isError,
   } = useGetUserMediaEntriesPaginated({
-    mediaType: selectedType === 'all' ? undefined : selectedType,
+    mediaType: selectedType,
     status: selectedStatus === 'all' ? undefined : selectedStatus,
+    isFavorite: isFavorite,
     sortBy: sortBy,
     sortOrder: sortOrder,
+    titleSearch: searchQuery || undefined,
     page: 1,
     perPage: 20,
   });
@@ -47,13 +51,13 @@ const LibraryPage = () => {
   // Flatten all pages into a single array of entries
   const entries = data?.pages?.flatMap((page) => page.results) ?? [];
 
-  const media: (MediaType | 'all')[] = [
-    'all',
+  const mediaTypes: MediaType[] = [
     MediaType.ANIME,
     MediaType.MANGA,
     MediaType.MOVIE,
     MediaType.TV,
   ];
+
   const statuses: (UserMediaEntryStatus | 'all')[] = [
     'all',
     UserMediaEntryStatus.CURRENT,
@@ -76,7 +80,6 @@ const LibraryPage = () => {
     { value: UserMediaEntrySortFields.CREATED_AT, label: 'Date Added' },
     { value: UserMediaEntrySortFields.UPDATED_AT, label: 'Last Updated' },
     { value: UserMediaEntrySortFields.TITLE, label: 'Title' },
-    //{ value: UserMediaEntrySortFields.RATING, label: 'Rating' },
   ];
 
   const toggleSortDirection = () => {
@@ -92,6 +95,12 @@ const LibraryPage = () => {
     hasNextPage: hasNextPage ?? false,
     isFetchingNextPage,
   });
+
+  const handleClearFilters = () => {
+    setSelectedStatus('all');
+    setIsFavorite(undefined);
+    setSearchQuery('');
+  };
 
   if (!user) {
     return (
@@ -113,12 +122,13 @@ const LibraryPage = () => {
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-linear-to-b from-purple-600/10 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-purple-900/20 via-transparent to-transparent" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
           <div className="text-center mb-10">
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
               My{' '}
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-pink-600">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-400 via-pink-500 to-purple-600">
                 Library
               </span>
             </h1>
@@ -131,8 +141,8 @@ const LibraryPage = () => {
 
       {/* Filters Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-        <div className="bg-zinc-800/50 backdrop-blur-xl border border-zinc-700/50 rounded-2xl p-6 shadow-xl">
-          <div className="flex items-center gap-2 mb-5">
+        <div className="bg-linear-to-br from-zinc-800/60 to-zinc-900/60 backdrop-blur-xl border border-zinc-700/50 rounded-2xl p-6 shadow-2xl">
+          <div className="flex items-center gap-2 mb-6">
             <svg
               className="w-5 h-5 text-purple-400"
               fill="none"
@@ -149,57 +159,104 @@ const LibraryPage = () => {
             <h3 className="text-lg font-semibold text-white">Filters</h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Media Type Dropdown */}
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-zinc-300">
-                <svg
-                  className="w-4 h-4 text-purple-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+          {/* Search Bar */}
+          <div className="mb-6">
+            <label className="flex items-center gap-2 text-sm font-medium text-zinc-300 mb-2">
+              <svg
+                className="w-4 h-4 text-purple-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              Search
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by title..."
+                className="w-full px-4 py-3 pl-11 bg-zinc-900/50 border border-zinc-600/50 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+              />
+              <svg
+                className="w-5 h-5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"
-                  />
-                </svg>
-                Media Type
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedType}
-                  onChange={(e) =>
-                    setSelectedType(e.target.value as MediaType | 'all')
-                  }
-                  className="w-full px-4 py-3 bg-zinc-900/50 border border-zinc-600/50 rounded-xl text-white font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all appearance-none cursor-pointer hover:border-zinc-500"
-                >
-                  {media.map((type) => (
-                    <option key={type} value={type}>
-                      {type === 'all'
-                        ? 'All Types'
-                        : type.charAt(0).toUpperCase() + type.slice(1)}
-                    </option>
-                  ))}
-                </select>
-                <svg
-                  className="w-5 h-5 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
             </div>
+          </div>
 
+          {/* Media Type Pills */}
+          <div className="space-y-2 mb-6">
+            <label className="flex items-center gap-2 text-sm font-medium text-zinc-300">
+              <svg
+                className="w-4 h-4 text-purple-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"
+                />
+              </svg>
+              Media Type
+            </label>
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
+              {mediaTypes.map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setSelectedType(type)}
+                  className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
+                    selectedType === type
+                      ? 'bg-linear-to-r from-purple-600/40 to-pink-600/40 border-purple-500/60 text-white shadow-lg shadow-purple-500/20'
+                      : 'bg-zinc-900/50 border-zinc-600/50 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800/50'
+                  }`}
+                >
+                  <span className="capitalize">{type}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Status Dropdown */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-zinc-300">
@@ -223,7 +280,7 @@ const LibraryPage = () => {
                   value={selectedStatus}
                   onChange={(e) =>
                     setSelectedStatus(
-                      e.target.value as UserMediaEntryStatus | 'all'
+                      e.target.value as UserMediaEntryStatus | 'all',
                     )
                   }
                   className="w-full px-4 py-3 bg-zinc-900/50 border border-zinc-600/50 rounded-xl text-white font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all appearance-none cursor-pointer hover:border-zinc-500"
@@ -247,6 +304,61 @@ const LibraryPage = () => {
                     d="M19 9l-7 7-7-7"
                   />
                 </svg>
+              </div>
+            </div>
+
+            {/* Favorites Toggle */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-zinc-300">
+                <svg
+                  className="w-4 h-4 text-purple-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  />
+                </svg>
+                Favorites
+              </label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIsFavorite(undefined)}
+                  className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all duration-200 border ${
+                    isFavorite === undefined
+                      ? 'bg-purple-600/20 border-purple-500/50 text-purple-300'
+                      : 'bg-zinc-900/50 border-zinc-600/50 text-zinc-300 hover:border-zinc-500'
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setIsFavorite(true)}
+                  className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all duration-200 border flex items-center justify-center gap-2 ${
+                    isFavorite === true
+                      ? 'bg-linear-to-r from-pink-600/30 to-rose-600/30 border-pink-500/60 text-pink-300'
+                      : 'bg-zinc-900/50 border-zinc-600/50 text-zinc-300 hover:border-zinc-500'
+                  }`}
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill={isFavorite === true ? 'currentColor' : 'none'}
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    />
+                  </svg>
+                  Favorites
+                </button>
               </div>
             </div>
 
@@ -344,16 +456,17 @@ const LibraryPage = () => {
           </div>
 
           {/* Active Filters Pills */}
-          {(selectedType !== 'all' || selectedStatus !== 'all') && (
+          {(selectedStatus !== 'all' ||
+            isFavorite !== undefined ||
+            searchQuery) && (
             <div className="mt-5 pt-5 border-t border-zinc-700/50">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm text-zinc-400">Active filters:</span>
-                {selectedType !== 'all' && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600/20 border border-purple-500/30 rounded-full text-sm text-purple-300">
-                    {selectedType.charAt(0).toUpperCase() +
-                      selectedType.slice(1)}
+                {searchQuery && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-linear-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 rounded-full text-sm text-purple-300">
+                    Search: "{searchQuery}"
                     <button
-                      onClick={() => setSelectedType('all')}
+                      onClick={() => setSearchQuery('')}
                       className="hover:text-white transition-colors"
                     >
                       <svg
@@ -373,7 +486,7 @@ const LibraryPage = () => {
                   </span>
                 )}
                 {selectedStatus !== 'all' && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-pink-600/20 border border-pink-500/30 rounded-full text-sm text-pink-300">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-linear-to-r from-pink-600/20 to-rose-600/20 border border-pink-500/30 rounded-full text-sm text-pink-300">
                     {statusLabels[selectedStatus]}
                     <button
                       onClick={() => setSelectedStatus('all')}
@@ -395,11 +508,38 @@ const LibraryPage = () => {
                     </button>
                   </span>
                 )}
+                {isFavorite !== undefined && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-linear-to-r from-pink-600/20 to-rose-600/20 border border-pink-500/30 rounded-full text-sm text-pink-300">
+                    <svg
+                      className="w-4 h-4"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    Favorites Only
+                    <button
+                      onClick={() => setIsFavorite(undefined)}
+                      className="hover:text-white transition-colors"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </span>
+                )}
                 <button
-                  onClick={() => {
-                    setSelectedType('all');
-                    setSelectedStatus('all');
-                  }}
+                  onClick={handleClearFilters}
                   className="text-sm text-zinc-400 hover:text-white transition-colors underline underline-offset-2"
                 >
                   Clear all
@@ -439,26 +579,51 @@ const LibraryPage = () => {
         {/* Empty State */}
         {!isLoading && !isError && entries.length === 0 && (
           <div className="flex flex-col items-center justify-center py-32">
+            <div className="w-20 h-20 mb-6 rounded-full bg-linear-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+              <svg
+                className="w-10 h-10 text-purple-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                />
+              </svg>
+            </div>
             <p className="text-2xl font-bold text-white mb-2">
-              Your library is empty
+              {searchQuery ? 'No results found' : 'Your library is empty'}
             </p>
             <p className="text-zinc-400 text-center max-w-md mb-6">
-              Start adding media to your library to track your progress and
-              build your collection.
+              {searchQuery
+                ? `No media found matching "${searchQuery}"`
+                : 'Start adding media to your library to track your progress and build your collection.'}
             </p>
-            <button
-              onClick={() => navigate('/anime')}
-              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
-            >
-              Explore Media
-            </button>
+            {searchQuery ? (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+              >
+                Clear Search
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/anime')}
+                className="px-6 py-3 bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium rounded-lg transition-all shadow-lg shadow-purple-500/25"
+              >
+                Explore Media
+              </button>
+            )}
           </div>
         )}
 
         {/* Media Grid */}
         {!isLoading && !isError && entries.length > 0 && (
           <div>
-            <div className="mb-6">
+            <div className="mb-6 flex items-center justify-between">
               <h2 className="text-2xl font-bold text-white">
                 {entries.length} {entries.length === 1 ? 'Entry' : 'Entries'}
               </h2>

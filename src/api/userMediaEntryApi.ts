@@ -61,6 +61,7 @@ export interface GetUserMediaEntriesParams {
   isFavorite?: boolean;
   status?: string;
   mediaType?: string;
+  titleSearch?: string;
 }
 
 export const getUserMediaEntriesPaginated = async (
