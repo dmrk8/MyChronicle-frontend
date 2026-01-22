@@ -127,6 +127,7 @@ export const MediaDetailPage = () => {
         externalSource: media?.externalSource as MediaExternalSource,
         status,
         inLibrary: true,
+        isAdult: media.isAdult
       });
     }
     setShowStatusDropdown(false);

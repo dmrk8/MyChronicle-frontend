@@ -15,7 +15,7 @@ export interface UserMediaEntryCreate {
   externalSource: MediaExternalSource;
   mediaType: MediaType;
   title: string;
-  isAdult: boolean;
+  isAdult?: boolean;
   coverImage?: string;
   status?: UserMediaEntryStatus;
   repeatCount?: number;

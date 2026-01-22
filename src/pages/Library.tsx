@@ -24,6 +24,7 @@ const LibraryPage = () => {
   );
   const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('DESC');
   const [searchQuery, setSearchQuery] = useState('');
+  const [includeAdult, setIncludeAdult] = useState(false);
 
   const sortKey =
     `${sortBy.toUpperCase()}_${sortDirection}` as keyof typeof UserMediaEntrySortOptions;
@@ -44,6 +45,7 @@ const LibraryPage = () => {
     sortBy: sortBy,
     sortOrder: sortOrder,
     titleSearch: searchQuery || undefined,
+    isAdult: includeAdult ? undefined : 'false',
     page: 1,
     perPage: 20,
   });
@@ -100,6 +102,7 @@ const LibraryPage = () => {
     setSelectedStatus('all');
     setIsFavorite(undefined);
     setSearchQuery('');
+    setIncludeAdult(false);
   };
 
   if (!user) {
@@ -141,7 +144,7 @@ const LibraryPage = () => {
 
       {/* Filters Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-        <div className="bg-linear-to-br from-zinc-800/60 to-zinc-900/60 backdrop-blur-xl border border-zinc-700/50 rounded-2xl p-6 shadow-2xl">
+        <div className="bg-gradient-to-br from-zinc-800/60 to-zinc-900/60 backdrop-blur-xl border border-zinc-700/50 rounded-2xl p-6 shadow-2xl">
           <div className="flex items-center gap-2 mb-6">
             <svg
               className="w-5 h-5 text-purple-400"
@@ -455,10 +458,45 @@ const LibraryPage = () => {
             </div>
           </div>
 
+          {/* Adult Content Checkbox */}
+          <div className="mt-6 pt-6 border-t border-zinc-700/50">
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={includeAdult}
+                  onChange={(e) => setIncludeAdult(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-zinc-700/50 rounded-full peer peer-checked:bg-linear-to-r peer-checked:from-purple-600 peer-checked:to-pink-600 transition-all duration-300 border border-zinc-600/50 peer-checked:border-purple-500/50"></div>
+                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 peer-checked:translate-x-5 shadow-lg"></div>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg
+                  className="w-5 h-5 text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+                <span className="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors">
+                  Include Adult Content (18+)
+                </span>
+              </div>
+            </label>
+          </div>
+
           {/* Active Filters Pills */}
           {(selectedStatus !== 'all' ||
             isFavorite !== undefined ||
-            searchQuery) && (
+            searchQuery ||
+            includeAdult) && (
             <div className="mt-5 pt-5 border-t border-zinc-700/50">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm text-zinc-400">Active filters:</span>
@@ -520,6 +558,42 @@ const LibraryPage = () => {
                     Favorites Only
                     <button
                       onClick={() => setIsFavorite(undefined)}
+                      className="hover:text-white transition-colors"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </span>
+                )}
+                {includeAdult && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-linear-to-r from-red-600/20 to-orange-600/20 border border-red-500/30 rounded-full text-sm text-red-300">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
+                    </svg>
+                    Adult Content (18+)
+                    <button
+                      onClick={() => setIncludeAdult(false)}
                       className="hover:text-white transition-colors"
                     >
                       <svg

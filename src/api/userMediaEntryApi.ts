@@ -62,6 +62,7 @@ export interface GetUserMediaEntriesParams {
   status?: string;
   mediaType?: string;
   titleSearch?: string;
+  isAdult?: string;
 }
 
 export const getUserMediaEntriesPaginated = async (
