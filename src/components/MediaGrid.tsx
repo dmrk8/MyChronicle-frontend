@@ -31,6 +31,7 @@ const MediaGrid = ({ title, mediaList, onMediaClick }: MediaGridProps) => {
             key={media.id}
             media={media}
             onClick={() => onMediaClick(media.id)}
+            href={`/${media.mediaType}/${media.id}`}
           />
         ))}
       </div>
