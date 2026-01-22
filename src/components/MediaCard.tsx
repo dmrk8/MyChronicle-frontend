@@ -3,11 +3,28 @@ import type { MediaMinimal } from "../types/Media";
 interface MediaCardProps {
   media: MediaMinimal;
   onClick: () => void;
+  href?: string;
 }
 
-const MediaCard = ({ media, onClick }: MediaCardProps) => {
+const MediaCard = ({ media, onClick, href }: MediaCardProps) => {
+  const handleClick = (e: React.MouseEvent) => {
+    // Only prevent default and call onClick for left clicks
+    if (e.button === 0 && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
-    <div onClick={onClick} className="group cursor-pointer h-full">
+    <a
+      href={href || '#'}
+      onClick={handleClick}
+      onContextMenu={(e) => {
+        // Allow context menu by not preventing default
+        e.stopPropagation();
+      }}
+      className="group cursor-pointer h-full block"
+    >
       {/* Card Container */}
       <div className="relative h-full flex flex-col bg-zinc-900/80 rounded-xl overflow-hidden border border-zinc-800 hover:border-blue-500/50 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/10">
         {/* Image Container */}
@@ -42,16 +59,15 @@ const MediaCard = ({ media, onClick }: MediaCardProps) => {
           )}
         </div>
 
-        {/* Info Section -  */}
+        {/* Info Section */}
         <div className="p-3 flex-1 flex flex-col">
-          {/* Title -  */}
+          {/* Title */}
           <h3
             className="text-white font-semibold text-sm line-clamp-2 mb-1 group-hover:text-blue-400 transition-colors min-h-10"
             title={media.title}
           >
             {media.title}
           </h3>
-
         </div>
 
         {/* Hover Border Glow Effect */}
@@ -59,7 +75,7 @@ const MediaCard = ({ media, onClick }: MediaCardProps) => {
           <div className="absolute inset-0 rounded-xl bg-linear-to-r from-blue-500/20 to-purple-500/20" />
         </div>
       </div>
-    </div>
+    </a>
   );
 };
 
