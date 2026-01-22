@@ -127,7 +127,6 @@ const Header = () => {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-zinc-300 hover:bg-zinc-800/50 hover:text-white transition-colors"
                           onClick={() => setIsUserMenuOpen(false)}
                         >
-                          <span className="w-5 text-center">👤</span>
                           <span>Profile Settings</span>
                         </Link>
                       </div>
@@ -140,7 +139,6 @@ const Header = () => {
                           }}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors w-full text-left"
                         >
-                          <span className="w-5 text-center">🚪</span>
                           <span>Sign Out</span>
                         </button>
                       </div>
