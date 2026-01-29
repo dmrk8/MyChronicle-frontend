@@ -29,6 +29,9 @@ export const searchAnilist = async (params: SearchAnilistParams): Promise<MediaP
 
   const res = await backendApi.get(`/anilist/search/${mediaType}`, {
     params: query,
+    paramsSerializer: {
+      indexes: null, // This will serialize arrays without brackets
+    }
   });
 
   return res.data;

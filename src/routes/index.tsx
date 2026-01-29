@@ -1,15 +1,13 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import LoginPage from '../pages/Login';
 import SignUpPage from '../pages/SignUp';
-import AnimeSearch from '../pages/SearchMedia/AnimeSearch';
-import MangaSearch from '../pages/SearchMedia/MangaSearch';
-import TvSearch from '../pages/SearchMedia/TvSearch';
-import MovieSearch from '../pages/SearchMedia/MovieSearch';
+import SearchMedia from '../pages/SearchMedia/SearchMedia';
 import MediaDetailPage from '../pages/MediaDetail/MediaDetail';
 import ProfilePage from '../pages/Profile';
 import HomePage from '../pages/Home';
 import LibraryPage from '../pages/Library';
+import NotFound from '../pages/NotFound';
 
 export const AppRoutes = () => {
   return (
@@ -18,13 +16,11 @@ export const AppRoutes = () => {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignUpPage />} />
 
-      <Route path="home" element={<HomePage />} />
+      <Route path="/" element={<Navigate to="/home" replace />} />
+      <Route path="/home" element={<HomePage />} />
 
-      {/* Media search routes */}
-      <Route path="/anime/search" element={<AnimeSearch />} />
-      <Route path="/manga/search" element={<MangaSearch />} />
-      <Route path="/movie/search" element={<MovieSearch />} />
-      <Route path="/tv/search" element={<TvSearch />} />
+      {/* Unified media search route */}
+      <Route path="/:mediaType/search" element={<SearchMedia />} />
       <Route path="/:mediaType/:id" element={<MediaDetailPage />} />
 
       <Route
@@ -44,6 +40,9 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+      {/* Catch all unmatched routes */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };

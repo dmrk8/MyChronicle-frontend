@@ -34,7 +34,7 @@ export function useSearchAnilist(params: SearchAnilistParams, options?: { enable
     },
     staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    enabled: options?.enabled ?? Boolean(params.search?.trim()),
+    enabled: options?.enabled ?? true, 
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,

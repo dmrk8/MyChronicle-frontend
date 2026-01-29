@@ -59,7 +59,7 @@ const HomePage = () => {
   }, [animeData, movieData, tvData, shuffleSeed]);
 
   const openDetails = (mediaType: MediaType, id: number) => {
-    navigate(`/${mediaType}/${id}`);
+    navigate(`/${mediaType.toLowerCase()}/${id}`);
   };
 
   return (

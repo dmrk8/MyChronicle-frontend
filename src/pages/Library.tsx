@@ -89,7 +89,7 @@ const LibraryPage = () => {
   };
 
   const openDetails = (externalId: number, mediaType: MediaType) => {
-    navigate(`/${mediaType}/${externalId}`);
+    navigate(`/${mediaType.toLowerCase()}/${externalId}`);
   };
 
   const sentinelRef = useInfiniteScroll({
