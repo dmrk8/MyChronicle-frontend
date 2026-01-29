@@ -225,7 +225,6 @@ const Header = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800/50 hover:text-white rounded-lg transition-colors"
                   >
-                    <span>🏠</span>
                     <span>Home</span>
                   </Link>
 
@@ -234,7 +233,6 @@ const Header = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800/50 hover:text-white rounded-lg transition-colors"
                   >
-                    <span>👤</span>
                     <span>Profile Settings</span>
                   </Link>
 
@@ -244,7 +242,6 @@ const Header = () => {
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800/50 hover:text-white rounded-lg transition-colors"
                     >
-                      <span>⚙️</span>
                       <span>Admin Panel</span>
                     </Link>
                   )}
@@ -256,7 +253,6 @@ const Header = () => {
                     }}
                     className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition-colors w-full text-left mt-2"
                   >
-                    <span>🚪</span>
                     <span>Sign Out</span>
                   </button>
                 </>

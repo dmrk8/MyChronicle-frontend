@@ -13,7 +13,7 @@ export const MediaRecommendations = ({
   if (!recommendations || recommendations.length === 0) return null;
 
   const handleNavigate = (recommendation: MediaRecommendation) => {
-    navigate(`/${recommendation.mediaType}/${recommendation.id}`);
+    navigate(`/${recommendation.mediaType.toLowerCase()}/${recommendation.id}`);
   };
 
   return (
@@ -21,10 +21,14 @@ export const MediaRecommendations = ({
       <h3 className="text-lg font-semibold mb-4 text-white">Recommendations</h3>
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3">
         {recommendations.map((recommendation) => (
-          <button
+          <a
             key={recommendation.id}
-            onClick={() => handleNavigate(recommendation)}
-            className="group relative rounded-lg overflow-hidden bg-zinc-900/50 border border-zinc-700/50 hover:border-zinc-600 transition-all hover:scale-105"
+            href={`/${recommendation.mediaType.toLowerCase()}/${recommendation.id}`}
+            onClick={(e) => {
+              e.preventDefault();
+              handleNavigate(recommendation);
+            }}
+            className="group relative rounded-lg overflow-hidden bg-zinc-900/50 border border-zinc-700/50 hover:border-zinc-600 transition-all hover:scale-105 block"
           >
             {recommendation.coverImage ? (
               <img
@@ -44,7 +48,7 @@ export const MediaRecommendations = ({
                 {recommendation.title}
               </div>
             </div>
-          </button>
+          </a>
         ))}
       </div>
     </div>
