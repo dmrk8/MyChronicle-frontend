@@ -35,10 +35,12 @@ export const ANILIST_FORMATS = [
 
 export const ANILIST_SEASONS = ['WINTER', 'SPRING', 'SUMMER', 'FALL'] as const;
 
-export const ANILIST_SORT_OPTIONS = [
-  "POPULARITY_DESC",
-  "TRENDING_DESC"
-] as const;
+export const ANILIST_SORT_OPTIONS = {
+  POPULARITY_DESC: "POPULARITY_DESC",
+  POPULARITY_ASC  : "POPULARITY",
+  TRENDING_ASC: "TRENDING",
+  TRENDING_DESC: "TRENDING_DESC",
+} as const;
 
 export const ANILIST_AIRING_STATUS = [
   'RELEASING',
@@ -62,6 +64,7 @@ export const ANILIST_COUNTRIES = [
   { code: 'TW', name: 'Taiwan' },
 ] as const;
 
+export type AnilistSortOptions = (typeof ANILIST_SORT_OPTIONS)[keyof typeof ANILIST_SORT_OPTIONS];
 export type AnilistGenre = (typeof ANILIST_GENRES)[number];
 export type AnilistFormat = (typeof ANILIST_FORMATS)[number];
 export type AnilistSeason = (typeof ANILIST_SEASONS)[number];

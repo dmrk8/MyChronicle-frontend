@@ -1,13 +1,13 @@
-export const TMDB_SORT_OPTIONS = [
-  'popularity.desc',
-  'popularity.asc',
-  'vote_average.desc',
-  'vote_average.asc',
-  'primary_release_date.desc',
-  'primary_release_date.asc',
-  'title.asc',
-  'title.desc',
-] as const;
+export const TMDB_MOVIE_SORT_OPTIONS = {
+  POPULARITY_DESC: 'popularity.desc',
+  POPULARITY_ASC: 'popularity.asc',
+  VOTE_AVERAGE_DESC: 'vote_average.desc',
+  VOTE_AVERAGE_ASC: 'vote_average.asc',
+  RELEASE_DATE_DESC: 'primary_release_date.desc',
+  RELEASE_DATE_ASC: 'primary_release_date.asc',
+  TITLE_ASC: 'title.asc',
+  TITLE_DESC: 'title.desc',
+} as const;
 
 export const TMDB_MOVIE_GENRES = [
   { id: 28, name: 'Action' },
@@ -50,7 +50,7 @@ export const TMDB_TV_GENRES = [
   { id: 37, name: 'Western' },
 ] as const;
 
-export type TmdbSortOption = (typeof TMDB_SORT_OPTIONS)[number];
+export type TmdbSortOption = (typeof TMDB_MOVIE_SORT_OPTIONS)[keyof typeof TMDB_MOVIE_SORT_OPTIONS];
 export type TmdbMovieGenre = (typeof TMDB_MOVIE_GENRES)[number];
 export type TmdbTvGenre = (typeof TMDB_TV_GENRES)[number];
 
