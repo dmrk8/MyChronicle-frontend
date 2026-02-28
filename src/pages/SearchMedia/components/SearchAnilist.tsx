@@ -6,17 +6,27 @@ import { MediaType } from '../../../constants/mediaConstants';
 import { useSearchAnilist } from '../../../hooks/useAnilist';
 import {
   ANILIST_SORT_OPTIONS,
+  ANILIST_SEASONS,
   type AnilistSortOptions,
+  type AnilistSeason,
 } from '../../../constants/anilistFilters';
 import type {
   AnilistMediaType,
   SearchAnilistParams,
 } from '../../../api/anilistApi';
+import { useLocation } from 'react-router-dom';
 
 const STORAGE_KEY_PREFIX = 'searchAnilist';
 
+const CURRENT_YEAR = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from(
+  { length: CURRENT_YEAR + 2 - 1940 },
+  (_, i) => CURRENT_YEAR + 1 - i,
+);
+
 const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const storageKey = `${STORAGE_KEY_PREFIX}_${mediaType}`;
 
@@ -31,6 +41,26 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       (sessionStorage.getItem(`${storageKey}_sort`) as AnilistSortOptions) ??
       ANILIST_SORT_OPTIONS.TRENDING_DESC,
   );
+  const [selectedSeason, setSelectedSeason] = useState<AnilistSeason | ''>(
+    () =>
+      (sessionStorage.getItem(`${storageKey}_season`) as AnilistSeason) ?? '',
+  );
+  const [selectedYear, setSelectedYear] = useState<number | ''>(() => {
+    const stored = sessionStorage.getItem(`${storageKey}_year`);
+    return stored ? Number(stored) : '';
+  });
+
+  // Reset state when navigated here with { state: { reset: true } }
+  useEffect(() => {
+    if (location.state?.reset) {
+      setSearchQuery('');
+      setDebouncedSearchQuery('');
+      setSortBy(ANILIST_SORT_OPTIONS.TRENDING_DESC);
+      setSelectedSeason('');
+      setSelectedYear('');
+      window.history.replaceState({}, '');
+    }
+  }, [location.state]);
 
   // Persist query to sessionStorage
   useEffect(() => {
@@ -44,12 +74,27 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     sessionStorage.setItem(`${storageKey}_sort`, sortBy);
   }, [sortBy, storageKey]);
 
+  // Persist season to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem(`${storageKey}_season`, selectedSeason);
+  }, [selectedSeason, storageKey]);
+
+  // Persist year to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem(
+      `${storageKey}_year`,
+      selectedYear !== '' ? String(selectedYear) : '',
+    );
+  }, [selectedYear, storageKey]);
+
   const isSearching = debouncedSearchQuery.trim().length > 0;
 
   const anilistParams: SearchAnilistParams = {
     ...(isSearching && { search: debouncedSearchQuery }),
     mediaType: mediaType as AnilistMediaType,
     sort: sortBy,
+    ...(selectedSeason && { season: selectedSeason }),
+    ...(selectedYear && { seasonYear: selectedYear }),
   };
 
   const {
@@ -73,6 +118,15 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
 
   const openDetails = (id: number) =>
     navigate(`/${mediaType.toLowerCase()}/${id}`);
+
+  const hasActiveFilters = selectedSeason !== '' || selectedYear !== '';
+
+  const clearFilters = () => {
+    setSelectedSeason('');
+    setSelectedYear('');
+  };
+
+  const isAnime = mediaType === MediaType.ANIME;
 
   return (
     <div className="min-h-screen bg-linear-to-b from-zinc-900 via-black to-zinc-900">
@@ -147,6 +201,79 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                 ▼
               </span>
             </div>
+          </div>
+
+          {/* Season & Year Filters */}
+          <div className="max-w-3xl mx-auto mt-3 flex items-center gap-3 flex-wrap">
+            {/* Season Dropdown — anime only */}
+            {isAnime && (
+              <div className="relative group shrink-0">
+                <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+                <select
+                  value={selectedSeason}
+                  onChange={(e) =>
+                    setSelectedSeason(e.target.value as AnilistSeason | '')
+                  }
+                  className={`relative appearance-none pl-4 pr-10 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200
+                    ${selectedSeason ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400'}`}
+                >
+                  <option value="" className="bg-zinc-800 text-zinc-400">
+                    All Seasons
+                  </option>
+                  {ANILIST_SEASONS.map((season) => (
+                    <option
+                      key={season}
+                      value={season}
+                      className="bg-zinc-800 text-white"
+                    >
+                      {season.charAt(0) + season.slice(1).toLowerCase()}
+                    </option>
+                  ))}
+                </select>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
+                  ▼
+                </span>
+              </div>
+            )}
+
+            {/* Year Dropdown */}
+            <div className="relative group shrink-0">
+              <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+              <select
+                value={selectedYear}
+                onChange={(e) =>
+                  setSelectedYear(e.target.value ? Number(e.target.value) : '')
+                }
+                className={`relative appearance-none pl-4 pr-10 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200
+                  ${selectedYear ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400'}`}
+              >
+                <option value="" className="bg-zinc-800 text-zinc-400">
+                  All Years
+                </option>
+                {YEAR_OPTIONS.map((year) => (
+                  <option
+                    key={year}
+                    value={year}
+                    className="bg-zinc-800 text-white"
+                  >
+                    {year}
+                  </option>
+                ))}
+              </select>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
+                ▼
+              </span>
+            </div>
+
+            {/* Clear Filters Button */}
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="px-4 py-3 text-sm text-zinc-400 hover:text-white border border-zinc-700 hover:border-zinc-500 rounded-xl transition-all duration-200 bg-zinc-800/80 backdrop-blur-xl"
+              >
+                Clear filters ✕
+              </button>
+            )}
           </div>
         </div>
       </div>
