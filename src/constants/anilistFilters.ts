@@ -20,7 +20,7 @@ export const ANILIST_GENRES = [
   'Thriller',
 ] as const;
 
-export const ANILIST_FORMATS = [
+export const ANILIST_ANIME_FORMATS = [
   'TV',
   'TV_SHORT',
   'MOVIE',
@@ -28,6 +28,10 @@ export const ANILIST_FORMATS = [
   'OVA',
   'ONA',
   'MUSIC',
+] as const;
+
+
+export const ANILIST_MANGA_FORMATS = [
   'MANGA',
   'NOVEL',
   'ONE_SHOT',
@@ -66,7 +70,8 @@ export const ANILIST_COUNTRIES = [
 
 export type AnilistSortOptions = (typeof ANILIST_SORT_OPTIONS)[keyof typeof ANILIST_SORT_OPTIONS];
 export type AnilistGenre = (typeof ANILIST_GENRES)[number];
-export type AnilistFormat = (typeof ANILIST_FORMATS)[number];
+export type AnilistAnimeFormat = (typeof ANILIST_ANIME_FORMATS)[number];
+export type AnilistMangaFormat = (typeof ANILIST_MANGA_FORMATS)[number];
 export type AnilistSeason = (typeof ANILIST_SEASONS)[number];
 export type AnilistAiringStatus = (typeof ANILIST_AIRING_STATUS)[number];
 export type AnilistPublishingStatus = (typeof ANILIST_PUBLISHING_STATUS)[number];
