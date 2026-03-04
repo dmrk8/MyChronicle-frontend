@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInfiniteScroll } from '../../../hooks/useInfiniteScroll';
 import MediaGrid from '../../../components/MediaGrid';
@@ -18,7 +18,7 @@ import {
   type AnilistAiringStatus,
   type AnilistPublishingStatus,
   ANILIST_ANIME_FORMATS,
-  ANILIST_MANGA_FORMATS
+  ANILIST_MANGA_FORMATS,
 } from '../../../constants/anilistFilters';
 import type {
   AnilistMediaType,
@@ -113,22 +113,51 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   const genreSearchRef = useRef<HTMLInputElement>(null);
   const yearSearchRef = useRef<HTMLInputElement>(null);
 
+  const isFirstRender = useRef(true);
+
   useEffect(() => {
     if (showGenreDropdown)
       setTimeout(() => genreSearchRef.current?.focus(), 50);
-    else setGenreSearch('');
+    else {
+      setTimeout(() => setGenreSearch(''), 0);
+    }
   }, [showGenreDropdown]);
 
   useEffect(() => {
     if (showYearDropdown) setTimeout(() => yearSearchRef.current?.focus(), 50);
     else {
-      setYearSearch('');
-      setYearDropdownIndex(-1); // reset index when closed
+      setTimeout(() => {
+        setYearSearch('');
+        setYearDropdownIndex(-1);
+      }, 0);
     }
   }, [showYearDropdown]);
 
   useEffect(() => {
     if (location.state?.reset) {
+      startTransition(() => {
+        setSearchQuery('');
+        setDebouncedSearchQuery('');
+        setSortBy(ANILIST_SORT_OPTIONS.TRENDING_DESC);
+        setSelectedSeason('');
+        setSelectedYear('');
+        setSelectedStatus('');
+        setSelectedGenres([]);
+        setSelectedCountry('');
+        setIsAdult(false);
+        setSelectedFormat('');
+      });
+      window.history.replaceState({}, '');
+    }
+  }, [location.state]);
+
+  // Reset all filters when media type changes (tab switch)
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    startTransition(() => {
       setSearchQuery('');
       setDebouncedSearchQuery('');
       setSortBy(ANILIST_SORT_OPTIONS.TRENDING_DESC);
@@ -138,9 +167,9 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       setSelectedGenres([]);
       setSelectedCountry('');
       setIsAdult(false);
-      window.history.replaceState({}, '');
-    }
-  }, [location.state]);
+      setSelectedFormat('');
+    });
+  }, [mediaType]);
 
   useEffect(() => {
     sessionStorage.setItem(`${storageKey}_query`, searchQuery);
@@ -392,9 +421,9 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
             </p>
           </div>
 
-          {/* Search Bar + Sort By */}
-          <div className="max-w-3xl mx-auto flex items-center gap-3">
-            <div className="relative group flex-1">
+          {/* Search Bar */}
+          <div className="max-w-3xl mx-auto">
+            <div className="relative group">
               <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
               <div className="relative flex items-center">
                 <span className="absolute left-5 text-zinc-400 text-xl">
@@ -417,33 +446,6 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                 )}
               </div>
             </div>
-
-            <div className="relative group shrink-0">
-              <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="relative appearance-none pl-4 pr-10 py-5 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm cursor-pointer"
-              >
-                {Object.entries(ANILIST_SORT_OPTIONS).map(([key, value]) => (
-                  <option key={value} value={value} className="bg-zinc-800">
-                    {key
-                      .split('_')
-                      .map((w) => {
-                        if (w === 'DESC') return 'Descending';
-                        if (w === 'ASC') return 'Ascending';
-                        return (
-                          w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
-                        );
-                      })
-                      .join(' ')}
-                  </option>
-                ))}
-              </select>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
-                ▼
-              </span>
-            </div>
           </div>
 
           {/* Filters */}
@@ -463,6 +465,46 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
             </div>
 
             <div className="flex items-start gap-4 flex-wrap">
+              {/* ── Sort By ── */}
+              <div className="flex flex-col gap-1 shrink-0">
+                <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
+                  Sort By
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                    className={`${selectBase} ${inactiveSelect}`}
+                  >
+                    {Object.entries(ANILIST_SORT_OPTIONS).map(
+                      ([key, value]) => (
+                        <option
+                          key={value}
+                          value={value}
+                          className="bg-zinc-800"
+                        >
+                          {key
+                            .split('_')
+                            .map((w) => {
+                              if (w === 'DESC') return 'Descending';
+                              if (w === 'ASC') return 'Ascending';
+                              return (
+                                w.charAt(0).toUpperCase() +
+                                w.slice(1).toLowerCase()
+                              );
+                            })
+                            .join(' ')}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
+                    ▼
+                  </span>
+                </div>
+              </div>
+
               {/* ── Genres ── */}
               <div className="flex flex-col gap-1 shrink-0">
                 <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
