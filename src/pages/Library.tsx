@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useGetUserMediaEntriesPaginated } from '../hooks/useUserMediaEntry';
@@ -109,7 +109,7 @@ const LibraryPage = () => {
     sortBy: sortBy,
     sortOrder: sortOrder,
     titleSearch: debouncedSearchQuery || undefined,
-    isAdult: includeAdult ? undefined : 'false',
+    isAdult: includeAdult ? 'true' : 'false', // 'true' = only adult, 'false' = only non-adult
     page: 1,
     perPage: 20,
   });
@@ -168,6 +168,19 @@ const LibraryPage = () => {
     setDebouncedSearchQuery('');
     setIncludeAdult(false);
   };
+  
+  const [, startTransition] = useTransition();
+
+  useEffect(() => {
+  startTransition(() => {
+    setSelectedStatus('all');
+    setIsFavorite(undefined);
+    setSearchQuery('');
+    setDebouncedSearchQuery('');
+    setIncludeAdult(false);
+  });
+}, [selectedType]);
+  
 
   const hasActiveFilters =
     selectedStatus !== 'all' ||
@@ -231,7 +244,7 @@ const LibraryPage = () => {
           </div>
 
           {/* Search + Filters Row */}
-          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-stretch gap-3">
+          <div className="max-w-4xl mx-auto flex flex-col gap-4">
             {/* Search Input */}
             <div className="relative group flex-1">
               <div className="absolute inset-0 bg-linear-to-r from-purple-500 to-pink-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
@@ -277,146 +290,198 @@ const LibraryPage = () => {
               </div>
             </div>
 
-            {/* Status Filter */}
-            <div className="relative group shrink-0">
-              <div className="absolute inset-0 bg-linear-to-r from-purple-500 to-pink-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-              <select
-                value={selectedStatus}
-                onChange={(e) =>
-                  setSelectedStatus(
-                    e.target.value as UserMediaEntryStatus | 'all',
-                  )
-                }
-                className="relative appearance-none pl-4 pr-9 py-3.5 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm cursor-pointer h-full"
-              >
-                {statuses.map((status) => (
-                  <option key={status} value={status} className="bg-zinc-800">
-                    {statusLabels[status]}
-                  </option>
-                ))}
-              </select>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
-                ▼
-              </span>
-            </div>
-
-            {/* Sort By */}
-            <div className="relative group shrink-0">
-              <div className="absolute inset-0 bg-linear-to-r from-purple-500 to-pink-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-              <select
-                value={sortBy}
-                onChange={(e) =>
-                  setSortBy(e.target.value as UserMediaEntrySortFields)
-                }
-                className="relative appearance-none pl-4 pr-9 py-3.5 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm cursor-pointer h-full"
-              >
-                {sortOptions.map((option) => (
-                  <option
-                    key={option.value}
-                    value={option.value}
-                    className="bg-zinc-800"
+            {/* Filters Label + Row */}
+            <div>
+              <div className="flex items-center justify-between mb-3 pl-1">
+                <p className="text-zinc-500 text-xs font-semibold uppercase tracking-widest">
+                  Filters
+                </p>
+                {hasActiveFilters && (
+                  <button
+                    onClick={handleClearFilters}
+                    className="text-xs text-zinc-500 hover:text-white transition-colors"
                   >
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
-                ▼
-              </span>
+                    Clear all ✕
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-stretch gap-3">
+                {/* Status Filter */}
+                <div className="flex flex-col gap-1 shrink-0">
+                  <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
+                    Status
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-linear-to-r from-purple-500 to-pink-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+                    <select
+                      value={selectedStatus}
+                      onChange={(e) =>
+                        setSelectedStatus(
+                          e.target.value as UserMediaEntryStatus | 'all',
+                        )
+                      }
+                      className="relative appearance-none pl-4 pr-9 py-3.5 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm cursor-pointer h-full"
+                    >
+                      {statuses.map((status) => (
+                        <option
+                          key={status}
+                          value={status}
+                          className="bg-zinc-800"
+                        >
+                          {statusLabels[status]}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
+                      ▼
+                    </span>
+                  </div>
+                </div>
+
+                {/* Sort By */}
+                <div className="flex flex-col gap-1 shrink-0">
+                  <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
+                    Sort By
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-linear-to-r from-purple-500 to-pink-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+                    <select
+                      value={sortBy}
+                      onChange={(e) =>
+                        setSortBy(e.target.value as UserMediaEntrySortFields)
+                      }
+                      className="relative appearance-none pl-4 pr-9 py-3.5 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm cursor-pointer h-full"
+                    >
+                      {sortOptions.map((option) => (
+                        <option
+                          key={option.value}
+                          value={option.value}
+                          className="bg-zinc-800"
+                        >
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
+                      ▼
+                    </span>
+                  </div>
+                </div>
+
+                {/* Sort Direction */}
+                <div className="flex flex-col gap-1 shrink-0">
+                  <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
+                    Order
+                  </label>
+                  <button
+                    onClick={toggleSortDirection}
+                    title={sortDirection === 'ASC' ? 'Ascending' : 'Descending'}
+                    className="shrink-0 px-4 py-3.5 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-zinc-300 hover:text-white hover:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200 flex items-center gap-1.5 text-sm"
+                  >
+                    {sortDirection === 'ASC' ? (
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 15l7-7 7 7"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    )}
+                    <span className="hidden sm:inline">
+                      {sortDirection === 'ASC' ? 'Asc' : 'Desc'}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Favorites Toggle */}
+                <div className="flex flex-col gap-1 shrink-0">
+                  <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
+                    Favorites
+                  </label>
+                  <button
+                    onClick={() =>
+                      setIsFavorite(isFavorite === true ? undefined : true)
+                    }
+                    title="Favorites only"
+                    className={`shrink-0 px-4 py-3.5 backdrop-blur-xl border rounded-2xl transition-all duration-200 flex items-center gap-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                      isFavorite === true
+                        ? 'bg-pink-600/20 border-pink-500/50 text-pink-300'
+                        : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-white hover:border-pink-500/50'
+                    }`}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill={isFavorite === true ? 'currentColor' : 'none'}
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Adult Content Toggle */}
+                <div className="flex flex-col gap-1 shrink-0">
+                  <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
+                    Adult
+                  </label>
+                  <button
+                    onClick={() => setIncludeAdult((prev) => !prev)}
+                    title={
+                      includeAdult
+                        ? 'Showing adult only'
+                        : 'Show adult content only'
+                    }
+                    className={`shrink-0 px-4 py-3.5 backdrop-blur-xl border rounded-2xl transition-all duration-200 flex items-center gap-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                      includeAdult
+                        ? 'bg-red-600/20 border-red-500/50 text-red-300'
+                        : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-white hover:border-red-500/50'
+                    }`}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
+                    </svg>
+                    <span className="hidden sm:inline">18+</span>
+                  </button>
+                </div>
+              </div>
             </div>
-
-            {/* Sort Direction */}
-            <button
-              onClick={toggleSortDirection}
-              title={sortDirection === 'ASC' ? 'Ascending' : 'Descending'}
-              className="shrink-0 px-4 py-3.5 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-zinc-300 hover:text-white hover:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200 flex items-center gap-1.5 text-sm"
-            >
-              {sortDirection === 'ASC' ? (
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 15l7-7 7 7"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              )}
-              <span className="hidden sm:inline">
-                {sortDirection === 'ASC' ? 'Asc' : 'Desc'}
-              </span>
-            </button>
-
-            {/* Favorites Toggle */}
-            <button
-              onClick={() =>
-                setIsFavorite(isFavorite === true ? undefined : true)
-              }
-              title="Favorites only"
-              className={`shrink-0 px-4 py-3.5 backdrop-blur-xl border rounded-2xl transition-all duration-200 flex items-center gap-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                isFavorite === true
-                  ? 'bg-pink-600/20 border-pink-500/50 text-pink-300'
-                  : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-white hover:border-pink-500/50'
-              }`}
-            >
-              <svg
-                className="w-4 h-4"
-                fill={isFavorite === true ? 'currentColor' : 'none'}
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                />
-              </svg>
-            </button>
-
-            {/* Adult Content Toggle */}
-            <button
-              onClick={() => setIncludeAdult((prev) => !prev)}
-              title="Include adult content"
-              className={`shrink-0 px-4 py-3.5 backdrop-blur-xl border rounded-2xl transition-all duration-200 flex items-center gap-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                includeAdult
-                  ? 'bg-red-600/20 border-red-500/50 text-red-300'
-                  : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-white hover:border-red-500/50'
-              }`}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
-              <span className="hidden sm:inline">18+</span>
-            </button>
           </div>
 
           {/* Active Filters Pills */}
