@@ -9,6 +9,17 @@ export const TMDB_MOVIE_SORT_OPTIONS = {
   TITLE_DESC: 'title.desc',
 } as const;
 
+export const TMDB_TV_SORT_OPTIONS = {
+  POPULARITY_DESC: 'popularity.desc',
+  POPULARITY_ASC: 'popularity.asc',
+  VOTE_AVERAGE_DESC: 'vote_average.desc',
+  VOTE_AVERAGE_ASC: 'vote_average.asc',
+  FIRST_AIR_DATE_DESC: 'first_air_date.desc',
+  FIRST_AIR_DATE_ASC: 'first_air_date.asc',
+  NAME_ASC: 'name.asc',
+  NAME_DESC: 'name.desc',
+} as const;
+
 export const TMDB_MOVIE_GENRES = [
   { id: 28, name: 'Action' },
   { id: 12, name: 'Adventure' },
@@ -50,23 +61,125 @@ export const TMDB_TV_GENRES = [
   { id: 37, name: 'Western' },
 ] as const;
 
-export type TmdbSortOption = (typeof TMDB_MOVIE_SORT_OPTIONS)[keyof typeof TMDB_MOVIE_SORT_OPTIONS];
+export const TMDB_TV_STATUSES = [
+  { value: '0', label: 'Returning Series' },
+  { value: '3', label: 'Ended' },
+  { value: '4', label: 'Cancelled' },
+] as const;
+
+export const TMDB_LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'ja', name: 'Japanese' },
+  { code: 'ko', name: 'Korean' },
+  { code: 'zh', name: 'Mandarin' },
+  { code: 'cn', name: 'Cantonese' },
+  { code: 'fr', name: 'French' },
+  { code: 'de', name: 'German' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'it', name: 'Italian' },
+  { code: 'pt', name: 'Portuguese' },
+  { code: 'hi', name: 'Hindi' },
+  { code: 'ru', name: 'Russian' },
+  { code: 'ar', name: 'Arabic' },
+  { code: 'tr', name: 'Turkish' },
+  { code: 'pl', name: 'Polish' },
+  { code: 'nl', name: 'Dutch' },
+  { code: 'sv', name: 'Swedish' },
+  { code: 'da', name: 'Danish' },
+  { code: 'fi', name: 'Finnish' },
+  { code: 'no', name: 'Norwegian' },
+  { code: 'nb', name: 'Norwegian Bokmål' },
+  { code: 'nn', name: 'Norwegian Nynorsk' },
+  { code: 'id', name: 'Indonesian' },
+  { code: 'ms', name: 'Malay' },
+  { code: 'th', name: 'Thai' },
+  { code: 'vi', name: 'Vietnamese' },
+  { code: 'fa', name: 'Persian' },
+  { code: 'he', name: 'Hebrew' },
+  { code: 'uk', name: 'Ukrainian' },
+  { code: 'cs', name: 'Czech' },
+  { code: 'sk', name: 'Slovak' },
+  { code: 'ro', name: 'Romanian' },
+  { code: 'hu', name: 'Hungarian' },
+  { code: 'bg', name: 'Bulgarian' },
+  { code: 'hr', name: 'Croatian' },
+  { code: 'bs', name: 'Bosnian' },
+  { code: 'sr', name: 'Serbian' },
+  { code: 'sh', name: 'Serbo-Croatian' },
+  { code: 'sl', name: 'Slovenian' },
+  { code: 'el', name: 'Greek' },
+  { code: 'lt', name: 'Lithuanian' },
+  { code: 'lv', name: 'Latvian' },
+  { code: 'et', name: 'Estonian' },
+  { code: 'is', name: 'Icelandic' },
+  { code: 'ca', name: 'Catalan' },
+  { code: 'eu', name: 'Basque' },
+  { code: 'gl', name: 'Galician' },
+  { code: 'af', name: 'Afrikaans' },
+  { code: 'sq', name: 'Albanian' },
+  { code: 'hy', name: 'Armenian' },
+  { code: 'az', name: 'Azerbaijani' },
+  { code: 'be', name: 'Belarusian' },
+  { code: 'bn', name: 'Bengali' },
+  { code: 'am', name: 'Amharic' },
+  { code: 'ka', name: 'Georgian' },
+  { code: 'kk', name: 'Kazakh' },
+  { code: 'mk', name: 'Macedonian' },
+  { code: 'mn', name: 'Mongolian' },
+  { code: 'my', name: 'Burmese' },
+  { code: 'ne', name: 'Nepali' },
+  { code: 'pa', name: 'Punjabi' },
+  { code: 'si', name: 'Sinhalese' },
+  { code: 'ta', name: 'Tamil' },
+  { code: 'te', name: 'Telugu' },
+  { code: 'ur', name: 'Urdu' },
+  { code: 'uz', name: 'Uzbek' },
+  { code: 'ml', name: 'Malayalam' },
+  { code: 'mr', name: 'Marathi' },
+  { code: 'gu', name: 'Gujarati' },
+  { code: 'kn', name: 'Kannada' },
+  { code: 'or', name: 'Oriya' },
+  { code: 'as', name: 'Assamese' },
+  { code: 'ps', name: 'Pushto' },
+  { code: 'ku', name: 'Kurdish' },
+  { code: 'tg', name: 'Tajik' },
+  { code: 'tk', name: 'Turkmen' },
+  { code: 'ky', name: 'Kirghiz' },
+  { code: 'bo', name: 'Tibetan' },
+  { code: 'km', name: 'Khmer' },
+  { code: 'lo', name: 'Lao' },
+  { code: 'tl', name: 'Tagalog' },
+  { code: 'jv', name: 'Javanese' },
+  { code: 'ms', name: 'Malay' },
+  { code: 'sw', name: 'Swahili' },
+  { code: 'yo', name: 'Yoruba' },
+  { code: 'ha', name: 'Hausa' },
+  { code: 'ig', name: 'Igbo' },
+  { code: 'zu', name: 'Zulu' },
+  { code: 'xh', name: 'Xhosa' },
+  { code: 'rw', name: 'Kinyarwanda' },
+  { code: 'so', name: 'Somali' },
+  { code: 'mt', name: 'Maltese' },
+  { code: 'cy', name: 'Welsh' },
+  { code: 'ga', name: 'Irish' },
+  { code: 'gd', name: 'Gaelic' },
+  { code: 'br', name: 'Breton' },
+  { code: 'lb', name: 'Letzeburgesch' },
+  { code: 'eo', name: 'Esperanto' },
+  { code: 'la', name: 'Latin' },
+  { code: 'mi', name: 'Maori' },
+  { code: 'wo', name: 'Wolof' },
+  { code: 'ms', name: 'Malay' },
+  { code: 'ba', name: 'Bashkir' },
+  { code: 'tt', name: 'Tatar' },
+  { code: 'sa', name: 'Sanskrit' },
+  { code: 'da', name: 'Danish' },
+  { code: 'xx', name: 'No Language' },
+] as const;
+
+export type TmdbSortOption =
+  | (typeof TMDB_MOVIE_SORT_OPTIONS)[keyof typeof TMDB_MOVIE_SORT_OPTIONS]
+  | (typeof TMDB_TV_SORT_OPTIONS)[keyof typeof TMDB_TV_SORT_OPTIONS];
 export type TmdbMovieGenre = (typeof TMDB_MOVIE_GENRES)[number];
 export type TmdbTvGenre = (typeof TMDB_TV_GENRES)[number];
-
-/*
-runtime - 0-360
-primary release Date
-original lang
-
-airdate
-
-first air date 
-
-status for tv 
-| Status ID | Meaning          |
-| --------- | ---------------- |
-| `0`       | Returning Series |
-| `3`       | Ended            |
-| `4`       | Cancelled        |
-*/
+export type TmdbGenre = TmdbMovieGenre | TmdbTvGenre;
