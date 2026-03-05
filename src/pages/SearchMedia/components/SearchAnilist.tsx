@@ -76,7 +76,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     query: sessionStorage.getItem(`${storageKey}_query`) ?? '',
     sort:
       (sessionStorage.getItem(`${storageKey}_sort`) as AnilistSortOptions) ??
-      ANILIST_SORT_OPTIONS.TRENDING_DESC,
+      ANILIST_SORT_OPTIONS.POPULARITY_DESC,
     season:
       (sessionStorage.getItem(`${storageKey}_season`) as AnilistSeason) ?? '',
     year: (() => {
@@ -203,7 +203,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     startTransition(() => {
       setSearchQuery('');
       setDebouncedSearchQuery('');
-      setSortBy(ANILIST_SORT_OPTIONS.TRENDING_DESC);
+      setSortBy(ANILIST_SORT_OPTIONS.POPULARITY_DESC);
       setSelectedSeason('');
       setSelectedYear('');
       setSelectedStatus('');

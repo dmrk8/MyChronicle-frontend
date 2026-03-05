@@ -44,61 +44,91 @@ const genreButtonLabel = (genres: TmdbGenre[]): string => {
   return `${genres[0].name} +${genres.length - 1}`;
 };
 
+// storageKey uses lowercase path to match what Header writes (searchTmdb_movie)
+const getStorageKey = (mediaType: MediaType) =>
+  `${STORAGE_KEY_PREFIX}_${mediaType.toLowerCase()}`;
+
 const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const storageKey = `${STORAGE_KEY_PREFIX}_${mediaType}`;
+  const storageKey = getStorageKey(mediaType);
   const isMovie = mediaType === MediaType.MOVIE;
   const genreOptions = isMovie ? TMDB_MOVIE_GENRES : TMDB_TV_GENRES;
   const sortOptions = isMovie ? TMDB_MOVIE_SORT_OPTIONS : TMDB_TV_SORT_OPTIONS;
 
-  const [searchQuery, setSearchQuery] = useState<string>(
-    () => sessionStorage.getItem(`${storageKey}_query`) ?? '',
-  );
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>(
-    () => sessionStorage.getItem(`${storageKey}_query`) ?? '',
-  );
-  const [sortBy, setSortBy] = useState<TmdbSortOption>(
-    () =>
+  // ── Helper to read all filters from sessionStorage ─────────────────────────
+  const readStorage = () => ({
+    query: sessionStorage.getItem(`${storageKey}_query`) ?? '',
+    sort:
       (sessionStorage.getItem(`${storageKey}_sort`) as TmdbSortOption) ??
       TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC,
+    genres: (() => {
+      const v = sessionStorage.getItem(`${storageKey}_genres`);
+      return v ? (JSON.parse(v) as TmdbGenre[]) : [];
+    })(),
+    year: (() => {
+      const v = sessionStorage.getItem(`${storageKey}_year`);
+      return v ? Number(v) : ('' as const);
+    })(),
+    status: sessionStorage.getItem(`${storageKey}_status`) ?? '',
+    language: sessionStorage.getItem(`${storageKey}_language`) ?? '',
+    minRating: (() => {
+      const v = sessionStorage.getItem(`${storageKey}_minRating`);
+      return v ? Number(v) : ('' as const);
+    })(),
+    runtimeMin: (() => {
+      const v = sessionStorage.getItem(`${storageKey}_runtimeMin`);
+      return v ? Number(v) : 0;
+    })(),
+    runtimeMax: (() => {
+      const v = sessionStorage.getItem(`${storageKey}_runtimeMax`);
+      return v ? Number(v) : 360;
+    })(),
+    runtimeEnabled:
+      sessionStorage.getItem(`${storageKey}_runtimeEnabled`) === 'true',
+    // Header now writes dateFrom / dateTo directly — single key, no fallback needed
+    dateFrom: sessionStorage.getItem(`${storageKey}_dateFrom`) ?? '',
+    dateTo: sessionStorage.getItem(`${storageKey}_dateTo`) ?? '',
+  });
+
+  const [searchQuery, setSearchQuery] = useState<string>(
+    () => readStorage().query,
   );
-  const [selectedGenres, setSelectedGenres] = useState<TmdbGenre[]>(() => {
-    const stored = sessionStorage.getItem(`${storageKey}_genres`);
-    return stored ? JSON.parse(stored) : [];
-  });
-  const [selectedYear, setSelectedYear] = useState<number | ''>(() => {
-    const stored = sessionStorage.getItem(`${storageKey}_year`);
-    return stored ? Number(stored) : '';
-  });
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>(
+    () => readStorage().query,
+  );
+  const [sortBy, setSortBy] = useState<TmdbSortOption>(
+    () => readStorage().sort,
+  );
+  const [selectedGenres, setSelectedGenres] = useState<TmdbGenre[]>(
+    () => readStorage().genres,
+  );
+  const [selectedYear, setSelectedYear] = useState<number | ''>(
+    () => readStorage().year,
+  );
   const [selectedStatus, setSelectedStatus] = useState<string>(
-    () => sessionStorage.getItem(`${storageKey}_status`) ?? '',
+    () => readStorage().status,
   );
   const [selectedLanguage, setSelectedLanguage] = useState<string>(
-    () => sessionStorage.getItem(`${storageKey}_language`) ?? '',
+    () => readStorage().language,
   );
-  const [minRating, setMinRating] = useState<number | ''>(() => {
-    const stored = sessionStorage.getItem(`${storageKey}_minRating`);
-    return stored ? Number(stored) : '';
-  });
-  const [runtimeMin, setRuntimeMin] = useState<number>(() => {
-    const stored = sessionStorage.getItem(`${storageKey}_runtimeMin`);
-    return stored ? Number(stored) : 0;
-  });
-  const [runtimeMax, setRuntimeMax] = useState<number>(() => {
-    const stored = sessionStorage.getItem(`${storageKey}_runtimeMax`);
-    return stored ? Number(stored) : 360;
-  });
-  const [runtimeEnabled, setRuntimeEnabled] = useState<boolean>(() => {
-    return sessionStorage.getItem(`${storageKey}_runtimeEnabled`) === 'true';
-  });
+  const [minRating, setMinRating] = useState<number | ''>(
+    () => readStorage().minRating,
+  );
+  const [runtimeMin, setRuntimeMin] = useState<number>(
+    () => readStorage().runtimeMin,
+  );
+  const [runtimeMax, setRuntimeMax] = useState<number>(
+    () => readStorage().runtimeMax,
+  );
+  const [runtimeEnabled, setRuntimeEnabled] = useState<boolean>(
+    () => readStorage().runtimeEnabled,
+  );
   const [dateFrom, setDateFrom] = useState<string>(
-    () => sessionStorage.getItem(`${storageKey}_dateFrom`) ?? '',
+    () => readStorage().dateFrom,
   );
-  const [dateTo, setDateTo] = useState<string>(
-    () => sessionStorage.getItem(`${storageKey}_dateTo`) ?? '',
-  );
+  const [dateTo, setDateTo] = useState<string>(() => readStorage().dateTo);
 
   const [showGenreDropdown, setShowGenreDropdown] = useState(false);
   const [genreSearch, setGenreSearch] = useState('');
@@ -125,33 +155,58 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
       }, 0);
   }, [showYearDropdown]);
 
+  // ── Apply filters from Header navigation ──────────────────────────────────
   useEffect(() => {
-    if (location.state?.reset) {
-      startTransition(() => {
-        setSearchQuery('');
-        setDebouncedSearchQuery('');
-        setSortBy(TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC);
-        setSelectedGenres([]);
-        setSelectedYear('');
-        setSelectedStatus('');
-        setSelectedLanguage('');
-        setMinRating('');
-        setRuntimeMin(0);
-        setRuntimeMax(360);
-        setRuntimeEnabled(false);
-        setDateFrom('');
-        setDateTo('');
-      });
-      window.history.replaceState({}, '');
-    }
-  }, [location.state]);
+    if (!location.state?.filtersApplied) return;
 
+    const s = readStorage();
+    startTransition(() => {
+      setSearchQuery(s.query);
+      setDebouncedSearchQuery(s.query);
+      setSortBy(s.sort);
+      setSelectedGenres(s.genres);
+      setSelectedYear(s.year);
+      setSelectedStatus(s.status);
+      setSelectedLanguage(s.language);
+      setMinRating(s.minRating);
+      setRuntimeMin(s.runtimeMin);
+      setRuntimeMax(s.runtimeMax);
+      setRuntimeEnabled(s.runtimeEnabled);
+      setDateFrom(s.dateFrom);
+      setDateTo(s.dateTo);
+    });
+
+    window.history.replaceState({}, '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state?.filtersApplied]);
+
+  // ── Reset effect ───────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!location.state?.reset) return;
+    startTransition(() => {
+      setSearchQuery('');
+      setDebouncedSearchQuery('');
+      setSortBy(TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC);
+      setSelectedGenres([]);
+      setSelectedYear('');
+      setSelectedStatus('');
+      setSelectedLanguage('');
+      setMinRating('');
+      setRuntimeMin(0);
+      setRuntimeMax(360);
+      setRuntimeEnabled(false);
+      setDateFrom('');
+      setDateTo('');
+    });
+    window.history.replaceState({}, '');
+  }, [location.state?.reset]);
+
+  // ── Persist to sessionStorage ──────────────────────────────────────────────
   useEffect(() => {
     sessionStorage.setItem(`${storageKey}_query`, searchQuery);
     const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 500);
     return () => clearTimeout(timer);
   }, [searchQuery, storageKey]);
-
   useEffect(() => {
     sessionStorage.setItem(`${storageKey}_sort`, sortBy);
   }, [sortBy, storageKey]);
@@ -179,7 +234,6 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
       minRating !== '' ? String(minRating) : '',
     );
   }, [minRating, storageKey]);
-
   useEffect(() => {
     sessionStorage.setItem(`${storageKey}_runtimeMin`, String(runtimeMin));
     sessionStorage.setItem(`${storageKey}_runtimeMax`, String(runtimeMax));
@@ -195,11 +249,12 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
     sessionStorage.setItem(`${storageKey}_dateTo`, dateTo);
   }, [dateTo, storageKey]);
 
+  // ── Query params ───────────────────────────────────────────────────────────
   const isSearching = debouncedSearchQuery.trim().length > 0;
 
   const tmdbMovieParams: SearchTmdbMovieParams = {
     ...(isSearching && { search: debouncedSearchQuery }),
-    sortBy: sortBy,
+    sortBy,
     ...(selectedGenres.length > 0 && {
       withGenres: selectedGenres.map((g) => g.id).join(','),
     }),
@@ -219,7 +274,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
 
   const tmdbTvParams: SearchTmdbTvParams = {
     ...(isSearching && { search: debouncedSearchQuery }),
-    sortBy: sortBy,
+    sortBy,
     ...(selectedGenres.length > 0 && {
       withGenres: selectedGenres.map((g) => g.id).join(','),
     }),
@@ -241,7 +296,6 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
   const movieQuery = useSearchTmdbMovie(tmdbMovieParams, {
     enabled: mediaType === MediaType.MOVIE,
   });
-
   const tvQuery = useSearchTmdbTv(tmdbTvParams, {
     enabled: mediaType === MediaType.TV,
   });
@@ -394,12 +448,10 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
     if (!showGenreDropdown) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setGenreDropdownIndex((prev) =>
-        Math.min(prev + 1, filteredGenres.length - 1),
-      );
+      setGenreDropdownIndex((p) => Math.min(p + 1, filteredGenres.length - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setGenreDropdownIndex((prev) => Math.max(prev - 1, 0));
+      setGenreDropdownIndex((p) => Math.max(p - 1, 0));
     } else if (e.key === 'Escape') {
       setShowGenreDropdown(false);
     } else if (
@@ -419,10 +471,10 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
     const totalItems = filteredYears.length + 1;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setYearDropdownIndex((prev) => Math.min(prev + 1, totalItems - 1));
+      setYearDropdownIndex((p) => Math.min(p + 1, totalItems - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setYearDropdownIndex((prev) => Math.max(prev - 1, 0));
+      setYearDropdownIndex((p) => Math.max(p - 1, 0));
     } else if (e.key === 'Escape') {
       setShowYearDropdown(false);
     } else if (e.key === 'Enter') {
@@ -662,9 +714,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
                               setShowYearDropdown(false);
                             }}
                             onMouseEnter={() => setYearDropdownIndex(0)}
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-700 transition-colors
-                              ${yearDropdownIndex === 0 ? 'bg-blue-600/30' : ''}
-                              ${!selectedYear ? 'text-blue-400' : 'text-zinc-400'}`}
+                            className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-700 transition-colors ${yearDropdownIndex === 0 ? 'bg-blue-600/30' : ''} ${!selectedYear ? 'text-blue-400' : 'text-zinc-400'}`}
                           >
                             Any
                           </button>
@@ -683,9 +733,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
                                 onMouseEnter={() =>
                                   setYearDropdownIndex(idx + 1)
                                 }
-                                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-700 transition-colors
-                                  ${yearDropdownIndex === idx + 1 ? 'bg-blue-600/30' : ''}
-                                  ${selectedYear === year ? 'text-blue-400 bg-zinc-700/50' : 'text-white'}`}
+                                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-700 transition-colors ${yearDropdownIndex === idx + 1 ? 'bg-blue-600/30' : ''} ${selectedYear === year ? 'text-blue-400 bg-zinc-700/50' : 'text-white'}`}
                               >
                                 {year}
                               </button>
@@ -780,10 +828,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
                           ? 'Clear the Year filter to use date range'
                           : ''
                       }
-                      className={`relative pl-3 pr-3 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer
-                        scheme-dark
-                        ${dateFrom ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400'}
-                        ${selectedYear ? 'opacity-40 cursor-not-allowed' : ''}`}
+                      className={`relative pl-3 pr-3 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer scheme-dark ${dateFrom ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400'} ${selectedYear ? 'opacity-40 cursor-not-allowed' : ''}`}
                     />
                   </div>
                   <span className="text-zinc-500 text-xs">to</span>
@@ -799,10 +844,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
                           ? 'Clear the Year filter to use date range'
                           : ''
                       }
-                      className={`relative pl-3 pr-3 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer
-                        scheme-dark
-                        ${dateTo ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400'}
-                        ${selectedYear ? 'opacity-40 cursor-not-allowed' : ''}`}
+                      className={`relative pl-3 pr-3 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer scheme-dark ${dateTo ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400'} ${selectedYear ? 'opacity-40 cursor-not-allowed' : ''}`}
                     />
                   </div>
                 </div>
@@ -844,10 +886,11 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
                           max={360}
                           step={5}
                           value={runtimeMin}
-                          onChange={(e) => {
-                            const val = Number(e.target.value);
-                            setRuntimeMin(Math.min(val, runtimeMax - 5));
-                          }}
+                          onChange={(e) =>
+                            setRuntimeMin(
+                              Math.min(Number(e.target.value), runtimeMax - 5),
+                            )
+                          }
                           className="flex-1 accent-blue-500 cursor-pointer"
                         />
                         <span className="text-white text-xs w-10 text-right">
@@ -862,10 +905,11 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
                           max={360}
                           step={5}
                           value={runtimeMax}
-                          onChange={(e) => {
-                            const val = Number(e.target.value);
-                            setRuntimeMax(Math.max(val, runtimeMin + 5));
-                          }}
+                          onChange={(e) =>
+                            setRuntimeMax(
+                              Math.max(Number(e.target.value), runtimeMin + 5),
+                            )
+                          }
                           className="flex-1 accent-blue-500 cursor-pointer"
                         />
                         <span className="text-white text-xs w-10 text-right">
@@ -902,6 +946,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
         </div>
       </div>
 
+      {/* Results */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {isFetching && mediaResults.length === 0 && (
           <div className="flex flex-col items-center justify-center py-32">
@@ -924,7 +969,6 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
               mediaList={mediaResults}
               onMediaClick={openDetails}
             />
-
             {hasNextPage && (
               <div
                 ref={sentinelRef}
@@ -932,25 +976,19 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
               >
                 {isFetchingNextPage ? (
                   <div className="flex items-center gap-3">
-                    <div
-                      className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
-                      style={{ animationDelay: '0ms' }}
-                    />
-                    <div
-                      className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
-                      style={{ animationDelay: '150ms' }}
-                    />
-                    <div
-                      className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
-                      style={{ animationDelay: '300ms' }}
-                    />
+                    {[0, 150, 300].map((delay) => (
+                      <div
+                        key={delay}
+                        className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                        style={{ animationDelay: `${delay}ms` }}
+                      />
+                    ))}
                   </div>
                 ) : (
                   <span className="text-zinc-500 text-sm">Scroll for more</span>
                 )}
               </div>
             )}
-
             {!hasNextPage && (
               <div className="text-center py-12 border-t border-zinc-800 mt-8">
                 <p className="text-lg font-medium text-zinc-300">
@@ -971,9 +1009,8 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
               No results found
             </p>
             <p className="text-zinc-400 text-center max-w-md">
-              We couldn't find any {mediaType.toLowerCase()} matching "
-              {debouncedSearchQuery}". Try different keywords or check the
-              spelling.
+              We couldn't find any {mediaType.toLowerCase()} matching your
+              filters.
             </p>
           </div>
         )}
