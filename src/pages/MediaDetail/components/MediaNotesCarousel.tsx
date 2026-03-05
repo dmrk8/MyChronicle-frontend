@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   FaChevronLeft,
   FaChevronRight,
   FaCircle,
   FaPlus,
+  FaRedo,
 } from 'react-icons/fa';
 import { MediaNotes } from './MediaNotes';
 import type { ReviewUpdate } from '../../../types/Review';
@@ -13,17 +14,21 @@ import {
   useGetReviewsByUserMediaEntryId,
   useUpdateReview,
 } from '../../../hooks/useReview';
+import { useUpdateUserMediaEntry } from '../../../hooks/useUserMediaEntry';
 
 interface MediaNotesCarouselProps {
   mediaTitle: string;
   userMediaEntryId?: string;
+  repeatCount?: number;
 }
 
 export const MediaNotesCarousel = ({
   mediaTitle,
   userMediaEntryId,
+  repeatCount = 0,
 }: MediaNotesCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [repeatInput, setRepeatInput] = useState(String(repeatCount));
 
   const { data: mediaNotes } = useGetReviewsByUserMediaEntryId(
     userMediaEntryId || '',
@@ -31,10 +36,28 @@ export const MediaNotesCarousel = ({
   const createReview = useCreateReview();
   const updateReview = useUpdateReview();
   const deleteReview = useDeleteReview();
+  const updateEntry = useUpdateUserMediaEntry();
 
   const hasReviews = mediaNotes && mediaNotes.length > 0;
-  const totalSlots = hasReviews ? mediaNotes.length + 1 : 1; // Reviews + new slot
+  const totalSlots = hasReviews ? mediaNotes.length + 1 : 1;
   const isOnNewReviewSlot = hasReviews && currentIndex === mediaNotes.length;
+
+  useEffect(() => {
+    setRepeatInput(String(repeatCount));
+  }, [repeatCount]);
+
+  const handleRepeatSave = async () => {
+    if (!userMediaEntryId) return;
+    const parsed = parseInt(repeatInput, 10);
+    if (!isNaN(parsed) && parsed >= 0) {
+      await updateEntry.mutateAsync({
+        entryId: userMediaEntryId,
+        update: { repeatCount: parsed },
+      });
+    } else {
+      setRepeatInput(String(repeatCount));
+    }
+  };
 
   const handleSaveNotes = async (
     reviewId: string | undefined,
@@ -61,15 +84,6 @@ export const MediaNotesCarousel = ({
 
   const handleDeleteNotes = async (reviewId: string) => {
     if (!userMediaEntryId) return;
-
-    try {
-      await deleteReview.mutateAsync({
-        reviewId,
-        userMediaEntryId: userMediaEntryId,
-      });
-    } catch (error) {
-      console.error('Failed to delete review:', error);
-    }
 
     try {
       await deleteReview.mutateAsync({
@@ -106,8 +120,25 @@ export const MediaNotesCarousel = ({
   const currentNote =
     hasReviews && !isOnNewReviewSlot ? mediaNotes[currentIndex] : undefined;
 
+    
   return (
     <div className="space-y-4">
+      {/* Repeat Count */}
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/60 rounded-lg border border-zinc-700/50 w-fit">
+        <FaRedo size={10} className="text-zinc-500 shrink-0" />
+        <span className="text-xs text-zinc-400 whitespace-nowrap">Repeats</span>
+        <input
+          type="number"
+          min={0}
+          value={repeatInput}
+          onChange={(e) => setRepeatInput(e.target.value)}
+          onBlur={handleRepeatSave}
+          onKeyDown={(e) => e.key === 'Enter' && handleRepeatSave()}
+          disabled={!userMediaEntryId}
+          className="w-10 text-center text-xs font-semibold text-white bg-zinc-700 border border-zinc-600 rounded px-1 py-0.5 focus:outline-none focus:border-zinc-400 disabled:opacity-40 disabled:cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        />
+      </div>
+
       {/* Navigation Header */}
       <div className="flex items-center justify-between px-4">
         <div className="flex items-center gap-2">

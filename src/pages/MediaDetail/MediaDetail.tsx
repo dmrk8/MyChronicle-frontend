@@ -41,22 +41,22 @@ export const MediaDetailPage = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const mediaType = rawMediaType?.toUpperCase() as MediaType;
-  const mediaId = id ? parseInt(id, 10) : undefined; 
+  const mediaId = id ? parseInt(id, 10) : undefined;
 
   const validMediaTypes = Object.values(MediaType);
   const isValidMediaType = mediaType && validMediaTypes.includes(mediaType);
 
   const animeQuery = useAnimeDetail(mediaId, {
-    enabled: mediaType === MediaType.ANIME && isValidMediaType && !!mediaId, 
+    enabled: mediaType === MediaType.ANIME && isValidMediaType && !!mediaId,
   });
   const mangaQuery = useMangaDetail(mediaId, {
-    enabled: mediaType === MediaType.MANGA && isValidMediaType && !!mediaId, 
+    enabled: mediaType === MediaType.MANGA && isValidMediaType && !!mediaId,
   });
   const movieQuery = useTmdbMovieDetail(mediaId, undefined, {
     enabled: mediaType === MediaType.MOVIE && isValidMediaType && !!mediaId,
   });
   const tvQuery = useTmdbTvDetail(mediaId, undefined, {
-    enabled: mediaType === MediaType.TV && isValidMediaType && !!mediaId, 
+    enabled: mediaType === MediaType.TV && isValidMediaType && !!mediaId,
   });
 
   const activeQuery =
@@ -127,7 +127,7 @@ export const MediaDetailPage = () => {
         externalSource: media?.externalSource as MediaExternalSource,
         status,
         inLibrary: true,
-        isAdult: media.isAdult
+        isAdult: media.isAdult,
       });
     }
     setShowStatusDropdown(false);
@@ -238,7 +238,7 @@ export const MediaDetailPage = () => {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-10">
+      <div className="max-w-full mx-auto px-4 sm:px-8 lg:px-60 -mt-32 relative z-10">
         {/* Main Content */}
         <div className="flex flex-col md:flex-row gap-8">
           {/* Left Sidebar - Cover Image, Buttons, and Info */}
@@ -451,6 +451,7 @@ export const MediaDetailPage = () => {
               mediaType={mediaType!}
               mediaTitle={media.title}
               userMediaEntryId={userEntry?.id}
+              repeatCount={userEntry?.repeatCount ?? 0}
             />
           </div>
         </div>

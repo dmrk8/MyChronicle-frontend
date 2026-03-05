@@ -28,25 +28,26 @@ export const MediaRecommendations = ({
               e.preventDefault();
               handleNavigate(recommendation);
             }}
-            className="group relative rounded-lg overflow-hidden bg-zinc-900/50 border border-zinc-700/50 hover:border-zinc-600 transition-all hover:scale-105 block"
+            className="group flex flex-col gap-1.5"
           >
-            {recommendation.coverImage ? (
-              <img
-                src={recommendation.coverImage}
-                alt={recommendation.title}
-                className="w-full aspect-2/3 object-cover"
-              />
-            ) : (
-              <div className="w-full aspect-2/3 bg-zinc-800 flex items-center justify-center">
-                <span className="text-zinc-600 text-2xl">📺</span>
-              </div>
-            )}
+            {/* Image box */}
+            <div className="rounded-lg overflow-hidden bg-zinc-900/50 border border-zinc-700/50 group-hover:border-zinc-500 transition-all group-hover:scale-105">
+              {recommendation.coverImage ? (
+                <img
+                  src={recommendation.coverImage}
+                  alt={recommendation.title}
+                  className="w-full aspect-2/3 object-cover"
+                />
+              ) : (
+                <div className="w-full aspect-2/3 bg-zinc-800 flex items-center justify-center">
+                  <span className="text-zinc-600 text-2xl">📺</span>
+                </div>
+              )}
+            </div>
 
-            {/* Title overlay on hover */}
-            <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
-              <div className="text-xs text-white font-semibold line-clamp-3">
-                {recommendation.title}
-              </div>
+            {/* Title below image */}
+            <div className="text-[14px] text-zinc-300 font-medium line-clamp-2 group-hover:text-white transition-colors leading-tight px-0.5">
+              {recommendation.title}
             </div>
           </a>
         ))}

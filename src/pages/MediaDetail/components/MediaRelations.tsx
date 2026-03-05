@@ -6,11 +6,9 @@ interface MediaRelationsProps {
   relations: MediaRelation[];
 }
 
-// Reusable card component for both full info and hover display
 const RelationCard = ({ relation }: { relation: MediaRelation }) => (
   <div className="w-64 bg-zinc-900/95 backdrop-blur-sm rounded-lg shadow-xl border border-zinc-700 hover:border-zinc-600 transition-colors">
     <div className="flex gap-2.5 p-2.5">
-      {/* Left side - Image */}
       <div className="shrink-0 w-20">
         {relation.coverImage ? (
           <img
@@ -24,20 +22,13 @@ const RelationCard = ({ relation }: { relation: MediaRelation }) => (
           </div>
         )}
       </div>
-
-      {/* Right side - Information */}
       <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-        {/* Top - Relation Type */}
         <div className="text-[10px] text-emerald-400 uppercase font-semibold tracking-wide mb-1 text-left">
           {relation.relationType}
         </div>
-
-        {/* Middle - Title */}
         <div className="text-xs text-white font-semibold line-clamp-2 flex-1 text-left">
           {relation.title}
         </div>
-
-        {/* Bottom - Format and Status */}
         <div className="flex gap-2 text-[10px] mt-1 justify-start">
           {relation.format && (
             <div className="text-zinc-400">{relation.format}</div>
@@ -50,6 +41,26 @@ const RelationCard = ({ relation }: { relation: MediaRelation }) => (
           )}
         </div>
       </div>
+    </div>
+  </div>
+);
+
+// Info panel that appears beside the image on hover
+const RelationInfoPanel = ({ relation }: { relation: MediaRelation }) => (
+  <div className="w-36 bg-zinc-900/95 backdrop-blur-sm border border-zinc-700 rounded flex flex-col justify-between p-2 h-full">
+    <div className="text-[10px] text-emerald-400 uppercase font-semibold tracking-wide text-left">
+      {relation.relationType}
+    </div>
+    <div className="text-xs text-white font-semibold line-clamp-3 text-left mt-1 flex-1">
+      {relation.title}
+    </div>
+    <div className="flex flex-col gap-0.5 text-[10px] mt-1">
+      {relation.format && (
+        <div className="text-zinc-400">{relation.format}</div>
+      )}
+      {relation.status && (
+        <div className="text-zinc-500">{relation.status}</div>
+      )}
     </div>
   </div>
 );
@@ -72,14 +83,12 @@ export const MediaRelations = ({ relations }: MediaRelationsProps) => {
   const handleMouseEnter = (index: number) => {
     setHoveredIndex(index);
 
-    // Calculate if card should expand left or right
     if (containerRef.current && itemRefs.current[index]) {
       const container = containerRef.current.getBoundingClientRect();
       const item = itemRefs.current[index]!.getBoundingClientRect();
       const itemCenter = item.left + item.width / 2;
       const containerCenter = container.left + container.width / 2;
 
-      // If item is in the right half, expand left; otherwise expand right
       setHoverPosition(itemCenter > containerCenter ? 'left' : 'right');
     }
   };
@@ -114,11 +123,9 @@ export const MediaRelations = ({ relations }: MediaRelationsProps) => {
               }`}
             >
               {showFullInfo ? (
-                // Full info layout for 3 or fewer relations
                 <RelationCard relation={relation} />
               ) : (
-                // Compact layout
-                <div className="relative group">
+                <div className="relative">
                   {relation.coverImage ? (
                     <img
                       src={relation.coverImage}
@@ -131,9 +138,13 @@ export const MediaRelations = ({ relations }: MediaRelationsProps) => {
                     </div>
                   )}
 
-                  {/* Always visible relation type */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/90 via-black/60 to-transparent p-1.5">
-                    <div className="text-[10px] text-zinc-300 uppercase font-medium text-center truncate">
+                  {/* Relation type label - hidden on hover */}
+                  <div
+                    className={`absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/80 via-black/40 to-transparent pt-6 pb-2 px-1.5 transition-opacity duration-150 ${
+                      hoveredIndex === index ? 'opacity-0' : 'opacity-100'
+                    }`}
+                  >
+                    <div className="text-[11px] text-white font-semibold uppercase tracking-wide text-center truncate drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">
                       {relation.relationType}
                     </div>
                   </div>
@@ -141,14 +152,18 @@ export const MediaRelations = ({ relations }: MediaRelationsProps) => {
               )}
             </button>
 
-            {/* Hover overlay - absolute positioned, doesn't affect layout */}
+            {/* Hover info panel - extends from image without shifting it */}
             {hoveredIndex === index && !showFullInfo && (
               <div
-                className={`absolute top-0 ${
-                  hoverPosition === 'left' ? 'right-0' : 'left-0'
-                } z-50 pointer-events-none`}
+                className={`absolute top-0 bottom-0 z-50 pointer-events-none flex ${
+                  hoverPosition === 'left'
+                    ? 'right-full pr-0.5'
+                    : 'left-full pl-0.5'
+                }`}
               >
-                <RelationCard relation={relation} />
+                <div className="w-36 h-full">
+                  <RelationInfoPanel relation={relation} />
+                </div>
               </div>
             )}
           </div>

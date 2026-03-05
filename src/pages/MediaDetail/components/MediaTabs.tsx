@@ -17,6 +17,7 @@ interface MediaTabsProps {
   mediaType: MediaType;
   mediaTitle: string;
   userMediaEntryId?: string;
+  repeatCount?: number;
 }
 
 type TabType = 'overview' | 'notes';
@@ -29,6 +30,7 @@ export const MediaTabs = ({
   mediaType,
   mediaTitle,
   userMediaEntryId,
+  repeatCount,
 }: MediaTabsProps) => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
@@ -75,6 +77,7 @@ export const MediaTabs = ({
             <MediaNotesCarousel
               mediaTitle={mediaTitle}
               userMediaEntryId={userMediaEntryId}
+              repeatCount={repeatCount}
             />
           </div>
         )}
