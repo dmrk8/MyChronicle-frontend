@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, startTransition } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useInfiniteScroll } from '../../../hooks/useInfiniteScroll';
 import MediaGrid from '../../../components/MediaGrid';
 import { MediaType } from '../../../constants/mediaConstants';
@@ -11,12 +11,15 @@ import {
   ANILIST_AIRING_STATUS,
   ANILIST_PUBLISHING_STATUS,
   ANILIST_COUNTRIES,
+  ANILIST_TAGS_BY_CATEGORY,
+  ANILIST_TAG_CATEGORY_ORDER,
   formatStatusDisplay,
   type AnilistSortOptions,
   type AnilistSeason,
   type AnilistGenre,
   type AnilistAiringStatus,
   type AnilistPublishingStatus,
+  type AnilistTag,
   ANILIST_ANIME_FORMATS,
   ANILIST_MANGA_FORMATS,
 } from '../../../constants/anilistFilters';
@@ -24,7 +27,6 @@ import type {
   AnilistMediaType,
   SearchAnilistParams,
 } from '../../../api/anilistApi';
-import { useLocation } from 'react-router-dom';
 
 const STORAGE_KEY_PREFIX = 'searchAnilist';
 
@@ -45,82 +47,116 @@ const fuzzyMatch = (query: string, target: string): boolean => {
   return qi === q.length;
 };
 
-// Helper: render genre button label
 const genreButtonLabel = (genres: AnilistGenre[]): string => {
   if (genres.length === 0) return 'Any';
   if (genres.length === 1) return genres[0];
   return `${genres[0]} +${genres.length - 1}`;
 };
 
-// Helper: get formats for current media type
-const getFormatOptions = (mediaType: MediaType) => {
-  return mediaType === MediaType.ANIME
-    ? ANILIST_ANIME_FORMATS
-    : ANILIST_MANGA_FORMATS;
+const tagButtonLabel = (tags: string[]): string => {
+  if (tags.length === 0) return 'Any';
+  if (tags.length === 1) return tags[0];
+  return `${tags[0]} +${tags.length - 1}`;
 };
+
+const getFormatOptions = (mediaType: MediaType) =>
+  mediaType === MediaType.ANIME ? ANILIST_ANIME_FORMATS : ANILIST_MANGA_FORMATS;
+
+// Key uses lowercase path to match what Header writes (searchAnilist_anime / searchAnilist_manga)
+const getStorageKey = (mediaType: MediaType) =>
+  `${STORAGE_KEY_PREFIX}_${mediaType.toLowerCase()}`;
 
 const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const storageKey = `${STORAGE_KEY_PREFIX}_${mediaType}`;
+  const storageKey = getStorageKey(mediaType);
 
-  const [searchQuery, setSearchQuery] = useState<string>(
-    () => sessionStorage.getItem(`${storageKey}_query`) ?? '',
-  );
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>(
-    () => sessionStorage.getItem(`${storageKey}_query`) ?? '',
-  );
-  const [sortBy, setSortBy] = useState<AnilistSortOptions>(
-    () =>
+  const readStorage = () => ({
+    query: sessionStorage.getItem(`${storageKey}_query`) ?? '',
+    sort:
       (sessionStorage.getItem(`${storageKey}_sort`) as AnilistSortOptions) ??
       ANILIST_SORT_OPTIONS.TRENDING_DESC,
-  );
-  const [selectedSeason, setSelectedSeason] = useState<AnilistSeason | ''>(
-    () =>
+    season:
       (sessionStorage.getItem(`${storageKey}_season`) as AnilistSeason) ?? '',
-  );
-  const [selectedYear, setSelectedYear] = useState<number | ''>(() => {
-    const stored = sessionStorage.getItem(`${storageKey}_year`);
-    return stored ? Number(stored) : '';
-  });
-  const [selectedStatus, setSelectedStatus] = useState<
-    AnilistAiringStatus | AnilistPublishingStatus | ''
-  >(
-    () =>
+    year: (() => {
+      const v = sessionStorage.getItem(`${storageKey}_year`);
+      return v ? Number(v) : ('' as const);
+    })(),
+    status:
       (sessionStorage.getItem(`${storageKey}_status`) as
         | AnilistAiringStatus
         | AnilistPublishingStatus) ?? '',
-  );
-  const [selectedGenres, setSelectedGenres] = useState<AnilistGenre[]>(() => {
-    const stored = sessionStorage.getItem(`${storageKey}_genres`);
-    return stored ? JSON.parse(stored) : [];
+    genres: (() => {
+      const v = sessionStorage.getItem(`${storageKey}_genres`);
+      return v ? (JSON.parse(v) as AnilistGenre[]) : [];
+    })(),
+    tags: (() => {
+      const v = sessionStorage.getItem(`${storageKey}_tags`);
+      return v ? (JSON.parse(v) as string[]) : [];
+    })(),
+    country: sessionStorage.getItem(`${storageKey}_country`) ?? '',
+    adult: sessionStorage.getItem(`${storageKey}_adult`) === 'true',
+    format: sessionStorage.getItem(`${storageKey}_format`) ?? '',
   });
+
+  const [searchQuery, setSearchQuery] = useState<string>(
+    () => readStorage().query,
+  );
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>(
+    () => readStorage().query,
+  );
+  const [sortBy, setSortBy] = useState<AnilistSortOptions>(
+    () => readStorage().sort,
+  );
+  const [selectedSeason, setSelectedSeason] = useState<AnilistSeason | ''>(
+    () => readStorage().season,
+  );
+  const [selectedYear, setSelectedYear] = useState<number | ''>(
+    () => readStorage().year,
+  );
+  const [selectedStatus, setSelectedStatus] = useState<
+    AnilistAiringStatus | AnilistPublishingStatus | ''
+  >(() => readStorage().status);
+  const [selectedGenres, setSelectedGenres] = useState<AnilistGenre[]>(
+    () => readStorage().genres,
+  );
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    () => readStorage().tags,
+  );
   const [selectedCountry, setSelectedCountry] = useState<string>(
-    () => sessionStorage.getItem(`${storageKey}_country`) ?? '',
+    () => readStorage().country,
   );
-  const [isAdult, setIsAdult] = useState<boolean>(() => {
-    return sessionStorage.getItem(`${storageKey}_adult`) === 'true';
-  });
-  const [selectedFormat, setSelectedFormat] = useState<string>('');
+  const [isAdult, setIsAdult] = useState<boolean>(() => readStorage().adult);
+  const [selectedFormat, setSelectedFormat] = useState<string>(
+    () => readStorage().format,
+  );
+
+  // ── Dropdown UI state ──────────────────────────────────────────────────────
   const [showGenreDropdown, setShowGenreDropdown] = useState(false);
   const [genreSearch, setGenreSearch] = useState('');
-  const [genreDropdownIndex, setGenreDropdownIndex] = useState<number>(-1); // for keyboard nav
+  const [genreDropdownIndex, setGenreDropdownIndex] = useState<number>(-1);
+
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const [tagSearch, setTagSearch] = useState('');
+  const [showAdultTags, setShowAdultTags] = useState(false);
+  const [expandedTagCategories, setExpandedTagCategories] = useState<
+    Set<string>
+  >(new Set());
+
   const [showYearDropdown, setShowYearDropdown] = useState(false);
   const [yearSearch, setYearSearch] = useState('');
-  const [yearDropdownIndex, setYearDropdownIndex] = useState<number>(-1); // for keyboard nav
+  const [yearDropdownIndex, setYearDropdownIndex] = useState<number>(-1);
 
   const genreSearchRef = useRef<HTMLInputElement>(null);
   const yearSearchRef = useRef<HTMLInputElement>(null);
+  const tagSearchRef = useRef<HTMLInputElement>(null);
 
-  const isFirstRender = useRef(true);
-
+  // ── Dropdown focus effects ─────────────────────────────────────────────────
   useEffect(() => {
     if (showGenreDropdown)
       setTimeout(() => genreSearchRef.current?.focus(), 50);
-    else {
-      setTimeout(() => setGenreSearch(''), 0);
-    }
+    else setTimeout(() => setGenreSearch(''), 0);
   }, [showGenreDropdown]);
 
   useEffect(() => {
@@ -134,29 +170,36 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   }, [showYearDropdown]);
 
   useEffect(() => {
-    if (location.state?.reset) {
-      startTransition(() => {
-        setSearchQuery('');
-        setDebouncedSearchQuery('');
-        setSortBy(ANILIST_SORT_OPTIONS.TRENDING_DESC);
-        setSelectedSeason('');
-        setSelectedYear('');
-        setSelectedStatus('');
-        setSelectedGenres([]);
-        setSelectedCountry('');
-        setIsAdult(false);
-        setSelectedFormat('');
-      });
-      window.history.replaceState({}, '');
-    }
-  }, [location.state]);
+    if (showTagDropdown) setTimeout(() => tagSearchRef.current?.focus(), 50);
+    else setTimeout(() => setTagSearch(''), 0);
+  }, [showTagDropdown]);
 
-  // Reset all filters when media type changes (tab switch)
+  // ── Apply filters from Header navigation ──────────────────────────────────
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
+    if (!location.state?.filtersApplied) return;
+
+    const s = readStorage();
+    startTransition(() => {
+      setSearchQuery(s.query);
+      setDebouncedSearchQuery(s.query);
+      setSortBy(s.sort);
+      setSelectedSeason(s.season);
+      setSelectedYear(s.year);
+      setSelectedStatus(s.status);
+      setSelectedGenres(s.genres);
+      setSelectedTags(s.tags);
+      setSelectedCountry(s.country);
+      setIsAdult(s.adult);
+      setSelectedFormat(s.format);
+    });
+
+    window.history.replaceState({}, '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state?.filtersApplied]);
+
+  // ── Reset effect ───────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!location.state?.reset) return;
     startTransition(() => {
       setSearchQuery('');
       setDebouncedSearchQuery('');
@@ -165,18 +208,20 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       setSelectedYear('');
       setSelectedStatus('');
       setSelectedGenres([]);
+      setSelectedTags([]);
       setSelectedCountry('');
       setIsAdult(false);
       setSelectedFormat('');
     });
-  }, [mediaType]);
+    window.history.replaceState({}, '');
+  }, [location.state?.reset]);
 
+  // ── Persist to sessionStorage ──────────────────────────────────────────────
   useEffect(() => {
     sessionStorage.setItem(`${storageKey}_query`, searchQuery);
     const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 500);
     return () => clearTimeout(timer);
   }, [searchQuery, storageKey]);
-
   useEffect(() => {
     sessionStorage.setItem(`${storageKey}_sort`, sortBy);
   }, [sortBy, storageKey]);
@@ -199,6 +244,9 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     );
   }, [selectedGenres, storageKey]);
   useEffect(() => {
+    sessionStorage.setItem(`${storageKey}_tags`, JSON.stringify(selectedTags));
+  }, [selectedTags, storageKey]);
+  useEffect(() => {
     sessionStorage.setItem(`${storageKey}_country`, selectedCountry);
   }, [selectedCountry, storageKey]);
   useEffect(() => {
@@ -208,6 +256,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     sessionStorage.setItem(`${storageKey}_format`, selectedFormat);
   }, [selectedFormat, storageKey]);
 
+  // ── Query params ───────────────────────────────────────────────────────────
   const isSearching = debouncedSearchQuery.trim().length > 0;
   const isAnime = mediaType === MediaType.ANIME;
 
@@ -219,8 +268,9 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     ...(selectedYear && { seasonYear: selectedYear }),
     ...(selectedStatus && { status: selectedStatus }),
     ...(selectedGenres.length > 0 && { genreIn: selectedGenres }),
+    ...(selectedTags.length > 0 && { tagIn: selectedTags }),
     ...(selectedCountry && { countryOfOrigin: selectedCountry }),
-    isAdult: isAdult, // ALWAYS pass isAdult, not conditionally
+    isAdult,
     ...(selectedFormat && { format: selectedFormat }),
   };
 
@@ -244,35 +294,51 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   const openDetails = (id: number) =>
     navigate(`/${mediaType.toLowerCase()}/${id}`);
 
-  const toggleGenre = (genre: AnilistGenre) => {
+  // ── Filter helpers ─────────────────────────────────────────────────────────
+  const toggleGenre = (genre: AnilistGenre) =>
     setSelectedGenres((prev) =>
       prev.includes(genre) ? prev.filter((g) => g !== genre) : [...prev, genre],
     );
-  };
+
+  const toggleTag = (tagName: string) =>
+    setSelectedTags((prev) =>
+      prev.includes(tagName)
+        ? prev.filter((t) => t !== tagName)
+        : [...prev, tagName],
+    );
+
+  const toggleTagCategory = (category: string) =>
+    setExpandedTagCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
 
   const hasActiveFilters =
     selectedSeason !== '' ||
     selectedYear !== '' ||
     selectedStatus !== '' ||
     selectedGenres.length > 0 ||
+    selectedTags.length > 0 ||
     selectedCountry !== '' ||
     isAdult ||
-    selectedFormat !== ''; // ADD selectedFormat
+    selectedFormat !== '';
 
   const clearFilters = () => {
     setSelectedSeason('');
     setSelectedYear('');
     setSelectedStatus('');
     setSelectedGenres([]);
+    setSelectedTags([]);
     setSelectedCountry('');
     setIsAdult(false);
-    setSelectedFormat(''); // ADD THIS
+    setSelectedFormat('');
   };
 
   const statusOptions = isAnime
     ? ANILIST_AIRING_STATUS
     : ANILIST_PUBLISHING_STATUS;
-
   const filteredGenres = ANILIST_GENRES.filter((g) =>
     fuzzyMatch(genreSearch, g),
   );
@@ -280,17 +346,82 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     fuzzyMatch(yearSearch, String(y)),
   );
 
-  const selectBase =
-    'relative appearance-none pl-4 pr-10 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200';
-  const activeSelect = 'border-blue-500 text-white';
-  const inactiveSelect = 'border-zinc-700 text-zinc-400';
+  const filteredTagsByCategory = Object.entries(ANILIST_TAGS_BY_CATEGORY)
+    .sort(([a], [b]) => {
+      const ai = ANILIST_TAG_CATEGORY_ORDER.indexOf(a);
+      const bi = ANILIST_TAG_CATEGORY_ORDER.indexOf(b);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    })
+    .map(([category, tags]) => ({
+      category,
+      tags: (tags as AnilistTag[]).filter(
+        (tag) =>
+          (showAdultTags || !tag.isAdult) &&
+          (!tagSearch || fuzzyMatch(tagSearch, tag.name)),
+      ),
+    }))
+    .filter(({ tags }) => tags.length > 0);
 
-  // Active filter chips — add format chip
+  // ── Keyboard handlers ──────────────────────────────────────────────────────
+  const handleGenreDropdownKeyDown = (
+    e: React.KeyboardEvent<HTMLButtonElement | HTMLInputElement>,
+  ) => {
+    if (!showGenreDropdown) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setGenreDropdownIndex((p) => Math.min(p + 1, filteredGenres.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setGenreDropdownIndex((p) => Math.max(p - 1, 0));
+    } else if (e.key === 'Escape') setShowGenreDropdown(false);
+    else if (
+      e.key === 'Enter' &&
+      genreDropdownIndex >= 0 &&
+      genreDropdownIndex < filteredGenres.length
+    ) {
+      e.preventDefault();
+      toggleGenre(filteredGenres[genreDropdownIndex]);
+    }
+  };
+
+  const handleYearDropdownKeyDown = (
+    e: React.KeyboardEvent<HTMLButtonElement | HTMLInputElement>,
+  ) => {
+    if (!showYearDropdown) return;
+    const totalItems = filteredYears.length + 1;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setYearDropdownIndex((p) => Math.min(p + 1, totalItems - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setYearDropdownIndex((p) => Math.max(p - 1, 0));
+    } else if (e.key === 'Escape') setShowYearDropdown(false);
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (yearDropdownIndex === 0) {
+        setSelectedYear('');
+        setShowYearDropdown(false);
+      } else if (
+        yearDropdownIndex > 0 &&
+        yearDropdownIndex <= filteredYears.length
+      ) {
+        setSelectedYear(filteredYears[yearDropdownIndex - 1]);
+        setShowYearDropdown(false);
+      }
+    }
+  };
+
+  // ── Active chips ───────────────────────────────────────────────────────────
   const activeChips: { key: string; label: string; onRemove: () => void }[] = [
     ...selectedGenres.map((g) => ({
       key: `genre-${g}`,
       label: g,
       onRemove: () => toggleGenre(g),
+    })),
+    ...selectedTags.map((t) => ({
+      key: `tag-${t}`,
+      label: t,
+      onRemove: () => toggleTag(t),
     })),
     ...(selectedFormat
       ? [
@@ -347,64 +478,25 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       : []),
   ];
 
-  // --- DROPDOWN KEYBOARD HANDLERS ---
-  const handleGenreDropdownKeyDown = (
-    e: React.KeyboardEvent<HTMLButtonElement | HTMLInputElement>,
-  ) => {
-    if (!showGenreDropdown) return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setGenreDropdownIndex((prev) =>
-        Math.min(prev + 1, filteredGenres.length - 1),
-      );
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setGenreDropdownIndex((prev) => Math.max(prev - 1, 0));
-    } else if (e.key === 'Escape') {
-      setShowGenreDropdown(false);
-    } else if (
-      e.key === 'Enter' &&
-      genreDropdownIndex >= 0 &&
-      genreDropdownIndex < filteredGenres.length
-    ) {
-      e.preventDefault();
-      toggleGenre(filteredGenres[genreDropdownIndex]);
-    }
-  };
+  // ── Shared select styles ───────────────────────────────────────────────────
+  const selectBase =
+    'relative appearance-none pl-4 pr-10 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200';
+  const activeSelect = 'border-blue-500 text-white';
+  const inactiveSelect = 'border-zinc-700 text-zinc-400';
 
-  // ADD: Year dropdown keyboard handler
-  const handleYearDropdownKeyDown = (
-    e: React.KeyboardEvent<HTMLButtonElement | HTMLInputElement>,
-  ) => {
-    if (!showYearDropdown) return;
-    // +1 offset for the "Any" option at index 0
-    const totalItems = filteredYears.length + 1;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setYearDropdownIndex((prev) => Math.min(prev + 1, totalItems - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setYearDropdownIndex((prev) => Math.max(prev - 1, 0));
-    } else if (e.key === 'Escape') {
-      setShowYearDropdown(false);
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (yearDropdownIndex === 0) {
-        setSelectedYear('');
-        setShowYearDropdown(false);
-      } else if (
-        yearDropdownIndex > 0 &&
-        yearDropdownIndex <= filteredYears.length
-      ) {
-        setSelectedYear(filteredYears[yearDropdownIndex - 1]);
-        setShowYearDropdown(false);
-      }
-    }
-  };
+  // ── Sort label helper ──────────────────────────────────────────────────────
+  const sortLabel = (key: string) =>
+    key
+      .split('_')
+      .map((w) => {
+        if (w === 'DESC') return '↓';
+        if (w === 'ASC') return '↑';
+        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+      })
+      .join(' ');
 
   return (
     <div className="min-h-screen bg-linear-to-b from-zinc-900 via-black to-zinc-900">
-      {/* Hero Section with Search */}
       <div className="relative overflow-visible">
         <div className="absolute inset-0 bg-linear-to-b from-blue-600/10 via-transparent to-transparent pointer-events-none" />
 
@@ -413,7 +505,8 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
               Search{' '}
               <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-600">
-                {mediaType.charAt(0).toUpperCase() + mediaType.slice(1)}
+                {mediaType.charAt(0).toUpperCase() +
+                  mediaType.slice(1).toLowerCase()}
               </span>
             </h1>
             <p className="text-zinc-400 text-lg">
@@ -431,7 +524,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                 </span>
                 <input
                   type="text"
-                  placeholder={`Search for ${mediaType}...`}
+                  placeholder={`Search for ${mediaType.toLowerCase()}...`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-14 pr-4 py-5 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-lg"
@@ -474,30 +567,21 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                   <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
                   <select
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                    onChange={(e) =>
+                      setSortBy(e.target.value as AnilistSortOptions)
+                    }
                     className={`${selectBase} ${inactiveSelect}`}
                   >
-                    {Object.entries(ANILIST_SORT_OPTIONS).map(
-                      ([key, value]) => (
-                        <option
-                          key={value}
-                          value={value}
-                          className="bg-zinc-800"
-                        >
-                          {key
-                            .split('_')
-                            .map((w) => {
-                              if (w === 'DESC') return 'Descending';
-                              if (w === 'ASC') return 'Ascending';
-                              return (
-                                w.charAt(0).toUpperCase() +
-                                w.slice(1).toLowerCase()
-                              );
-                            })
-                            .join(' ')}
-                        </option>
-                      ),
-                    )}
+                    {(
+                      Object.entries(ANILIST_SORT_OPTIONS) as [
+                        string,
+                        AnilistSortOptions,
+                      ][]
+                    ).map(([key, value]) => (
+                      <option key={value} value={value} className="bg-zinc-800">
+                        {sortLabel(key)}
+                      </option>
+                    ))}
                   </select>
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
                     ▼
@@ -524,7 +608,6 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                       ▼
                     </span>
                   </button>
-
                   {showGenreDropdown && (
                     <>
                       <div
@@ -552,11 +635,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                             filteredGenres.map((genre, idx) => (
                               <label
                                 key={genre}
-                                className={`flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-700 cursor-pointer transition-colors ${
-                                  genreDropdownIndex === idx
-                                    ? 'bg-blue-600/30'
-                                    : ''
-                                }`}
+                                className={`flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-700 cursor-pointer transition-colors ${genreDropdownIndex === idx ? 'bg-blue-600/30' : ''}`}
                                 tabIndex={-1}
                                 onMouseEnter={() => setGenreDropdownIndex(idx)}
                                 onClick={() => toggleGenre(genre)}
@@ -578,9 +657,6 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                           <div className="p-2 border-t border-zinc-700">
                             <button
                               onClick={() => setSelectedGenres([])}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') setSelectedGenres([]);
-                              }}
                               className="w-full text-xs text-zinc-400 hover:text-white transition-colors py-1"
                             >
                               Clear {selectedGenres.length} selected
@@ -593,7 +669,202 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                 </div>
               </div>
 
-              {/* ── Media Format ── */}
+              {/* ── Tags ── */}
+              <div className="flex flex-col gap-1 shrink-0">
+                <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
+                  Tags
+                </label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowTagDropdown((prev) => !prev)}
+                    className={`${selectBase} ${selectedTags.length > 0 ? activeSelect : inactiveSelect}`}
+                    aria-haspopup="listbox"
+                    aria-expanded={showTagDropdown}
+                  >
+                    {tagButtonLabel(selectedTags)}
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs pointer-events-none">
+                      ▼
+                    </span>
+                  </button>
+                  {showTagDropdown && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowTagDropdown(false)}
+                      />
+                      <div className="fixed left-1/2 -translate-x-1/2 top-[20%] z-50 w-[min(92vw,860px)] bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl flex flex-col max-h-[65vh]">
+                        <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-700/70">
+                          <span className="text-sm font-semibold text-white">
+                            Select Tags
+                          </span>
+                          {selectedTags.length > 0 && (
+                            <button
+                              onClick={() => setSelectedTags([])}
+                              className="text-xs text-zinc-400 hover:text-white transition-colors"
+                            >
+                              Clear {selectedTags.length} selected
+                            </button>
+                          )}
+                        </div>
+                        <div className="px-4 py-3 border-b border-zinc-700/70 flex items-center gap-4">
+                          <input
+                            ref={tagSearchRef}
+                            type="text"
+                            placeholder="Search tags..."
+                            value={tagSearch}
+                            onChange={(e) => {
+                              setTagSearch(e.target.value);
+                              if (e.target.value)
+                                setExpandedTagCategories(
+                                  new Set(
+                                    Object.keys(ANILIST_TAGS_BY_CATEGORY),
+                                  ),
+                                );
+                            }}
+                            className="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <label className="flex items-center gap-2 cursor-pointer select-none shrink-0">
+                            <input
+                              type="checkbox"
+                              checked={showAdultTags}
+                              onChange={(e) =>
+                                setShowAdultTags(e.target.checked)
+                              }
+                              className="accent-blue-500 w-4 h-4"
+                            />
+                            <span className="text-xs text-zinc-400 whitespace-nowrap">
+                              Show 18+ tags
+                            </span>
+                          </label>
+                        </div>
+                        <div className="flex flex-1 overflow-hidden">
+                          <div className="w-48 shrink-0 border-r border-zinc-700/70 overflow-y-auto py-2">
+                            {filteredTagsByCategory.length === 0 ? (
+                              <p className="px-4 py-3 text-sm text-zinc-500">
+                                No matches
+                              </p>
+                            ) : (
+                              filteredTagsByCategory.map(
+                                ({ category, tags }) => {
+                                  const isExpanded =
+                                    expandedTagCategories.has(category);
+                                  const selectedInCategory = tags.filter((t) =>
+                                    selectedTags.includes(t.name),
+                                  ).length;
+                                  return (
+                                    <button
+                                      key={category}
+                                      onClick={() =>
+                                        toggleTagCategory(category)
+                                      }
+                                      className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-zinc-800 ${isExpanded ? 'bg-zinc-800 border-l-2 border-blue-500' : 'border-l-2 border-transparent'}`}
+                                    >
+                                      <span
+                                        className={`text-xs font-medium truncate ${isExpanded ? 'text-white' : 'text-zinc-400'}`}
+                                      >
+                                        {category}
+                                      </span>
+                                      {selectedInCategory > 0 && (
+                                        <span className="ml-1 px-1.5 py-0.5 bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs rounded-md shrink-0">
+                                          {selectedInCategory}
+                                        </span>
+                                      )}
+                                    </button>
+                                  );
+                                },
+                              )
+                            )}
+                          </div>
+                          <div className="flex-1 overflow-y-auto py-2">
+                            {filteredTagsByCategory.filter(
+                              ({ category }) =>
+                                expandedTagCategories.has(category) ||
+                                tagSearch,
+                            ).length === 0 ? (
+                              <div className="flex flex-col items-center justify-center h-full py-16 text-zinc-500">
+                                <svg
+                                  className="w-10 h-10 mb-3 opacity-40"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={1.5}
+                                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                                  />
+                                </svg>
+                                <p className="text-sm">
+                                  Select a category on the left
+                                </p>
+                              </div>
+                            ) : (
+                              filteredTagsByCategory
+                                .filter(
+                                  ({ category }) =>
+                                    expandedTagCategories.has(category) ||
+                                    tagSearch,
+                                )
+                                .map(({ category, tags }) => (
+                                  <div key={category} className="mb-4">
+                                    <div className="px-4 py-1.5 sticky top-0 bg-zinc-900/95 backdrop-blur-sm z-10">
+                                      <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                                        {category}
+                                      </span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-0.5 px-2">
+                                      {tags.map((tag) => (
+                                        <label
+                                          key={tag.id}
+                                          onClick={() => toggleTag(tag.name)}
+                                          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-zinc-800 cursor-pointer transition-colors ${selectedTags.includes(tag.name) ? 'bg-blue-500/10' : ''}`}
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={selectedTags.includes(
+                                              tag.name,
+                                            )}
+                                            readOnly
+                                            className="accent-blue-500 w-3.5 h-3.5 cursor-pointer shrink-0"
+                                          />
+                                          <span className="text-sm text-white leading-tight flex-1 truncate">
+                                            {tag.name}
+                                          </span>
+                                          {tag.isAdult && (
+                                            <span className="text-xs text-red-400 shrink-0">
+                                              18+
+                                            </span>
+                                          )}
+                                        </label>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between px-5 py-3 border-t border-zinc-700/70">
+                          <span className="text-xs text-zinc-500">
+                            {selectedTags.length > 0
+                              ? `${selectedTags.length} tag${selectedTags.length > 1 ? 's' : ''} selected`
+                              : 'No tags selected'}
+                          </span>
+                          <button
+                            onClick={() => setShowTagDropdown(false)}
+                            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors"
+                          >
+                            Done
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* ── Format ── */}
               <div className="flex flex-col gap-1 shrink-0">
                 <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
                   Format
@@ -661,7 +932,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                 </div>
               )}
 
-              {/* ── Year (searchable) ── */}
+              {/* ── Year ── */}
               <div className="flex flex-col gap-1 shrink-0">
                 <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
                   Year
@@ -677,7 +948,6 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                       ▼
                     </span>
                   </button>
-
                   {showYearDropdown && (
                     <>
                       <div
@@ -697,42 +967,29 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                           />
                         </div>
                         <div className="max-h-72 overflow-y-auto">
-                          {/* "Any" option at index 0 */}
                           <button
                             onClick={() => {
                               setSelectedYear('');
                               setShowYearDropdown(false);
                             }}
                             onMouseEnter={() => setYearDropdownIndex(0)}
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-700 transition-colors
-                              ${yearDropdownIndex === 0 ? 'bg-blue-600/30' : ''}
-                              ${!selectedYear ? 'text-blue-400' : 'text-zinc-400'}`}
+                            className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-700 transition-colors ${yearDropdownIndex === 0 ? 'bg-blue-600/30' : ''} ${!selectedYear ? 'text-blue-400' : 'text-zinc-400'}`}
                           >
                             Any
                           </button>
-                          {filteredYears.length === 0 ? (
-                            <p className="px-4 py-3 text-sm text-zinc-500">
-                              No matches
-                            </p>
-                          ) : (
-                            filteredYears.map((year, idx) => (
-                              <button
-                                key={year}
-                                onClick={() => {
-                                  setSelectedYear(year);
-                                  setShowYearDropdown(false);
-                                }}
-                                onMouseEnter={() =>
-                                  setYearDropdownIndex(idx + 1)
-                                } // +1 for "Any"
-                                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-700 transition-colors
-                                  ${yearDropdownIndex === idx + 1 ? 'bg-blue-600/30' : ''}
-                                  ${selectedYear === year ? 'text-blue-400 bg-zinc-700/50' : 'text-white'}`}
-                              >
-                                {year}
-                              </button>
-                            ))
-                          )}
+                          {filteredYears.map((year, idx) => (
+                            <button
+                              key={year}
+                              onClick={() => {
+                                setSelectedYear(year);
+                                setShowYearDropdown(false);
+                              }}
+                              onMouseEnter={() => setYearDropdownIndex(idx + 1)}
+                              className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-700 transition-colors ${yearDropdownIndex === idx + 1 ? 'bg-blue-600/30' : ''} ${selectedYear === year ? 'text-blue-400 bg-zinc-700/50' : 'text-white'}`}
+                            >
+                              {year}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     </>
@@ -804,7 +1061,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                 </div>
               </div>
 
-              {/* ── Adult Toggle ── */}
+              {/* ── Adult ── */}
               <div className="flex flex-col gap-1 shrink-0">
                 <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
                   Adult
@@ -843,7 +1100,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
         </div>
       </div>
 
-      {/* Content Section */}
+      {/* Results */}
       <div className="relative z-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {isFetching && mediaResults.length === 0 && (
           <div className="flex flex-col items-center justify-center py-32">
@@ -866,7 +1123,6 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
               mediaList={mediaResults}
               onMediaClick={openDetails}
             />
-
             {hasNextPage && (
               <div
                 ref={sentinelRef}
@@ -874,25 +1130,19 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
               >
                 {isFetchingNextPage ? (
                   <div className="flex items-center gap-3">
-                    <div
-                      className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
-                      style={{ animationDelay: '0ms' }}
-                    />
-                    <div
-                      className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
-                      style={{ animationDelay: '150ms' }}
-                    />
-                    <div
-                      className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
-                      style={{ animationDelay: '300ms' }}
-                    />
+                    {[0, 150, 300].map((delay) => (
+                      <div
+                        key={delay}
+                        className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                        style={{ animationDelay: `${delay}ms` }}
+                      />
+                    ))}
                   </div>
                 ) : (
                   <span className="text-zinc-500 text-sm">Scroll for more</span>
                 )}
               </div>
             )}
-
             {!hasNextPage && (
               <div className="text-center py-12 border-t border-zinc-800 mt-8">
                 <p className="text-lg font-medium text-zinc-300">
@@ -913,8 +1163,8 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
               No results found
             </p>
             <p className="text-zinc-400 text-center max-w-md">
-              We couldn't find any {mediaType} matching "{debouncedSearchQuery}
-              ". Try different keywords or check the spelling.
+              We couldn't find any {mediaType.toLowerCase()} matching your
+              filters.
             </p>
           </div>
         )}

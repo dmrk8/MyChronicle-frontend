@@ -1,3 +1,5 @@
+import tagsJson from '../public/anilistTags.json';
+
 export const ANILIST_GENRES = [
   'Action',
   'Adventure',
@@ -111,4 +113,33 @@ export const getNextSeason = (season: AnilistSeason, year: number): { season: An
   return { season: nextSeason, year: nextYear };
 };
 
+
+
+
+export interface AnilistTag {
+  id: number;
+  name: string;
+  isAdult: boolean;
+  category: string;
+}
+
+export const ANILIST_TAGS: AnilistTag[] = tagsJson.MediaTagCollection;
+
+// Group tags by their top-level category (e.g. "Theme", "Cast", "Setting", "Technical", "Demographic")
+export const ANILIST_TAGS_BY_CATEGORY: Record<string, AnilistTag[]> = 
+  ANILIST_TAGS.reduce((acc, tag) => {
+    const topCategory = tag.category.split('-')[0].trim();
+    if (!acc[topCategory]) acc[topCategory] = [];
+    acc[topCategory].push(tag);
+    return acc;
+  }, {} as Record<string, AnilistTag[]>);
+
+export const ANILIST_TAG_CATEGORY_ORDER = [
+  'Theme',
+  'Cast',
+  'Setting',
+  'Demographic',
+  'Technical',
+  'Sexual Content',
+];
 
