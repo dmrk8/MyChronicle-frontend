@@ -150,7 +150,7 @@ const Header = () => {
           <Link to="/home" className="flex items-center gap-3 group">
             <div className="flex flex-col">
               <span className="text-2xl font-black tracking-tight">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-600">
                   My
                 </span>
                 <span className="text-white">Chronicle</span>
@@ -341,10 +341,10 @@ const Header = () => {
                 >
                   {link.label}
                   {isActive(link.path) && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-600" />
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-blue-500 to-purple-600" />
                   )}
                   {!isActive(link.path) && (
-                    <span className="absolute bottom-0 left-1/2 right-1/2 h-0.5 bg-gradient-to-r from-blue-500 to-purple-600 opacity-0 group-hover:left-0 group-hover:right-0 group-hover:opacity-100 transition-all duration-300" />
+                    <span className="absolute bottom-0 left-1/2 right-1/2 h-0.5 bg-linear-to-r from-blue-500 to-purple-600 opacity-0 group-hover:left-0 group-hover:right-0 group-hover:opacity-100 transition-all duration-300" />
                   )}
                 </span>
               </Link>
@@ -359,7 +359,7 @@ const Header = () => {
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center gap-3 px-4 py-2.5 bg-zinc-900/80 hover:bg-zinc-800/80 rounded-xl transition-all duration-300 border border-zinc-800 hover:border-zinc-700"
                 >
-                  <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <div className="w-9 h-9 bg-linear-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                     <span className="text-white font-bold text-sm">
                       {user?.username.charAt(0).toUpperCase()}
                     </span>
@@ -425,8 +425,8 @@ const Header = () => {
                 to="/login"
                 className="relative px-8 py-3 font-semibold text-sm text-white rounded-xl overflow-hidden group"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 transition-transform group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 transition-transform group-hover:scale-105" />
+                <div className="absolute inset-0 bg-linear-to-r from-blue-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <span className="relative z-10">Sign In</span>
               </Link>
             )}
@@ -616,7 +616,7 @@ const Header = () => {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`block px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
                     isActive(link.path)
-                      ? 'bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-white border-l-4 border-blue-500'
+                      ? 'bg-linear-to-r from-blue-500/10 to-purple-500/10 text-white border-l-4 border-blue-500'
                       : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
                   }`}
                 >
@@ -673,7 +673,7 @@ const Header = () => {
                 <Link
                   to="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg text-center"
+                  className="block px-4 py-3 bg-linear-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg text-center"
                 >
                   Sign In
                 </Link>
