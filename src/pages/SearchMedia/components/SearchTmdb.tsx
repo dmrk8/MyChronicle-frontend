@@ -496,7 +496,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
     <div className="min-h-screen bg-linear-to-b from-zinc-900 via-black to-zinc-900">
       <div className="relative overflow-visible">
         <div className="absolute inset-0 bg-linear-to-b from-blue-600/10 via-transparent to-transparent pointer-events-none" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+        <div className="relative max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 pt-20 pb-16">
           <div className="text-center mb-10">
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
               Search{' '}
@@ -947,7 +947,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
       </div>
 
       {/* Results */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 py-10">
         {isFetching && mediaResults.length === 0 && (
           <div className="flex flex-col items-center justify-center py-32">
             <div className="relative w-16 h-16 mb-6">

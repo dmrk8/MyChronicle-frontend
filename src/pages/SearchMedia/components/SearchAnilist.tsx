@@ -190,7 +190,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     keysToRemove.forEach((key) =>
       sessionStorage.removeItem(`${storageKey}_${key}`),
     );
-    
+
     startTransition(() => {
       setSearchQuery('');
       setDebouncedSearchQuery('');
@@ -205,7 +205,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       setSelectedFormat('');
     });
     window.history.replaceState({}, '');
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state?.reset]);
 
   // ── Persist to sessionStorage ──────────────────────────────────────────────
@@ -484,7 +484,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       <div className="relative overflow-visible">
         <div className="absolute inset-0 bg-linear-to-b from-blue-600/10 via-transparent to-transparent pointer-events-none" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+        <div className="relative max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 pt-20 pb-16">
           <div className="text-center mb-10">
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
               Search{' '}
@@ -1087,7 +1087,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       </div>
 
       {/* Results */}
-      <div className="relative z-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="relative z-0 max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 py-10">
         {isFetching && mediaResults.length === 0 && (
           <div className="flex flex-col items-center justify-center py-32">
             <div className="relative w-16 h-16 mb-6">
