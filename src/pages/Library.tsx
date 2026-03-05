@@ -168,19 +168,18 @@ const LibraryPage = () => {
     setDebouncedSearchQuery('');
     setIncludeAdult(false);
   };
-  
+
   const [, startTransition] = useTransition();
 
   useEffect(() => {
-  startTransition(() => {
-    setSelectedStatus('all');
-    setIsFavorite(undefined);
-    setSearchQuery('');
-    setDebouncedSearchQuery('');
-    setIncludeAdult(false);
-  });
-}, [selectedType]);
-  
+    startTransition(() => {
+      setSelectedStatus('all');
+      setIsFavorite(undefined);
+      setSearchQuery('');
+      setDebouncedSearchQuery('');
+      setIncludeAdult(false);
+    });
+  }, [selectedType]);
 
   const hasActiveFilters =
     selectedStatus !== 'all' ||
@@ -312,7 +311,7 @@ const LibraryPage = () => {
                   <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
                     Status
                   </label>
-                  <div className="relative group">
+                  <div className="relative group h-12">
                     <div className="absolute inset-0 bg-linear-to-r from-purple-500 to-pink-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
                     <select
                       value={selectedStatus}
@@ -321,7 +320,7 @@ const LibraryPage = () => {
                           e.target.value as UserMediaEntryStatus | 'all',
                         )
                       }
-                      className="relative appearance-none pl-4 pr-9 py-3.5 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm cursor-pointer h-full"
+                      className="relative h-full w-full appearance-none pl-4 pr-9 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm cursor-pointer"
                     >
                       {statuses.map((status) => (
                         <option
@@ -344,14 +343,14 @@ const LibraryPage = () => {
                   <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
                     Sort By
                   </label>
-                  <div className="relative group">
+                  <div className="relative group h-12">
                     <div className="absolute inset-0 bg-linear-to-r from-purple-500 to-pink-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
                     <select
                       value={sortBy}
                       onChange={(e) =>
                         setSortBy(e.target.value as UserMediaEntrySortFields)
                       }
-                      className="relative appearance-none pl-4 pr-9 py-3.5 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm cursor-pointer h-full"
+                      className="relative h-full w-full appearance-none pl-4 pr-9 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm cursor-pointer"
                     >
                       {sortOptions.map((option) => (
                         <option
@@ -377,11 +376,11 @@ const LibraryPage = () => {
                   <button
                     onClick={toggleSortDirection}
                     title={sortDirection === 'ASC' ? 'Ascending' : 'Descending'}
-                    className="shrink-0 px-4 py-3.5 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-zinc-300 hover:text-white hover:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200 flex items-center gap-1.5 text-sm"
+                    className="h-12 shrink-0 px-4 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-zinc-300 hover:text-white hover:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200 flex items-center gap-1.5 text-sm"
                   >
                     {sortDirection === 'ASC' ? (
                       <svg
-                        className="w-4 h-4"
+                        className="w-4 h-4 shrink-0"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -395,7 +394,7 @@ const LibraryPage = () => {
                       </svg>
                     ) : (
                       <svg
-                        className="w-4 h-4"
+                        className="w-4 h-4 shrink-0"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -408,7 +407,7 @@ const LibraryPage = () => {
                         />
                       </svg>
                     )}
-                    <span className="hidden sm:inline">
+                    <span className="sm:inline">
                       {sortDirection === 'ASC' ? 'Asc' : 'Desc'}
                     </span>
                   </button>
@@ -424,14 +423,14 @@ const LibraryPage = () => {
                       setIsFavorite(isFavorite === true ? undefined : true)
                     }
                     title="Favorites only"
-                    className={`shrink-0 px-4 py-3.5 backdrop-blur-xl border rounded-2xl transition-all duration-200 flex items-center gap-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                    className={`h-12 shrink-0 px-4 backdrop-blur-xl border rounded-2xl transition-all duration-200 flex items-center gap-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 ${
                       isFavorite === true
                         ? 'bg-pink-600/20 border-pink-500/50 text-pink-300'
                         : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-white hover:border-pink-500/50'
                     }`}
                   >
                     <svg
-                      className="w-4 h-4"
+                      className="w-4 h-4 shrink-0"
                       fill={isFavorite === true ? 'currentColor' : 'none'}
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -443,6 +442,7 @@ const LibraryPage = () => {
                         d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                       />
                     </svg>
+                    <span className="sm:inline">Favorites</span>
                   </button>
                 </div>
 
@@ -458,14 +458,14 @@ const LibraryPage = () => {
                         ? 'Showing adult only'
                         : 'Show adult content only'
                     }
-                    className={`shrink-0 px-4 py-3.5 backdrop-blur-xl border rounded-2xl transition-all duration-200 flex items-center gap-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                    className={`h-12 shrink-0 px-4 backdrop-blur-xl border rounded-2xl transition-all duration-200 flex items-center gap-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 ${
                       includeAdult
                         ? 'bg-red-600/20 border-red-500/50 text-red-300'
                         : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-white hover:border-red-500/50'
                     }`}
                   >
                     <svg
-                      className="w-4 h-4"
+                      className="w-4 h-4 shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -477,7 +477,7 @@ const LibraryPage = () => {
                         d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                       />
                     </svg>
-                    <span className="hidden sm:inline">18+</span>
+                    <span className="sm:inline">18+</span>
                   </button>
                 </div>
               </div>

@@ -140,9 +140,6 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   const [showTagDropdown, setShowTagDropdown] = useState(false);
   const [tagSearch, setTagSearch] = useState('');
   const [showAdultTags, setShowAdultTags] = useState(false);
-  const [expandedTagCategories, setExpandedTagCategories] = useState<
-    Set<string>
-  >(new Set());
 
   const [showYearDropdown, setShowYearDropdown] = useState(false);
   const [yearSearch, setYearSearch] = useState('');
@@ -307,13 +304,6 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
         : [...prev, tagName],
     );
 
-  const toggleTagCategory = (category: string) =>
-    setExpandedTagCategories((prev) => {
-      const next = new Set(prev);
-      if (next.has(category)) next.delete(category);
-      else next.add(category);
-      return next;
-    });
 
   const hasActiveFilters =
     selectedSeason !== '' ||
@@ -693,8 +683,9 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                         className="fixed inset-0 z-40"
                         onClick={() => setShowTagDropdown(false)}
                       />
-                      <div className="fixed left-1/2 -translate-x-1/2 top-[20%] z-50 w-[min(92vw,860px)] bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl flex flex-col max-h-[65vh]">
-                        <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-700/70">
+                      <div className="fixed left-1/2 -translate-x-1/2 top-[8%] z-50 w-[min(96vw,1000px)] bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl flex flex-col max-h-[82vh]">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-700/70 shrink-0">
                           <span className="text-sm font-semibold text-white">
                             Select Tags
                           </span>
@@ -707,21 +698,15 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                             </button>
                           )}
                         </div>
-                        <div className="px-4 py-3 border-b border-zinc-700/70 flex items-center gap-4">
+
+                        {/* Search + Adult toggle */}
+                        <div className="px-4 py-3 border-b border-zinc-700/70 flex items-center gap-4 shrink-0">
                           <input
                             ref={tagSearchRef}
                             type="text"
                             placeholder="Search tags..."
                             value={tagSearch}
-                            onChange={(e) => {
-                              setTagSearch(e.target.value);
-                              if (e.target.value)
-                                setExpandedTagCategories(
-                                  new Set(
-                                    Object.keys(ANILIST_TAGS_BY_CATEGORY),
-                                  ),
-                                );
-                            }}
+                            onChange={(e) => setTagSearch(e.target.value)}
                             className="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                           <label className="flex items-center gap-2 cursor-pointer select-none shrink-0">
@@ -738,114 +723,121 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                             </span>
                           </label>
                         </div>
-                        <div className="flex flex-1 overflow-hidden">
-                          <div className="w-48 shrink-0 border-r border-zinc-700/70 overflow-y-auto py-2">
-                            {filteredTagsByCategory.length === 0 ? (
-                              <p className="px-4 py-3 text-sm text-zinc-500">
-                                No matches
-                              </p>
-                            ) : (
-                              filteredTagsByCategory.map(
+
+                        {/* Selected tags chips */}
+                        {selectedTags.length > 0 && (
+                          <div className="px-4 py-2.5 border-b border-zinc-700/70 shrink-0 flex flex-wrap gap-1.5">
+                            {selectedTags.map((t) => (
+                              <span
+                                key={t}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-500/15 border border-blue-500/40 text-blue-300 text-xs rounded-lg"
+                              >
+                                {t}
+                                <button
+                                  onClick={() => toggleTag(t)}
+                                  className="text-blue-400 hover:text-white transition-colors leading-none ml-0.5"
+                                >
+                                  ✕
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* All tags grouped by category */}
+                        <div className="flex-1 overflow-y-auto p-4">
+                          {filteredTagsByCategory.length === 0 ? (
+                            <p className="text-center py-12 text-sm text-zinc-500">
+                              No matches
+                            </p>
+                          ) : (
+                            <div className="flex flex-col gap-4">
+                              {filteredTagsByCategory.map(
                                 ({ category, tags }) => {
-                                  const isExpanded =
-                                    expandedTagCategories.has(category);
                                   const selectedInCategory = tags.filter((t) =>
                                     selectedTags.includes(t.name),
                                   ).length;
                                   return (
-                                    <button
+                                    <div
                                       key={category}
-                                      onClick={() =>
-                                        toggleTagCategory(category)
-                                      }
-                                      className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-zinc-800 ${isExpanded ? 'bg-zinc-800 border-l-2 border-blue-500' : 'border-l-2 border-transparent'}`}
+                                      className="border border-zinc-700/60 rounded-xl overflow-hidden"
                                     >
-                                      <span
-                                        className={`text-xs font-medium truncate ${isExpanded ? 'text-white' : 'text-zinc-400'}`}
-                                      >
-                                        {category}
-                                      </span>
-                                      {selectedInCategory > 0 && (
-                                        <span className="ml-1 px-1.5 py-0.5 bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs rounded-md shrink-0">
-                                          {selectedInCategory}
+                                      {/* Category header */}
+                                      <div className="flex items-center gap-2 px-4 py-2 bg-zinc-800/70 border-b border-zinc-700/60">
+                                        <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
+                                          {category}
                                         </span>
-                                      )}
-                                    </button>
+                                        {selectedInCategory > 0 && (
+                                          <span className="px-1.5 py-0.5 bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs rounded-md">
+                                            {selectedInCategory} selected
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      {/* Tags grid */}
+                                      <div className="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1">
+                                        {tags.map((tag) => {
+                                          const isSelected =
+                                            selectedTags.includes(tag.name);
+                                          return (
+                                            <button
+                                              key={tag.id}
+                                              type="button"
+                                              onClick={() =>
+                                                toggleTag(tag.name)
+                                              }
+                                              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-left transition-all duration-150 border text-xs ${
+                                                isSelected
+                                                  ? 'bg-blue-500/15 border-blue-500/50 text-blue-200'
+                                                  : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700/60 hover:text-white hover:border-zinc-600'
+                                              }`}
+                                            >
+                                              <span
+                                                className={`w-3 h-3 rounded border shrink-0 flex items-center justify-center transition-colors ${
+                                                  isSelected
+                                                    ? 'bg-blue-500 border-blue-500'
+                                                    : 'border-zinc-600'
+                                                }`}
+                                              >
+                                                {isSelected && (
+                                                  <svg
+                                                    className="w-2 h-2 text-white"
+                                                    fill="currentColor"
+                                                    viewBox="0 0 12 12"
+                                                  >
+                                                    <path
+                                                      d="M10 3L5 8.5 2 5.5"
+                                                      stroke="currentColor"
+                                                      strokeWidth="1.5"
+                                                      strokeLinecap="round"
+                                                      strokeLinejoin="round"
+                                                      fill="none"
+                                                    />
+                                                  </svg>
+                                                )}
+                                              </span>
+                                              <span className="truncate flex-1">
+                                                {tag.name}
+                                              </span>
+                                              {tag.isAdult && (
+                                                <span className="text-red-400 shrink-0">
+                                                  18+
+                                                </span>
+                                              )}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
                                   );
                                 },
-                              )
-                            )}
-                          </div>
-                          <div className="flex-1 overflow-y-auto py-2">
-                            {filteredTagsByCategory.filter(
-                              ({ category }) =>
-                                expandedTagCategories.has(category) ||
-                                tagSearch,
-                            ).length === 0 ? (
-                              <div className="flex flex-col items-center justify-center h-full py-16 text-zinc-500">
-                                <svg
-                                  className="w-10 h-10 mb-3 opacity-40"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={1.5}
-                                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                                  />
-                                </svg>
-                                <p className="text-sm">
-                                  Select a category on the left
-                                </p>
-                              </div>
-                            ) : (
-                              filteredTagsByCategory
-                                .filter(
-                                  ({ category }) =>
-                                    expandedTagCategories.has(category) ||
-                                    tagSearch,
-                                )
-                                .map(({ category, tags }) => (
-                                  <div key={category} className="mb-4">
-                                    <div className="px-4 py-1.5 sticky top-0 bg-zinc-900/95 backdrop-blur-sm z-10">
-                                      <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                                        {category}
-                                      </span>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-0.5 px-2">
-                                      {tags.map((tag) => (
-                                        <label
-                                          key={tag.id}
-                                          onClick={() => toggleTag(tag.name)}
-                                          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-zinc-800 cursor-pointer transition-colors ${selectedTags.includes(tag.name) ? 'bg-blue-500/10' : ''}`}
-                                        >
-                                          <input
-                                            type="checkbox"
-                                            checked={selectedTags.includes(
-                                              tag.name,
-                                            )}
-                                            readOnly
-                                            className="accent-blue-500 w-3.5 h-3.5 cursor-pointer shrink-0"
-                                          />
-                                          <span className="text-sm text-white leading-tight flex-1 truncate">
-                                            {tag.name}
-                                          </span>
-                                          {tag.isAdult && (
-                                            <span className="text-xs text-red-400 shrink-0">
-                                              18+
-                                            </span>
-                                          )}
-                                        </label>
-                                      ))}
-                                    </div>
-                                  </div>
-                                ))
-                            )}
-                          </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center justify-between px-5 py-3 border-t border-zinc-700/70">
+
+                        {/* Footer */}
+                        <div className="flex items-center justify-between px-5 py-3 border-t border-zinc-700/70 shrink-0">
                           <span className="text-xs text-zinc-500">
                             {selectedTags.length > 0
                               ? `${selectedTags.length} tag${selectedTags.length > 1 ? 's' : ''} selected`
