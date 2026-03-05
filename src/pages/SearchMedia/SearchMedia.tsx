@@ -24,10 +24,17 @@ const SearchMedia = () => {
   switch (normalizedMediaType) {
     case MediaType.ANIME:
     case MediaType.MANGA:
-      return <SearchAnilist mediaType={normalizedMediaType} />;
+      return (
+        <SearchAnilist
+          key={normalizedMediaType}
+          mediaType={normalizedMediaType}
+        />
+      );
     case MediaType.MOVIE:
     case MediaType.TV:
-      return <SearchTmdb mediaType={normalizedMediaType} />;
+      return (
+        <SearchTmdb key={normalizedMediaType} mediaType={normalizedMediaType} />
+      );
     default:
       return <NotFound />;
   }

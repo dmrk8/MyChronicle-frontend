@@ -171,32 +171,26 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     else setTimeout(() => setTagSearch(''), 0);
   }, [showTagDropdown]);
 
-  // ── Apply filters from Header navigation ──────────────────────────────────
-  useEffect(() => {
-    if (!location.state?.filtersApplied) return;
-
-    const s = readStorage();
-    startTransition(() => {
-      setSearchQuery(s.query);
-      setDebouncedSearchQuery(s.query);
-      setSortBy(s.sort);
-      setSelectedSeason(s.season);
-      setSelectedYear(s.year);
-      setSelectedStatus(s.status);
-      setSelectedGenres(s.genres);
-      setSelectedTags(s.tags);
-      setSelectedCountry(s.country);
-      setIsAdult(s.adult);
-      setSelectedFormat(s.format);
-    });
-
-    window.history.replaceState({}, '');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.state?.filtersApplied]);
-
   // ── Reset effect ───────────────────────────────────────────────────────────
   useEffect(() => {
     if (!location.state?.reset) return;
+
+    const keysToRemove = [
+      'query',
+      'sort',
+      'season',
+      'year',
+      'status',
+      'genres',
+      'tags',
+      'country',
+      'adult',
+      'format',
+    ];
+    keysToRemove.forEach((key) =>
+      sessionStorage.removeItem(`${storageKey}_${key}`),
+    );
+    
     startTransition(() => {
       setSearchQuery('');
       setDebouncedSearchQuery('');
@@ -211,6 +205,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       setSelectedFormat('');
     });
     window.history.replaceState({}, '');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state?.reset]);
 
   // ── Persist to sessionStorage ──────────────────────────────────────────────
@@ -303,7 +298,6 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
         ? prev.filter((t) => t !== tagName)
         : [...prev, tagName],
     );
-
 
   const hasActiveFilters =
     selectedSeason !== '' ||

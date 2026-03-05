@@ -86,15 +86,26 @@ const Header = () => {
       'year',
       'status',
       'genres',
+      'tags',
       'country',
       'adult',
       'format',
     ].forEach((key) => sessionStorage.removeItem(`${anilistKey}_${key}`));
     const tmdbKey = `searchTmdb_${mediaPath}`;
-    // Use same keys as SearchTmdb persists (dateFrom / dateTo)
-    ['query', 'sort', 'dateFrom', 'dateTo'].forEach((key) =>
-      sessionStorage.removeItem(`${tmdbKey}_${key}`),
-    );
+    [
+      'query',
+      'sort',
+      'genres',
+      'year',
+      'status',
+      'language',
+      'minRating',
+      'runtimeMin',
+      'runtimeMax',
+      'runtimeEnabled',
+      'dateFrom',
+      'dateTo',
+    ].forEach((key) => sessionStorage.removeItem(`${tmdbKey}_${key}`));
   };
 
   const handleTitleNavigate = (mediaPath: string) => {
