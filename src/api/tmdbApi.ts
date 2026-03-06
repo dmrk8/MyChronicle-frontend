@@ -38,6 +38,16 @@ export interface SearchTmdbTvParams {
   withoutKeywords?: string;
 }
 
+export interface TmdbKeyword {
+  id: number;
+  name: string;
+}
+
+export const searchTmdbKeywords = async (query: string): Promise<TmdbKeyword[]> => {
+  const res = await backendApi.get('/tmdb/keyword/search', { params: { query } });
+  return res.data;
+};
+
 export const searchTmdbMovie = async (params: SearchTmdbMovieParams): Promise<MediaPagination> => {
   const res = await backendApi.get('/tmdb/search/movie', { params });
   return res.data;

@@ -7,11 +7,12 @@ import {
   getTmdbTvDetail,
   getTmdbFeaturedBulk,
   getTmdbCollectionDetail,
+  searchTmdbKeywords,
   type TmdbMediaType,
   type SearchTmdbMovieParams,
   type SearchTmdbTvParams,
+  type TmdbKeyword,
 } from '../api/tmdbApi';
-
 
 export function useTmdbFeaturedBulk(mediaType: TmdbMediaType, options?: { enabled?: boolean }) {
   return useQuery<MediaFeaturedBulk>({
@@ -111,5 +112,15 @@ export function useTmdbCollectionDetail(collectionId?: number, language?: string
     enabled: options?.enabled ?? (typeof collectionId === 'number' && collectionId > 0),
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
+  });
+}
+
+export function useTmdbKeywordSearch(query: string, options?: { enabled?: boolean }) {
+  return useQuery<TmdbKeyword[]>({
+    queryKey: ['tmdb', 'keyword', 'search', query] as const,
+    queryFn: () => searchTmdbKeywords(query),
+    enabled: options?.enabled ?? Boolean(query.trim().length >= 1),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 }

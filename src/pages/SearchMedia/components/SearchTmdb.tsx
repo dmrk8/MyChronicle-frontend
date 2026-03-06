@@ -17,7 +17,11 @@ import type {
   SearchTmdbMovieParams,
   SearchTmdbTvParams,
 } from '../../../api/tmdbApi';
-import { useSearchTmdbMovie, useSearchTmdbTv } from '../../../hooks/useTmdb';
+import {
+  useSearchTmdbMovie,
+  useSearchTmdbTv,
+  useTmdbKeywordSearch,
+} from '../../../hooks/useTmdb';
 
 const STORAGE_KEY_PREFIX = 'searchTmdb';
 
@@ -87,9 +91,12 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
     })(),
     runtimeEnabled:
       sessionStorage.getItem(`${storageKey}_runtimeEnabled`) === 'true',
-    // Header now writes dateFrom / dateTo directly — single key, no fallback needed
     dateFrom: sessionStorage.getItem(`${storageKey}_dateFrom`) ?? '',
     dateTo: sessionStorage.getItem(`${storageKey}_dateTo`) ?? '',
+    keywords: (() => {
+      const v = sessionStorage.getItem(`${storageKey}_keywords`);
+      return v ? (JSON.parse(v) as { id: number; name: string }[]) : [];
+    })(),
   });
 
   const [searchQuery, setSearchQuery] = useState<string>(
@@ -130,6 +137,16 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
   );
   const [dateTo, setDateTo] = useState<string>(() => readStorage().dateTo);
 
+  // ── Keyword filter state ───────────────────────────────────────────────────
+  const [selectedKeywords, setSelectedKeywords] = useState<
+    { id: number; name: string }[]
+  >(() => readStorage().keywords);
+  const [keywordInput, setKeywordInput] = useState('');
+  const [debouncedKeywordInput, setDebouncedKeywordInput] = useState('');
+  const [showKeywordDropdown, setShowKeywordDropdown] = useState(false);
+  const [keywordDropdownIndex, setKeywordDropdownIndex] = useState(-1);
+  const keywordInputRef = useRef<HTMLInputElement>(null);
+
   const [showGenreDropdown, setShowGenreDropdown] = useState(false);
   const [genreSearch, setGenreSearch] = useState('');
   const [genreDropdownIndex, setGenreDropdownIndex] = useState<number>(-1);
@@ -155,6 +172,12 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
       }, 0);
   }, [showYearDropdown]);
 
+  // ── Debounce keyword input ─────────────────────────────────────────────────
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedKeywordInput(keywordInput), 400);
+    return () => clearTimeout(timer);
+  }, [keywordInput]);
+
   // ── Apply filters from Header navigation ──────────────────────────────────
   useEffect(() => {
     if (!location.state?.filtersApplied) return;
@@ -174,6 +197,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
       setRuntimeEnabled(s.runtimeEnabled);
       setDateFrom(s.dateFrom);
       setDateTo(s.dateTo);
+      setSelectedKeywords(s.keywords);
     });
 
     window.history.replaceState({}, '');
@@ -197,6 +221,8 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
       setRuntimeEnabled(false);
       setDateFrom('');
       setDateTo('');
+      setSelectedKeywords([]);
+      setKeywordInput('');
     });
     window.history.replaceState({}, '');
   }, [location.state?.reset]);
@@ -248,6 +274,22 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
   useEffect(() => {
     sessionStorage.setItem(`${storageKey}_dateTo`, dateTo);
   }, [dateTo, storageKey]);
+  useEffect(() => {
+    sessionStorage.setItem(
+      `${storageKey}_keywords`,
+      JSON.stringify(selectedKeywords),
+    );
+  }, [selectedKeywords, storageKey]);
+
+  // ── Keyword search query ───────────────────────────────────────────────────
+  const { data: keywordResults, isFetching: isFetchingKeywords } =
+    useTmdbKeywordSearch(debouncedKeywordInput, {
+      enabled: debouncedKeywordInput.trim().length >= 1,
+    });
+
+  const availableKeywords = (keywordResults ?? []).filter(
+    (kw) => !selectedKeywords.some((s) => s.id === kw.id),
+  );
 
   // ── Query params ───────────────────────────────────────────────────────────
   const isSearching = debouncedSearchQuery.trim().length > 0;
@@ -257,6 +299,9 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
     sortBy,
     ...(selectedGenres.length > 0 && {
       withGenres: selectedGenres.map((g) => g.id).join(','),
+    }),
+    ...(selectedKeywords.length > 0 && {
+      withKeywords: selectedKeywords.map((k) => k.id).join(','),
     }),
     ...(selectedYear && {
       primaryReleaseDateGte: `${selectedYear}-01-01`,
@@ -277,6 +322,9 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
     sortBy,
     ...(selectedGenres.length > 0 && {
       withGenres: selectedGenres.map((g) => g.id).join(','),
+    }),
+    ...(selectedKeywords.length > 0 && {
+      withKeywords: selectedKeywords.map((k) => k.id).join(','),
     }),
     ...(selectedYear && {
       firstAirDateGte: `${selectedYear}-01-01`,
@@ -328,6 +376,46 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
     );
   };
 
+  // ── Keyword helpers ────────────────────────────────────────────────────────
+  const addKeyword = (kw: { id: number; name: string }) => {
+    setSelectedKeywords((prev) =>
+      prev.some((k) => k.id === kw.id) ? prev : [...prev, kw],
+    );
+    setKeywordInput('');
+    setDebouncedKeywordInput('');
+    setShowKeywordDropdown(false);
+    setKeywordDropdownIndex(-1);
+    keywordInputRef.current?.focus();
+  };
+
+  const removeKeyword = (id: number) => {
+    setSelectedKeywords((prev) => prev.filter((k) => k.id !== id));
+  };
+
+  const handleKeywordKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showKeywordDropdown && e.key !== 'ArrowDown') return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setShowKeywordDropdown(true);
+      setKeywordDropdownIndex((p) =>
+        Math.min(p + 1, availableKeywords.length - 1),
+      );
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setKeywordDropdownIndex((p) => Math.max(p - 1, 0));
+    } else if (e.key === 'Escape') {
+      setShowKeywordDropdown(false);
+      setKeywordDropdownIndex(-1);
+    } else if (
+      e.key === 'Enter' &&
+      keywordDropdownIndex >= 0 &&
+      keywordDropdownIndex < availableKeywords.length
+    ) {
+      e.preventDefault();
+      addKeyword(availableKeywords[keywordDropdownIndex]);
+    }
+  };
+
   const hasActiveFilters =
     selectedGenres.length > 0 ||
     selectedYear !== '' ||
@@ -336,7 +424,8 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
     minRating !== '' ||
     runtimeEnabled ||
     dateFrom !== '' ||
-    dateTo !== '';
+    dateTo !== '' ||
+    selectedKeywords.length > 0;
 
   const clearFilters = () => {
     setSelectedGenres([]);
@@ -349,6 +438,8 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
     setRuntimeEnabled(false);
     setDateFrom('');
     setDateTo('');
+    setSelectedKeywords([]);
+    setKeywordInput('');
   };
 
   const filteredGenres = [...genreOptions].filter((g) =>
@@ -363,6 +454,12 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
       key: `genre-${g.id}`,
       label: g.name,
       onRemove: () => toggleGenre(g),
+    })),
+
+    ...selectedKeywords.map((kw) => ({
+      key: `keyword-${kw.id}`,
+      label: `🏷 ${kw.name}`,
+      onRemove: () => removeKeyword(kw.id),
     })),
     ...(selectedYear
       ? [
@@ -917,6 +1014,79 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
                         </span>
                       </div>
                     </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ── Keywords ── */}
+              <div className="flex flex-col gap-1 shrink-0">
+                <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
+                  Keywords
+                </label>
+                <div className="relative">
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+                    <input
+                      ref={keywordInputRef}
+                      type="text"
+                      placeholder="e.g. time travel..."
+                      value={keywordInput}
+                      onChange={(e) => {
+                        setKeywordInput(e.target.value);
+                        setShowKeywordDropdown(true);
+                        setKeywordDropdownIndex(-1);
+                      }}
+                      onFocus={() => {
+                        if (keywordInput.trim()) setShowKeywordDropdown(true);
+                      }}
+                      onKeyDown={handleKeywordKeyDown}
+                      className={`relative appearance-none pl-4 pr-10 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 w-full ${selectedKeywords.length > 0 ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400 placeholder-zinc-500'}`}
+                    />
+                  </div>
+
+                  {showKeywordDropdown && keywordInput.trim().length > 0 && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowKeywordDropdown(false)}
+                      />
+                      <div className="absolute top-full mt-2 left-0 z-50 w-64 bg-zinc-800 border border-zinc-700 rounded-xl shadow-2xl flex flex-col overflow-hidden">
+                        {isFetchingKeywords ? (
+                          <div className="flex items-center gap-2 px-4 py-3 text-sm text-zinc-400">
+                            <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                            Searching keywords...
+                          </div>
+                        ) : availableKeywords.length === 0 ? (
+                          <p className="px-4 py-3 text-sm text-zinc-500">
+                            No keywords found
+                          </p>
+                        ) : (
+                          <div className="max-h-60 overflow-y-auto">
+                            {availableKeywords.map(
+                              (
+                                kw: { id: number; name: string },
+                                idx: number,
+                              ) => (
+                                <button
+                                  key={kw.id}
+                                  type="button"
+                                  onClick={() => addKeyword(kw)}
+                                  onMouseEnter={() =>
+                                    setKeywordDropdownIndex(idx)
+                                  }
+                                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-700 transition-colors flex items-center gap-2 ${keywordDropdownIndex === idx ? 'bg-blue-600/30' : ''} text-white`}
+                                >
+                                  <span className="text-zinc-400 text-xs">
+                                    🏷
+                                  </span>
+                                  {kw.name}
+                                </button>
+                              ),
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
