@@ -1,11 +1,10 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import type { MediaPagination, MediaFeaturedBulk, MovieDetailed, TVDetailed, CollectionDetailed } from '../types/Media';
+import type { MediaPagination, MovieDetailed, TVDetailed, CollectionDetailed } from '../types/Media';
 import {
   searchTmdbMovie,
   searchTmdbTv,
   getTmdbMovieDetail,
   getTmdbTvDetail,
-  getTmdbFeaturedBulk,
   getTmdbCollectionDetail,
   searchTmdbKeywords,
   type TmdbMediaType,
@@ -15,22 +14,6 @@ import {
   getTmdbTrending,
   type GetTmdbTrendingParams,
 } from '../api/tmdbApi';
-
-export function useTmdbFeaturedBulk(mediaType: TmdbMediaType, options?: { enabled?: boolean }) {
-  return useQuery<MediaFeaturedBulk>({
-    queryKey: ['tmdb', 'featured-bulk', mediaType] as const,
-    queryFn: () => getTmdbFeaturedBulk(mediaType),
-    staleTime: 10 * 60 * 1000,
-    select: (data) => ({
-      trending: data.trending?.slice(0, 6),
-      popularSeason: data.popularSeason?.slice(0, 6),
-      upcoming: data.upcoming?.slice(0, 6),
-      allTime: data.allTime?.slice(0, 6),
-      allTimeManhwa: data.allTimeManhwa?.slice(0, 6),
-    }),
-    ...options,
-  });
-}
 
 export function useSearchTmdbMovie(params: SearchTmdbMovieParams, options?: { enabled?: boolean }) {
   const { page: _page, ...keyParams } = params;
