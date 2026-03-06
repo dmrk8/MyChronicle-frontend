@@ -8,6 +8,7 @@ import {
   type SearchAnilistParams,
 } from "../api/anilistApi";
 import type { AnimeDetailed, MangaDetailed, MediaFeaturedBulk, MediaPagination } from "../types/Media";
+import { getCurrentSeason } from "../constants/anilistFilters";
 
 export function useFeaturedMediaAnilist(mediaType: AnilistMediaType, options?: { enabled?: boolean }) {
   return useQuery<MediaFeaturedBulk>({
@@ -64,5 +65,30 @@ export function useMangaDetail(mangaId?: number, options?: { enabled?: boolean }
     enabled: options?.enabled ?? (typeof mangaId === "number" && mangaId > 0),
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
+  });
+}
+
+export function useTrendingAnilist(mediaType: AnilistMediaType, options?: { enabled?: boolean }) {
+  const { season, year } = getCurrentSeason();
+
+  return useInfiniteQuery<MediaPagination>({
+    queryKey: ['anilist', 'trending', mediaType, season, year] as const,
+    queryFn: ({ pageParam }) =>
+      searchAnilist({
+        mediaType,
+        sort: 'TRENDING_DESC',
+        season: mediaType === 'ANIME' ? season : undefined,
+        seasonYear: mediaType === 'ANIME' ? year : undefined,
+        page: typeof pageParam === 'number' ? pageParam : 1,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNextPage ? lastPage.currentPage + 1 : undefined,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    enabled: options?.enabled ?? true,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 }

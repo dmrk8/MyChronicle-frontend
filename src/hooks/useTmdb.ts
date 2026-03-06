@@ -12,6 +12,8 @@ import {
   type SearchTmdbMovieParams,
   type SearchTmdbTvParams,
   type TmdbKeyword,
+  getTmdbTrending,
+  type GetTmdbTrendingParams,
 } from '../api/tmdbApi';
 
 export function useTmdbFeaturedBulk(mediaType: TmdbMediaType, options?: { enabled?: boolean }) {
@@ -122,5 +124,31 @@ export function useTmdbKeywordSearch(query: string, options?: { enabled?: boolea
     enabled: options?.enabled ?? Boolean(query.trim().length >= 1),
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
+  });
+}
+
+export function useTmdbTrending(
+  mediaType: TmdbMediaType,
+  params?: GetTmdbTrendingParams,
+  options?: { enabled?: boolean },
+) {
+  const { page: _page, ...keyParams } = { page: params?.page, ...params };
+
+  return useInfiniteQuery<MediaPagination>({
+    queryKey: ['tmdb', 'trending', mediaType, keyParams] as const,
+    queryFn: ({ pageParam }) =>
+      getTmdbTrending(mediaType, {
+        ...params,
+        page: typeof pageParam === 'number' ? pageParam : 1,
+      }),
+    initialPageParam: params?.page ?? 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNextPage ? lastPage.currentPage + 1 : undefined,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    enabled: options?.enabled ?? true,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 }

@@ -77,3 +77,23 @@ export const getTmdbCollectionDetail = async (collectionId: number, language?: s
   const res = await backendApi.get(`/tmdb/collection/${collectionId}`, { params: { language } });
   return res.data;
 };
+
+export interface GetTmdbTrendingParams {
+  timeWindow?: 'day' | 'week';
+  language?: string;
+  page?: number;
+}
+
+export const getTmdbTrending = async (
+  mediaType: TmdbMediaType,
+  params?: GetTmdbTrendingParams,
+): Promise<MediaPagination> => {
+  const res = await backendApi.get(`/tmdb/trending/${mediaType}`, {
+    params: {
+      time_window: params?.timeWindow,
+      language: params?.language,
+      page: params?.page ?? 1,
+    },
+  });
+  return res.data;
+};
