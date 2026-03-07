@@ -39,28 +39,38 @@ export const SlidingMediaRow = ({
         className="flex gap-4 overflow-x-auto scroll-smooth pb-2 scrollbar-hide"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {mediaList.map((media) => (
-          <div
-            key={`${media.mediaType}-${media.id}`}
-            onClick={() => onMediaClick(media.mediaType as MediaType, media.id)}
-            className="shrink-0 w-36 md:w-44 cursor-pointer group/card"
-          >
-            <div className="relative rounded-xl overflow-hidden aspect-2/3 bg-zinc-800">
-              <img
-                src={media.coverImage}
-                alt={media.title}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover/card:scale-105"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-200" />
-              <div className="absolute bottom-0 left-0 right-0 p-2 translate-y-full group-hover/card:translate-y-0 transition-transform duration-200">
-                <p className="text-white text-xs font-medium line-clamp-2">
-                  {media.title}
-                </p>
+        {mediaList.map((media) => {
+          const href = `/${media.mediaType.toLowerCase()}/${media.id}`;
+          return (
+            <a
+              key={`${media.mediaType}-${media.id}`}
+              href={href}
+              onClick={(e) => {
+                if (e.ctrlKey || e.metaKey || e.button === 1) return;
+                e.preventDefault();
+                onMediaClick(media.mediaType as MediaType, media.id);
+              }}
+              draggable={false}
+              className="shrink-0 w-36 md:w-44 cursor-pointer group/card no-underline"
+            >
+              <div className="relative rounded-xl overflow-hidden aspect-2/3 bg-zinc-800">
+                <img
+                  src={media.coverImage}
+                  alt={media.title}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover/card:scale-105"
+                  loading="lazy"
+                  draggable={false}
+                />
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-200" />
+                <div className="absolute bottom-0 left-0 right-0 p-2 translate-y-full group-hover/card:translate-y-0 transition-transform duration-200">
+                  <p className="text-white text-xs font-medium line-clamp-2">
+                    {media.title}
+                  </p>
+                </div>
               </div>
-            </div>
-          </div>
-        ))}
+            </a>
+          );
+        })}
       </div>
 
       {/* Right Arrow */}
