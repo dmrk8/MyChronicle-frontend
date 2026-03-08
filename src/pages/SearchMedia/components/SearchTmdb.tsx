@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, startTransition } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useInfiniteScroll } from '../../../hooks/useInfiniteScroll';
 import MediaGrid from '../../../components/MediaGrid';
 import { MediaType } from '../../../constants/mediaConstants';
@@ -55,6 +55,7 @@ const getStorageKey = (mediaType: MediaType) =>
 const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const storageKey = getStorageKey(mediaType);
   const isMovie = mediaType === MediaType.MOVIE;
@@ -99,48 +100,112 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
     })(),
   });
 
-  const [searchQuery, setSearchQuery] = useState<string>(
-    () => readStorage().query,
-  );
+  const _init = (() => {
+    const FILTER_KEYS = [
+      'q',
+      'sort',
+      'genres',
+      'year',
+      'status',
+      'lang',
+      'rating',
+      'runtimeMin',
+      'runtimeMax',
+      'runtimeOn',
+      'dateFrom',
+      'dateTo',
+      'kw',
+    ];
+    if (!FILTER_KEYS.some((k) => searchParams.has(k))) return readStorage();
+
+    const rawGenres = searchParams.get('genres');
+    const genres = rawGenres
+      ? rawGenres
+          .split(',')
+          .filter(Boolean)
+          .map((g) => {
+            const sep = g.indexOf(':');
+            return {
+              id: Number(g.slice(0, sep)),
+              name: decodeURIComponent(g.slice(sep + 1)),
+            } as TmdbGenre;
+          })
+      : ([] as TmdbGenre[]);
+
+    const rawKw = searchParams.get('kw');
+    const keywords: { id: number; name: string }[] = rawKw
+      ? rawKw
+          .split(',')
+          .filter(Boolean)
+          .map((k) => {
+            const sep = k.indexOf(':');
+            return {
+              id: Number(k.slice(0, sep)),
+              name: decodeURIComponent(k.slice(sep + 1)),
+            };
+          })
+      : [];
+
+    const runtimeOn = searchParams.get('runtimeOn') === '1';
+    return {
+      query: searchParams.get('q') ?? '',
+      sort:
+        (searchParams.get('sort') as TmdbSortOption) ??
+        TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC,
+      genres,
+      year: searchParams.get('year')
+        ? Number(searchParams.get('year'))
+        : ('' as const),
+      status: searchParams.get('status') ?? '',
+      language: searchParams.get('lang') ?? '',
+      minRating: searchParams.get('rating')
+        ? Number(searchParams.get('rating'))
+        : ('' as const),
+      runtimeMin: searchParams.get('runtimeMin')
+        ? Number(searchParams.get('runtimeMin'))
+        : 0,
+      runtimeMax: searchParams.get('runtimeMax')
+        ? Number(searchParams.get('runtimeMax'))
+        : 360,
+      runtimeEnabled: runtimeOn,
+      dateFrom: searchParams.get('dateFrom') ?? '',
+      dateTo: searchParams.get('dateTo') ?? '',
+      keywords,
+    };
+  })();
+
+  const [searchQuery, setSearchQuery] = useState<string>(() => _init.query);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>(
-    () => readStorage().query,
+    () => _init.query,
   );
-  const [sortBy, setSortBy] = useState<TmdbSortOption>(
-    () => readStorage().sort,
-  );
+  const [sortBy, setSortBy] = useState<TmdbSortOption>(() => _init.sort);
   const [selectedGenres, setSelectedGenres] = useState<TmdbGenre[]>(
-    () => readStorage().genres,
+    () => _init.genres,
   );
   const [selectedYear, setSelectedYear] = useState<number | ''>(
-    () => readStorage().year,
+    () => _init.year,
   );
   const [selectedStatus, setSelectedStatus] = useState<string>(
-    () => readStorage().status,
+    () => _init.status,
   );
   const [selectedLanguage, setSelectedLanguage] = useState<string>(
-    () => readStorage().language,
+    () => _init.language,
   );
   const [minRating, setMinRating] = useState<number | ''>(
-    () => readStorage().minRating,
+    () => _init.minRating,
   );
-  const [runtimeMin, setRuntimeMin] = useState<number>(
-    () => readStorage().runtimeMin,
-  );
-  const [runtimeMax, setRuntimeMax] = useState<number>(
-    () => readStorage().runtimeMax,
-  );
+  const [runtimeMin, setRuntimeMin] = useState<number>(() => _init.runtimeMin);
+  const [runtimeMax, setRuntimeMax] = useState<number>(() => _init.runtimeMax);
   const [runtimeEnabled, setRuntimeEnabled] = useState<boolean>(
-    () => readStorage().runtimeEnabled,
+    () => _init.runtimeEnabled,
   );
-  const [dateFrom, setDateFrom] = useState<string>(
-    () => readStorage().dateFrom,
-  );
-  const [dateTo, setDateTo] = useState<string>(() => readStorage().dateTo);
+  const [dateFrom, setDateFrom] = useState<string>(() => _init.dateFrom);
+  const [dateTo, setDateTo] = useState<string>(() => _init.dateTo);
 
   // ── Keyword filter state ───────────────────────────────────────────────────
   const [selectedKeywords, setSelectedKeywords] = useState<
     { id: number; name: string }[]
-  >(() => readStorage().keywords);
+  >(() => _init.keywords);
   const [keywordInput, setKeywordInput] = useState('');
   const [debouncedKeywordInput, setDebouncedKeywordInput] = useState('');
   const [showKeywordDropdown, setShowKeywordDropdown] = useState(false);
@@ -200,6 +265,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
       setSelectedKeywords(s.keywords);
     });
 
+    setSearchParams({}, { replace: true });
     window.history.replaceState({}, '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state?.filtersApplied]);
@@ -588,6 +654,55 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
       }
     }
   };
+
+  // ── Sync filter state to URL params (shareable links) ──────────────────────
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (debouncedSearchQuery) params.set('q', debouncedSearchQuery);
+    params.set('sort', sortBy);
+    if (selectedGenres.length > 0)
+      params.set(
+        'genres',
+        selectedGenres
+          .map((g) => `${g.id}:${encodeURIComponent(g.name)}`)
+          .join(','),
+      );
+    if (selectedYear !== '') params.set('year', String(selectedYear));
+    if (selectedStatus) params.set('status', selectedStatus);
+    if (selectedLanguage) params.set('lang', selectedLanguage);
+    if (minRating !== '') params.set('rating', String(minRating));
+    if (runtimeEnabled) {
+      params.set('runtimeMin', String(runtimeMin));
+      params.set('runtimeMax', String(runtimeMax));
+      params.set('runtimeOn', '1');
+    }
+    if (!selectedYear && dateFrom) params.set('dateFrom', dateFrom);
+    if (!selectedYear && dateTo) params.set('dateTo', dateTo);
+    if (selectedKeywords.length > 0)
+      params.set(
+        'kw',
+        selectedKeywords
+          .map((k) => `${k.id}:${encodeURIComponent(k.name)}`)
+          .join(','),
+      );
+    setSearchParams(params, { replace: true });
+    window.history.replaceState({}, '');
+  }, [
+    debouncedSearchQuery,
+    sortBy,
+    selectedGenres,
+    selectedYear,
+    selectedStatus,
+    selectedLanguage,
+    minRating,
+    runtimeEnabled,
+    runtimeMin,
+    runtimeMax,
+    dateFrom,
+    dateTo,
+    selectedKeywords,
+    setSearchParams,
+  ]);
 
   return (
     <div className="min-h-screen bg-linear-to-b from-zinc-900 via-black to-zinc-900">

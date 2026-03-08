@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, startTransition } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useInfiniteScroll } from '../../../hooks/useInfiniteScroll';
 import MediaGrid from '../../../components/MediaGrid';
 import { MediaType } from '../../../constants/mediaConstants';
@@ -69,6 +69,7 @@ const getStorageKey = (mediaType: MediaType) =>
 const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const storageKey = getStorageKey(mediaType);
 
@@ -100,36 +101,72 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     format: sessionStorage.getItem(`${storageKey}_format`) ?? '',
   });
 
-  const [searchQuery, setSearchQuery] = useState<string>(
-    () => readStorage().query,
-  );
+  const _init = (() => {
+    const FILTER_KEYS = [
+      'q',
+      'sort',
+      'season',
+      'year',
+      'status',
+      'genres',
+      'tags',
+      'country',
+      'adult',
+      'format',
+    ];
+    if (!FILTER_KEYS.some((k) => searchParams.has(k))) return readStorage();
+    return {
+      query: searchParams.get('q') ?? '',
+      sort:
+        (searchParams.get('sort') as AnilistSortOptions) ??
+        ANILIST_SORT_OPTIONS.POPULARITY_DESC,
+      season: (searchParams.get('season') ?? '') as AnilistSeason | '',
+      year: searchParams.get('year')
+        ? Number(searchParams.get('year'))
+        : ('' as const),
+      status: (searchParams.get('status') ?? '') as
+        | AnilistAiringStatus
+        | AnilistPublishingStatus
+        | '',
+      genres: searchParams.get('genres')
+        ? (searchParams
+            .get('genres')!
+            .split(',')
+            .filter(Boolean) as AnilistGenre[])
+        : [],
+      tags: searchParams.get('tags')
+        ? searchParams.get('tags')!.split(',').filter(Boolean)
+        : [],
+      country: searchParams.get('country') ?? '',
+      adult: searchParams.get('adult') === '1',
+      format: searchParams.get('format') ?? '',
+    };
+  })();
+
+  const [searchQuery, setSearchQuery] = useState<string>(() => _init.query);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>(
-    () => readStorage().query,
+    () => _init.query,
   );
-  const [sortBy, setSortBy] = useState<AnilistSortOptions>(
-    () => readStorage().sort,
-  );
+  const [sortBy, setSortBy] = useState<AnilistSortOptions>(() => _init.sort);
   const [selectedSeason, setSelectedSeason] = useState<AnilistSeason | ''>(
-    () => readStorage().season,
+    () => _init.season,
   );
   const [selectedYear, setSelectedYear] = useState<number | ''>(
-    () => readStorage().year,
+    () => _init.year,
   );
   const [selectedStatus, setSelectedStatus] = useState<
     AnilistAiringStatus | AnilistPublishingStatus | ''
-  >(() => readStorage().status);
+  >(() => _init.status);
   const [selectedGenres, setSelectedGenres] = useState<AnilistGenre[]>(
-    () => readStorage().genres,
+    () => _init.genres,
   );
-  const [selectedTags, setSelectedTags] = useState<string[]>(
-    () => readStorage().tags,
-  );
+  const [selectedTags, setSelectedTags] = useState<string[]>(() => _init.tags);
   const [selectedCountry, setSelectedCountry] = useState<string>(
-    () => readStorage().country,
+    () => _init.country,
   );
-  const [isAdult, setIsAdult] = useState<boolean>(() => readStorage().adult);
+  const [isAdult, setIsAdult] = useState<boolean>(() => _init.adult);
   const [selectedFormat, setSelectedFormat] = useState<string>(
-    () => readStorage().format,
+    () => _init.format,
   );
 
   // ── Dropdown UI state ──────────────────────────────────────────────────────
@@ -478,6 +515,34 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
         return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
       })
       .join(' ');
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (debouncedSearchQuery) params.set('q', debouncedSearchQuery);
+    params.set('sort', sortBy);
+    if (selectedSeason) params.set('season', selectedSeason);
+    if (selectedYear !== '') params.set('year', String(selectedYear));
+    if (selectedStatus) params.set('status', selectedStatus);
+    if (selectedGenres.length > 0)
+      params.set('genres', selectedGenres.join(','));
+    if (selectedTags.length > 0) params.set('tags', selectedTags.join(','));
+    if (selectedCountry) params.set('country', selectedCountry);
+    if (isAdult) params.set('adult', '1');
+    if (selectedFormat) params.set('format', selectedFormat);
+    setSearchParams(params, { replace: true });
+  }, [
+    debouncedSearchQuery,
+    sortBy,
+    selectedSeason,
+    selectedYear,
+    selectedStatus,
+    selectedGenres,
+    selectedTags,
+    selectedCountry,
+    isAdult,
+    selectedFormat,
+    setSearchParams,
+  ]);
 
   return (
     <div className="min-h-screen bg-linear-to-b from-zinc-900 via-black to-zinc-900">
