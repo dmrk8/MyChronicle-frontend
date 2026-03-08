@@ -1,3 +1,4 @@
+import { formatStatusDisplay } from '../../../constants/anilistFilters';
 import type {
   AnimeDetailed,
   MangaDetailed,
@@ -43,12 +44,12 @@ export const MainMediaInfo = ({ media }: MainMediaInfoProps) => {
       <div className="flex flex-wrap gap-2 mb-6">
         {media.status && (
           <span className="px-3 py-1 bg-blue-500/20 border border-blue-500/50 rounded-full text-sm">
-            {media.status}
+            {formatStatusDisplay(media.status)}
           </span>
         )}
         {media.format && (
           <span className="px-3 py-1 bg-purple-500/20 border border-purple-500/50 rounded-full text-sm">
-            {media.format.toUpperCase()}
+            {formatStatusDisplay(media.format)}
             {media.mediaType === 'MANGA' &&
               'countryOfOrigin' in media &&
               media.countryOfOrigin && <> ({media.countryOfOrigin})</>}

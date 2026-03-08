@@ -206,7 +206,6 @@ export const MediaDetailPage = () => {
     );
   }
 
-  // NOW you can have early returns
   if (!isValidMediaType) {
     return (
       <div className="min-h-screen flex items-center justify-center">

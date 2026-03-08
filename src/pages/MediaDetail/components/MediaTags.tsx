@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { searchTmdbKeywords } from '../../../api/tmdbApi';
 import type {
   AnimeDetailed,
   MangaDetailed,
@@ -15,12 +17,69 @@ interface MediaInfoProps {
 
 export const MediaTags = ({ anime, manga, movie, tv }: MediaInfoProps) => {
   const [showSpoilers, setShowSpoilers] = useState(false);
+  const navigate = useNavigate();
 
   const media = anime || manga || movie || tv;
   if (!media) return null;
 
   const tags = anime?.tags || manga?.tags || [];
   const keywords = movie?.keywords || tv?.keywords || [];
+
+  const mediaPath = anime ? 'anime' : manga ? 'manga' : movie ? 'movie' : 'tv';
+
+  const handleAnilistTagClick = (tagName: string) => {
+    const storageKey = `searchAnilist_${mediaPath}`;
+    [
+      'query',
+      'sort',
+      'season',
+      'year',
+      'status',
+      'genres',
+      'tags',
+      'country',
+      'adult',
+      'format',
+    ].forEach((key) => sessionStorage.removeItem(`${storageKey}_${key}`));
+    sessionStorage.setItem(`${storageKey}_tags`, JSON.stringify([tagName]));
+    navigate(`/${mediaPath}/search`);
+  };
+
+  const handleTmdbKeywordClick = async (keyword: string) => {
+    const storageKey = `searchTmdb_${mediaPath}`;
+    [
+      'query',
+      'sort',
+      'genres',
+      'year',
+      'status',
+      'language',
+      'minRating',
+      'runtimeMin',
+      'runtimeMax',
+      'runtimeEnabled',
+      'dateFrom',
+      'dateTo',
+      'keywords',
+    ].forEach((key) => sessionStorage.removeItem(`${storageKey}_${key}`));
+    try {
+      const results = await searchTmdbKeywords(keyword);
+      const match = results.find(
+        (k) => k.name.toLowerCase() === keyword.toLowerCase(),
+      );
+      if (match) {
+        sessionStorage.setItem(
+          `${storageKey}_keywords`,
+          JSON.stringify([match]),
+        );
+      } else {
+        sessionStorage.setItem(`${storageKey}_query`, keyword);
+      }
+    } catch {
+      sessionStorage.setItem(`${storageKey}_query`, keyword);
+    }
+    navigate(`/${mediaPath}/search`);
+  };
 
   // Separate spoiler and non-spoiler tags
   const regularTags = tags.filter(
@@ -35,6 +94,9 @@ export const MediaTags = ({ anime, manga, movie, tv }: MediaInfoProps) => {
 
   if (allTags.length === 0 && !hasSpoilers) return null;
 
+  const tagClass =
+    'px-3 py-1 rounded-full text-xs font-medium bg-zinc-700/50 text-zinc-300 border border-zinc-600/30 cursor-pointer hover:bg-zinc-600/50 hover:text-white transition-colors';
+
   return (
     <div className="mt-4 bg-zinc-800/50 rounded-lg p-4">
       <h3 className="text-sm font-semibold mb-3 text-zinc-400">Tags</h3>
@@ -44,39 +106,43 @@ export const MediaTags = ({ anime, manga, movie, tv }: MediaInfoProps) => {
         <div className="flex flex-wrap gap-2 mb-3">
           {anime &&
             regularTags.map((tag, index) => (
-              <span
+              <button
                 key={index}
-                className="px-3 py-1 rounded-full text-xs font-medium bg-zinc-700/50 text-zinc-300 border border-zinc-600/30"
+                onClick={() => handleAnilistTagClick(tag.name)}
+                className={tagClass}
               >
                 {tag.name}
-              </span>
+              </button>
             ))}
           {manga &&
             regularTags.map((tag, index) => (
-              <span
+              <button
                 key={index}
-                className="px-3 py-1 rounded-full text-xs font-medium bg-zinc-700/50 text-zinc-300 border border-zinc-600/30"
+                onClick={() => handleAnilistTagClick(tag.name)}
+                className={tagClass}
               >
                 {tag.name}
-              </span>
+              </button>
             ))}
           {movie &&
             keywords.map((keyword, index) => (
-              <span
+              <button
                 key={index}
-                className="px-3 py-1 rounded-full text-xs font-medium bg-zinc-700/50 text-zinc-300 border border-zinc-600/30"
+                onClick={() => handleTmdbKeywordClick(keyword)}
+                className={tagClass}
               >
                 {keyword}
-              </span>
+              </button>
             ))}
           {tv &&
             keywords.map((keyword, index) => (
-              <span
+              <button
                 key={index}
-                className="px-3 py-1 rounded-full text-xs font-medium bg-zinc-700/50 text-zinc-300 border border-zinc-600/30"
+                onClick={() => handleTmdbKeywordClick(keyword)}
+                className={tagClass}
               >
                 {keyword}
-              </span>
+              </button>
             ))}
         </div>
       )}
@@ -97,12 +163,13 @@ export const MediaTags = ({ anime, manga, movie, tv }: MediaInfoProps) => {
           {showSpoilers && (
             <div className="flex flex-wrap gap-2 mt-2">
               {spoilerTags.map((tag, index) => (
-                <span
+                <button
                   key={index}
-                  className="px-3 py-1 rounded-full text-xs font-medium bg-zinc-700/50 text-zinc-300 border border-zinc-600/30"
+                  onClick={() => handleAnilistTagClick(tag.name)}
+                  className={tagClass}
                 >
                   {tag.name}
-                </span>
+                </button>
               ))}
             </div>
           )}
