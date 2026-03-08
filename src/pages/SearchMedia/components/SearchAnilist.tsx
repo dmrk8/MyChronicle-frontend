@@ -208,6 +208,28 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     else setTimeout(() => setTagSearch(''), 0);
   }, [showTagDropdown]);
 
+  // ── Apply filters from Header navigation ──────────────────────────────────
+  useEffect(() => {
+    if (!location.state?.filtersApplied) return;
+
+    const s = readStorage();
+    startTransition(() => {
+      setSearchQuery(s.query);
+      setDebouncedSearchQuery(s.query);
+      setSortBy(s.sort);
+      setSelectedSeason(s.season);
+      setSelectedYear(s.year);
+      setSelectedStatus(s.status);
+      setSelectedGenres(s.genres);
+      setSelectedTags(s.tags);
+      setSelectedCountry(s.country);
+      setIsAdult(s.adult);
+      setSelectedFormat(s.format);
+    });
+    window.history.replaceState({}, '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state?.filtersApplied]);
+
   // ── Reset effect ───────────────────────────────────────────────────────────
   useEffect(() => {
     if (!location.state?.reset) return;

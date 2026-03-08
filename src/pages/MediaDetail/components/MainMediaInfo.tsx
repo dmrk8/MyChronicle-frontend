@@ -1,4 +1,9 @@
+import { useNavigate } from 'react-router-dom';
 import { formatStatusDisplay } from '../../../constants/anilistFilters';
+import {
+  TMDB_MOVIE_GENRES,
+  TMDB_TV_GENRES,
+} from '../../../constants/tmdbFilters';
 import type {
   AnimeDetailed,
   MangaDetailed,
@@ -21,6 +26,59 @@ const getScoreColor = (score?: number | null) => {
 };
 
 export const MainMediaInfo = ({ media }: MainMediaInfoProps) => {
+  const navigate = useNavigate();
+
+  const handleGenreClick = (genre: string) => {
+    const mediaPath = media.mediaType.toLowerCase();
+
+    if (media.mediaType === 'ANIME' || media.mediaType === 'MANGA') {
+      const storageKey = `searchAnilist_${mediaPath}`;
+      [
+        'query',
+        'sort',
+        'season',
+        'year',
+        'status',
+        'genres',
+        'tags',
+        'country',
+        'adult',
+        'format',
+      ].forEach((k) => sessionStorage.removeItem(`${storageKey}_${k}`));
+      sessionStorage.setItem(`${storageKey}_genres`, JSON.stringify([genre]));
+    } else {
+      const storageKey = `searchTmdb_${mediaPath}`;
+      [
+        'query',
+        'sort',
+        'genres',
+        'year',
+        'status',
+        'language',
+        'minRating',
+        'runtimeMin',
+        'runtimeMax',
+        'runtimeEnabled',
+        'dateFrom',
+        'dateTo',
+        'keywords',
+      ].forEach((k) => sessionStorage.removeItem(`${storageKey}_${k}`));
+      const genreOptions =
+        media.mediaType === 'MOVIE' ? TMDB_MOVIE_GENRES : TMDB_TV_GENRES;
+      const genreObj = genreOptions.find((g) => g.name === genre);
+      if (genreObj) {
+        sessionStorage.setItem(
+          `${storageKey}_genres`,
+          JSON.stringify([genreObj]),
+        );
+      } else {
+        sessionStorage.setItem(`${storageKey}_query`, genre);
+      }
+    }
+
+    navigate(`/${mediaPath}/search`);
+  };
+
   return (
     <div className="flex-1">
       {/* Title and Score */}
@@ -29,9 +87,7 @@ export const MainMediaInfo = ({ media }: MainMediaInfoProps) => {
         {media.averageScore && (
           <div className="flex items-center gap-2">
             <span
-              className={`text-2xl font-bold ${getScoreColor(
-                media.averageScore,
-              )}`}
+              className={`text-2xl font-bold ${getScoreColor(media.averageScore)}`}
             >
               ★ {media.averageScore}
             </span>
@@ -78,12 +134,13 @@ export const MainMediaInfo = ({ media }: MainMediaInfoProps) => {
           <h3 className="text-lg font-semibold mb-2">Genres</h3>
           <div className="flex flex-wrap gap-2">
             {media.genres.map((genre: string) => (
-              <span
+              <button
                 key={genre}
-                className="px-3 py-1 bg-zinc-800 border border-zinc-700 rounded-lg text-sm"
+                onClick={() => handleGenreClick(genre)}
+                className="px-3 py-1 bg-zinc-800 border border-zinc-700 rounded-lg text-sm cursor-pointer hover:bg-zinc-700 hover:border-zinc-500 hover:text-white transition-colors"
               >
                 {genre}
-              </span>
+              </button>
             ))}
           </div>
         </div>

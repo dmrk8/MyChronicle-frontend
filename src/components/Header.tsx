@@ -342,22 +342,16 @@ const Header = () => {
 
             {/* Regular Nav Links */}
             {navLinks.map((link) => (
-              <Link key={link.path} to={link.path} className="relative group">
-                <span
-                  className={`relative px-6 py-2.5 font-semibold text-sm tracking-wide transition-all duration-300 ${
-                    isActive(link.path)
-                      ? 'text-white'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  {link.label}
-                  {isActive(link.path) && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-blue-500 to-purple-600" />
-                  )}
-                  {!isActive(link.path) && (
-                    <span className="absolute bottom-0 left-1/2 right-1/2 h-0.5 bg-linear-to-r from-blue-500 to-purple-600 opacity-0 group-hover:left-0 group-hover:right-0 group-hover:opacity-100 transition-all duration-300" />
-                  )}
-                </span>
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`flex items-center gap-2 px-4 py-2.5 font-semibold text-sm tracking-wide transition-all duration-300 ${
+                  isActive(link.path)
+                    ? 'text-white'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                {link.label}
               </Link>
             ))}
           </div>
