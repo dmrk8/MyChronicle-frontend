@@ -1,73 +1,154 @@
-# React + TypeScript + Vite
+![React](https://img.shields.io/badge/React-19-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)
+![Vite](https://img.shields.io/badge/Build-Vite-purple)
+![TailwindCSS](https://img.shields.io/badge/Styling-TailwindCSS-cyan)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# MyChronicle — Frontend
 
-Currently, two official plugins are available:
+Frontend for **MyChronicle**, a media tracking application for anime, movies, and TV shows.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The application allows users to search, discover, and manage their media library through the MyChronicle backend API.
 
-## React Compiler
+⚠️ This project is primarily intended for personal use due to rate limits on AniList and TMDB APIs.  
+Some features may not work under heavy public usage.
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+## Live Deployment
 
-## Expanding the ESLint configuration
+https://linazze.com
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Screenshots
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Home Page
+![Home Page](docs/home.png)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Media Search
+![Media Search](docs/media-search.png)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Media Detail Page
+![Media Detail](docs/media-detail.png)
+
+### User Library
+![Library](docs/library.png)
+
+## Backend Repository
+
+Backend API for this project:  
+https://github.com/dmrk8/MyChronicle-backend
+
+## Features
+
+- Search anime, movies, and TV shows
+- Browse seasonal anime and featured media
+- Add media to a personal library and track status & progress
+- Write and manage notes and reviews
+- User registration, login, and profile management
+- Protected routes with JWT-based authentication
+- Responsive UI
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | React 19 |
+| Language | TypeScript 5.9 |
+| Build Tool | Vite |
+| Styling | Tailwind CSS v4 |
+| State / Fetching | TanStack Query v5 |
+| Routing | React Router v7 |
+| HTTP Client | Axios |
+
+## External API Integrations
+
+| API | Purpose |
+|---|---|
+| [AniList](https://anilist.gitbook.io/anilist-apiv2-docs/) | Anime & Manga |
+| [TMDB](https://developer.themoviedb.org/docs) | Movies & TV shows |
+
+
+## Architecture
+
+```
+Browser
+   │
+   ▼
+React App (Vite)
+   │
+   ├── React Router (client-side routing)
+   ├── TanStack Query (server state & caching)
+   ├── AuthContext (session state)
+   └── MyChronicle Backend API
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Pages & Routes
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Route | Description | Auth Required |
+|---|---|---|
+| `/home` | Home page with featured media | No |
+| `/:mediaType/search` | Search anime, movies, or TV shows | No |
+| `/:mediaType/:id` | Media detail page | No |
+| `/library` | Personal media library | Yes |
+| `/profile` | User profile & settings | Yes |
+| `/login` | Login page | No |
+| `/signup` | Registration page | No |
+
+## Project Structure
+
 ```
+src/
+├── api/         # Axios API clients (auth, users, media, reviews)
+├── components/  # Shared UI components
+├── constants/   # Filter and media type constants
+├── contexts/    # Auth context definition
+├── hooks/       # Custom React hooks
+├── pages/       # Page components
+├── providers/   # Context providers
+├── routes/      # Route definitions
+├── types/       # TypeScript interfaces
+└── utils/       # Utility helpers
+```
+
+
+## Environment Variables
+
+Create a `.env.development` file in the project root:
+
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+## Installation & Running Locally
+
+```bash
+# Clone the repo
+git clone https://github.com/dmrk8/MyChronicle-frontend.git
+cd MyChronicle-frontend
+
+# Install dependencies
+npm install
+
+# Create your .env.development file
+VITE_API_URL=http://localhost:8000
+
+# Start development server
+npm run dev
+```
+
+The app will be available at:
+
+```
+http://localhost:5173
+```
+
+## Available Scripts
+
+| Script | Description |
+|---|---|
+| `npm run dev` | Start development server |
+| `npm run build` | Type-check and build for production |
+| `npm run preview` | Preview production build locally |
+| `npm run lint` | Run ESLint |
+
+License
+This project is licensed under the MIT License.
