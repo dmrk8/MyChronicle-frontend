@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import type { MediaRelation } from '../../../types/Media';
 import { useNavigate } from 'react-router-dom';
-
+import { formatStatusDisplay } from '../../../constants/anilistFilters';
 interface MediaRelationsProps {
   relations: MediaRelation[];
 }
@@ -24,7 +24,7 @@ const RelationCard = ({ relation }: { relation: MediaRelation }) => (
       </div>
       <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
         <div className="text-[10px] text-emerald-400 uppercase font-semibold tracking-wide mb-1 text-left">
-          {relation.relationType}
+          {formatStatusDisplay(relation.relationType)}
         </div>
         <div className="text-xs text-white font-semibold line-clamp-2 flex-1 text-left">
           {relation.title}
@@ -47,19 +47,22 @@ const RelationCard = ({ relation }: { relation: MediaRelation }) => (
 
 // Info panel that appears beside the image on hover
 const RelationInfoPanel = ({ relation }: { relation: MediaRelation }) => (
-  <div className="w-36 bg-zinc-900/95 backdrop-blur-sm border border-zinc-700 rounded flex flex-col justify-between p-2 h-full">
-    <div className="text-[10px] text-emerald-400 uppercase font-semibold tracking-wide text-left">
-      {relation.relationType}
+  <div className="w-60 bg-zinc-900/95 backdrop-blur-sm border border-zinc-700 rounded flex flex-col justify-between p-2 h-full">
+    <div className="text-[14px] text-emerald-400 font-semibold tracking-wide text-left">
+      {formatStatusDisplay(relation.relationType)}
     </div>
-    <div className="text-xs text-white font-semibold line-clamp-3 text-left mt-1 flex-1">
+    <div className="text-[14px] text-white font-semibold line-clamp-3 text-left mt-1 flex-1">
       {relation.title}
     </div>
-    <div className="flex flex-col gap-0.5 text-[10px] mt-1">
+    <div className="flex gap-2 text-[14px] mt-1 justify-start">
       {relation.format && (
-        <div className="text-zinc-400">{relation.format}</div>
+        <div className="text-zinc-400">{formatStatusDisplay(relation.format)}</div>
+      )}
+      {relation.format && relation.status && (
+        <div className="text-zinc-600">•</div>
       )}
       {relation.status && (
-        <div className="text-zinc-500">{relation.status}</div>
+        <div className="text-zinc-500">{formatStatusDisplay(relation.status)}</div>
       )}
     </div>
   </div>
@@ -144,8 +147,8 @@ export const MediaRelations = ({ relations }: MediaRelationsProps) => {
                       hoveredIndex === index ? 'opacity-0' : 'opacity-100'
                     }`}
                   >
-                    <div className="text-[11px] text-white font-semibold uppercase tracking-wide text-center truncate drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">
-                      {relation.relationType}
+                    <div className="text-[11px] text-white font-semibold tracking-wide text-center truncate drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">
+                      {formatStatusDisplay(relation.relationType)}
                     </div>
                   </div>
                 </div>

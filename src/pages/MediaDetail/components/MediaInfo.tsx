@@ -5,7 +5,7 @@ import type {
   MovieDetailed,
   TVDetailed,
 } from '../../../types/Media';
-
+import { formatStatusDisplay } from '../../../constants/anilistFilters';
 interface InfoItemProps {
   label: string;
   value: string | number | null;
@@ -96,7 +96,7 @@ export const MediaInfo = ({ anime, manga, movie, tv }: MediaInfoProps) => {
             <InfoItem label="Start Date" value={anime.startDate} />
           )}
           {anime.endDate && <InfoItem label="End Date" value={anime.endDate} />}
-          {anime.source && <InfoItem label="Source" value={anime.source} />}
+          {anime.source && <InfoItem label="Source" value={formatStatusDisplay(anime.source)} />}
           {anime.countryOfOrigin && (
             <InfoItem label="Country" value={anime.countryOfOrigin} />
           )}
