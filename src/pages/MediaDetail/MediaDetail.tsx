@@ -82,6 +82,44 @@ export const MediaDetailPage = () => {
   const updateEntry = useUpdateUserMediaEntry();
   const deleteEntry = useDeleteUserMediaEntry();
 
+  const storedTitle = userEntry?.title;
+  const storedCoverImage = userEntry?.coverImage;
+  const storedIsAdult = userEntry?.isAdult;
+
+  const latestTitle = media?.title;
+  const latestCoverImage = media?.coverImage ?? undefined;
+  const latestIsAdult = media?.isAdult ?? undefined;
+
+  // ── Sync metadata when entry and media are both loaded ─────────────────────
+  useEffect(() => {
+    if (!userEntry?.id || !latestTitle) return;
+
+    const needsUpdate =
+      storedTitle !== latestTitle ||
+      storedCoverImage !== latestCoverImage ||
+      storedIsAdult !== latestIsAdult;
+
+    if (!needsUpdate || updateEntry.isPending) return;
+
+    updateEntry.mutate({
+      entryId: userEntry.id,
+      update: {
+        title: latestTitle,
+        coverImage: latestCoverImage,
+        isAdult: latestIsAdult,
+      },
+    });
+  }, [
+    userEntry?.id,
+    storedTitle,
+    storedCoverImage,
+    storedIsAdult,
+    latestTitle,
+    latestCoverImage,
+    latestIsAdult,
+    updateEntry,
+  ]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (

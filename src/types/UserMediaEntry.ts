@@ -35,6 +35,9 @@ export interface UserMediaEntryUpdate {
   repeatCount?: number;
   isFavorite?: boolean;
   inLibrary?: boolean;
+  title?: string;
+  coverImage?: string;
+  isAdult?: boolean;
 }
 
 export interface UserMediaEntryPagination {
