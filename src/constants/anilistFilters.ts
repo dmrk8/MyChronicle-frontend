@@ -114,13 +114,12 @@ export const getNextSeason = (season: AnilistSeason, year: number): { season: An
 };
 
 
-
-
 export interface AnilistTag {
   id: number;
   name: string;
   isAdult: boolean;
   category: string;
+  description: string;
 }
 
 export const ANILIST_TAGS: AnilistTag[] = tagsJson.MediaTagCollection;

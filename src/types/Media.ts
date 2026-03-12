@@ -55,6 +55,7 @@ export interface Tag {
   isMediaSpoiler: boolean;
   isGeneralSpoiler: boolean;
   rank: number;
+  description: string;
 }
 
 export interface MediaBelongsToCollection {

@@ -255,6 +255,8 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       setSelectedCountry(s.country);
       setIsAdult(s.adult);
       setSelectedFormat(s.format);
+      setExcludedGenres(s.excludedGenres);
+      setExcludedTags(s.excludedTags);
     });
     window.history.replaceState({}, '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -275,6 +277,8 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       'country',
       'adult',
       'format',
+      'genres_excluded',
+      'tags_excluded',
     ];
     keysToRemove.forEach((key) =>
       sessionStorage.removeItem(`${storageKey}_${key}`),
@@ -292,6 +296,8 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       setSelectedCountry('');
       setIsAdult(false);
       setSelectedFormat('');
+      setExcludedGenres([]);
+      setExcludedTags([]);
     });
     window.history.replaceState({}, '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -530,25 +536,25 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     ...selectedGenres.map((g) => ({
       key: `genre-${g}`,
       label: g,
-      onRemove: () => toggleGenre(g),
+      onRemove: () => setSelectedGenres((prev) => prev.filter((x) => x !== g)),
       isExcluded: false,
     })),
     ...excludedGenres.map((g) => ({
       key: `genre-excluded-${g}`,
       label: `−${g}`,
-      onRemove: () => toggleGenre(g),
+      onRemove: () => setExcludedGenres((prev) => prev.filter((x) => x !== g)),
       isExcluded: true,
     })),
     ...selectedTags.map((t) => ({
       key: `tag-${t}`,
       label: t,
-      onRemove: () => toggleTag(t),
+      onRemove: () => setSelectedTags((prev) => prev.filter((x) => x !== t)),
       isExcluded: false,
     })),
     ...excludedTags.map((t) => ({
       key: `tag-excluded-${t}`,
       label: `−${t}`,
-      onRemove: () => toggleTag(t),
+      onRemove: () => setExcludedTags((prev) => prev.filter((x) => x !== t)),
       isExcluded: true,
     })),
     ...(selectedFormat
@@ -1021,8 +1027,10 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                             <div className="flex flex-col gap-4">
                               {filteredTagsByCategory.map(
                                 ({ category, tags }) => {
-                                  const selectedInCategory = tags.filter((t) =>
-                                    selectedTags.includes(t.name),
+                                  const selectedInCategory = tags.filter(
+                                    (t) =>
+                                      selectedTags.includes(t.name) ||
+                                      excludedTags.includes(t.name),
                                   ).length;
                                   return (
                                     <div
@@ -1042,7 +1050,13 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                                       </div>
 
                                       {/* Tags grid */}
-                                      <div className="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1">
+                                      <div
+                                        className="p-2 grid gap-1"
+                                        style={{
+                                          gridTemplateColumns:
+                                            'repeat(auto-fill, minmax(140px, 1fr))',
+                                        }}
+                                      >
                                         {tags.map((tag) => {
                                           const isSelected =
                                             selectedTags.includes(tag.name);
@@ -1050,70 +1064,91 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                                             excludedTags.includes(tag.name);
 
                                           return (
-                                            <button
+                                            <div
                                               key={tag.id}
-                                              type="button"
-                                              onClick={() =>
-                                                toggleTag(tag.name)
-                                              }
-                                              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-left transition-all duration-150 border text-xs ${
-                                                isSelected
-                                                  ? 'bg-blue-500/15 border-blue-500/50 text-blue-200'
-                                                  : isExcluded
-                                                    ? 'bg-red-500/15 border-red-500/50 text-red-200'
-                                                    : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700/60 hover:text-white hover:border-zinc-600'
-                                              }`}
+                                              className="relative group"
                                             >
-                                              <span
-                                                className={`w-3 h-3 rounded border shrink-0 flex items-center justify-center transition-colors ${
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  toggleTag(tag.name)
+                                                }
+                                                className={`w-full min-w-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-left transition-all duration-150 border text-xs relative group ${
                                                   isSelected
-                                                    ? 'bg-blue-500 border-blue-500'
+                                                    ? 'bg-blue-500/15 border-blue-500/50 text-blue-200'
                                                     : isExcluded
-                                                      ? 'bg-red-500 border-red-500'
-                                                      : 'border-zinc-600'
+                                                      ? 'bg-red-500/15 border-red-500/50 text-red-200'
+                                                      : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700/60 hover:text-white hover:border-zinc-600'
                                                 }`}
-                                                aria-hidden="true"
                                               >
-                                                {isSelected && (
-                                                  <svg
-                                                    className="w-2 h-2 text-white"
-                                                    fill="currentColor"
-                                                    viewBox="0 0 12 12"
-                                                  >
-                                                    <path
-                                                      d="M10 3L5 8.5 2 5.5"
-                                                      stroke="currentColor"
-                                                      strokeWidth="1.5"
-                                                      strokeLinecap="round"
-                                                      strokeLinejoin="round"
-                                                      fill="none"
-                                                    />
-                                                  </svg>
-                                                )}
-                                                {isExcluded && (
-                                                  <svg
-                                                    className="w-2 h-2 text-white"
-                                                    fill="currentColor"
-                                                    viewBox="0 0 12 12"
-                                                  >
-                                                    <path
-                                                      d="M2 6h8"
-                                                      stroke="currentColor"
-                                                      strokeWidth="2"
-                                                      strokeLinecap="round"
-                                                    />
-                                                  </svg>
-                                                )}
-                                              </span>
-                                              <span className="truncate flex-1">
-                                                {tag.name}
-                                              </span>
-                                              {tag.isAdult && (
-                                                <span className="text-red-400 shrink-0">
-                                                  18+
+                                                <span
+                                                  className={`w-3 h-3 rounded border shrink-0 flex items-center justify-center transition-colors ${
+                                                    isSelected
+                                                      ? 'bg-blue-500 border-blue-500'
+                                                      : isExcluded
+                                                        ? 'bg-red-500 border-red-500'
+                                                        : 'border-zinc-600'
+                                                  }`}
+                                                  aria-hidden="true"
+                                                >
+                                                  {isSelected && (
+                                                    <svg
+                                                      className="w-2 h-2 text-white"
+                                                      fill="currentColor"
+                                                      viewBox="0 0 12 12"
+                                                    >
+                                                      <path
+                                                        d="M10 3L5 8.5 2 5.5"
+                                                        stroke="currentColor"
+                                                        strokeWidth="1.5"
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        fill="none"
+                                                      />
+                                                    </svg>
+                                                  )}
+                                                  {isExcluded && (
+                                                    <svg
+                                                      className="w-2 h-2 text-white"
+                                                      fill="currentColor"
+                                                      viewBox="0 0 12 12"
+                                                    >
+                                                      <path
+                                                        d="M2 6h8"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        strokeLinecap="round"
+                                                      />
+                                                    </svg>
+                                                  )}
                                                 </span>
+                                                <span className="truncate flex-1">
+                                                  {tag.name}
+                                                </span>
+                                                {tag.isAdult && (
+                                                  <span className="text-red-400 shrink-0">
+                                                    18+
+                                                  </span>
+                                                )}
+                                              </button>
+
+                                              {tag.description && (
+                                                <div className="absolute bottom-[calc(100%+6px)] left-1/2 -translate-x-1/2 w-52 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                                                  <p className="text-xs font-medium text-white mb-1">
+                                                    {tag.name}
+                                                  </p>
+                                                  <p className="text-xs text-zinc-400 leading-relaxed">
+                                                    {tag.description}
+                                                  </p>
+                                                  {tag.isAdult && (
+                                                    <span className="inline-block mt-2 text-[10px] px-2 py-0.5 bg-red-500/15 text-red-300 rounded-md">
+                                                      18+ only
+                                                    </span>
+                                                  )}
+                                                  <div className="absolute -bottom-1.25 left-1/2 -translate-x-1/2 w-2 h-2 bg-zinc-900 border-r border-b border-zinc-700 rotate-45" />
+                                                </div>
                                               )}
-                                            </button>
+                                            </div>
                                           );
                                         })}
                                       </div>

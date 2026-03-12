@@ -95,7 +95,7 @@ export const MediaTags = ({ anime, manga, movie, tv }: MediaInfoProps) => {
   if (allTags.length === 0 && !hasSpoilers) return null;
 
   const tagClass =
-    'px-3 py-1 rounded-full text-xs font-medium bg-zinc-700/50 text-zinc-300 border border-zinc-600/30 cursor-pointer hover:bg-zinc-600/50 hover:text-white transition-colors';
+    'px-3 py-1 rounded-full text-xs font-medium bg-zinc-700/50 text-zinc-300 border border-zinc-600/30 cursor-pointer hover:bg-zinc-600/50 hover:text-white transition-colors relative group';
 
   return (
     <div className="mt-4 bg-zinc-800/50 rounded-lg p-4">
@@ -112,6 +112,11 @@ export const MediaTags = ({ anime, manga, movie, tv }: MediaInfoProps) => {
                 className={tagClass}
               >
                 {tag.name}
+                {tag.description && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-zinc-950 text-zinc-100 text-xs rounded shadow-lg pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 max-w-md whitespace-normal border border-zinc-700">
+                    {tag.description}
+                  </div>
+                )}
               </button>
             ))}
           {manga &&
@@ -122,6 +127,11 @@ export const MediaTags = ({ anime, manga, movie, tv }: MediaInfoProps) => {
                 className={tagClass}
               >
                 {tag.name}
+                {tag.description && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-zinc-950 text-zinc-100 text-xs rounded shadow-lg pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 max-w-md whitespace-normal border border-zinc-700">
+                    {tag.description}
+                  </div>
+                )}
               </button>
             ))}
           {movie &&
@@ -166,9 +176,15 @@ export const MediaTags = ({ anime, manga, movie, tv }: MediaInfoProps) => {
                 <button
                   key={index}
                   onClick={() => handleAnilistTagClick(tag.name)}
+                  title={tag.description}
                   className={tagClass}
                 >
                   {tag.name}
+                  {tag.description && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-zinc-950 text-zinc-100 text-xs rounded shadow-lg pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 max-w-md whitespace-normal border border-zinc-700">
+                      {tag.description}
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
