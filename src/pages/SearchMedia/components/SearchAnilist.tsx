@@ -47,16 +47,21 @@ const fuzzyMatch = (query: string, target: string): boolean => {
   return qi === q.length;
 };
 
-const genreButtonLabel = (genres: AnilistGenre[]): string => {
-  if (genres.length === 0) return 'Any';
-  if (genres.length === 1) return genres[0];
-  return `${genres[0]} +${genres.length - 1}`;
+const genreButtonLabel = (
+  included: AnilistGenre[],
+  excluded: AnilistGenre[],
+): string => {
+  const total = included.length + excluded.length;
+  if (total === 0) return 'Any';
+  if (total === 1) return included[0] ?? `−${excluded[0]}`;
+  return `${total} active`;
 };
 
-const tagButtonLabel = (tags: string[]): string => {
-  if (tags.length === 0) return 'Any';
-  if (tags.length === 1) return tags[0];
-  return `${tags[0]} +${tags.length - 1}`;
+const tagButtonLabel = (included: string[], excluded: string[]): string => {
+  const total = included.length + excluded.length;
+  if (total === 0) return 'Any';
+  if (total === 1) return included[0] ?? `−${excluded[0]}`;
+  return `${total} active`;
 };
 
 const getFormatOptions = (mediaType: MediaType) =>
@@ -92,8 +97,16 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       const v = sessionStorage.getItem(`${storageKey}_genres`);
       return v ? (JSON.parse(v) as AnilistGenre[]) : [];
     })(),
+    excludedGenres: (() => {
+      const v = sessionStorage.getItem(`${storageKey}_genres_excluded`);
+      return v ? (JSON.parse(v) as AnilistGenre[]) : [];
+    })(),
     tags: (() => {
       const v = sessionStorage.getItem(`${storageKey}_tags`);
+      return v ? (JSON.parse(v) as string[]) : [];
+    })(),
+    excludedTags: (() => {
+      const v = sessionStorage.getItem(`${storageKey}_tags_excluded`);
       return v ? (JSON.parse(v) as string[]) : [];
     })(),
     country: sessionStorage.getItem(`${storageKey}_country`) ?? '',
@@ -109,7 +122,9 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       'year',
       'status',
       'genres',
+      'genresExclude',
       'tags',
+      'tagsExclude',
       'country',
       'adult',
       'format',
@@ -134,8 +149,17 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
             .split(',')
             .filter(Boolean) as AnilistGenre[])
         : [],
+      excludedGenres: searchParams.get('genresExclude')
+        ? (searchParams
+            .get('genresExclude')!
+            .split(',')
+            .filter(Boolean) as AnilistGenre[])
+        : [],
       tags: searchParams.get('tags')
         ? searchParams.get('tags')!.split(',').filter(Boolean)
+        : [],
+      excludedTags: searchParams.get('tagsExclude')
+        ? searchParams.get('tagsExclude')!.split(',').filter(Boolean)
         : [],
       country: searchParams.get('country') ?? '',
       adult: searchParams.get('adult') === '1',
@@ -167,6 +191,12 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   const [isAdult, setIsAdult] = useState<boolean>(() => _init.adult);
   const [selectedFormat, setSelectedFormat] = useState<string>(
     () => _init.format,
+  );
+  const [excludedGenres, setExcludedGenres] = useState<AnilistGenre[]>(
+    () => _init.excludedGenres,
+  );
+  const [excludedTags, setExcludedTags] = useState<string[]>(
+    () => _init.excludedTags,
   );
 
   // ── Dropdown UI state ──────────────────────────────────────────────────────
@@ -306,6 +336,19 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   useEffect(() => {
     sessionStorage.setItem(`${storageKey}_format`, selectedFormat);
   }, [selectedFormat, storageKey]);
+  useEffect(() => {
+    sessionStorage.setItem(
+      `${storageKey}_genres_excluded`,
+      JSON.stringify(excludedGenres),
+    );
+  }, [excludedGenres, storageKey]);
+
+  useEffect(() => {
+    sessionStorage.setItem(
+      `${storageKey}_tags_excluded`,
+      JSON.stringify(excludedTags),
+    );
+  }, [excludedTags, storageKey]);
 
   // ── Query params ───────────────────────────────────────────────────────────
   const isSearching = debouncedSearchQuery.trim().length > 0;
@@ -319,7 +362,9 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     ...(selectedYear && { seasonYear: selectedYear }),
     ...(selectedStatus && { status: selectedStatus }),
     ...(selectedGenres.length > 0 && { genreIn: selectedGenres }),
+    ...(excludedGenres.length > 0 && { genreNotIn: excludedGenres }),
     ...(selectedTags.length > 0 && { tagIn: selectedTags }),
+    ...(excludedTags.length > 0 && { tagNotIn: excludedTags }),
     ...(selectedCountry && { countryOfOrigin: selectedCountry }),
     isAdult,
     ...(selectedFormat && { format: selectedFormat }),
@@ -346,24 +391,43 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     navigate(`/${mediaType.toLowerCase()}/${id}`);
 
   // ── Filter helpers ─────────────────────────────────────────────────────────
-  const toggleGenre = (genre: AnilistGenre) =>
-    setSelectedGenres((prev) =>
-      prev.includes(genre) ? prev.filter((g) => g !== genre) : [...prev, genre],
-    );
 
-  const toggleTag = (tagName: string) =>
-    setSelectedTags((prev) =>
-      prev.includes(tagName)
-        ? prev.filter((t) => t !== tagName)
-        : [...prev, tagName],
-    );
+  const toggleGenre = (genre: AnilistGenre) => {
+    if (selectedGenres.includes(genre)) {
+      // selected → excluded
+      setSelectedGenres((prev) => prev.filter((g) => g !== genre));
+      setExcludedGenres((prev) => [...prev, genre]);
+    } else if (excludedGenres.includes(genre)) {
+      // excluded → none
+      setExcludedGenres((prev) => prev.filter((g) => g !== genre));
+    } else {
+      // none → selected
+      setSelectedGenres((prev) => [...prev, genre]);
+    }
+  };
+
+  const toggleTag = (tagName: string) => {
+    if (selectedTags.includes(tagName)) {
+      // selected → excluded
+      setSelectedTags((prev) => prev.filter((t) => t !== tagName));
+      setExcludedTags((prev) => [...prev, tagName]);
+    } else if (excludedTags.includes(tagName)) {
+      // excluded → none
+      setExcludedTags((prev) => prev.filter((t) => t !== tagName));
+    } else {
+      // none → selected
+      setSelectedTags((prev) => [...prev, tagName]);
+    }
+  };
 
   const hasActiveFilters =
     selectedSeason !== '' ||
     selectedYear !== '' ||
     selectedStatus !== '' ||
     selectedGenres.length > 0 ||
+    excludedGenres.length > 0 ||
     selectedTags.length > 0 ||
+    excludedTags.length > 0 ||
     selectedCountry !== '' ||
     isAdult ||
     selectedFormat !== '';
@@ -373,7 +437,9 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     setSelectedYear('');
     setSelectedStatus('');
     setSelectedGenres([]);
+    setExcludedGenres([]);
     setSelectedTags([]);
+    setExcludedTags([]);
     setSelectedCountry('');
     setIsAdult(false);
     setSelectedFormat('');
@@ -455,16 +521,35 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   };
 
   // ── Active chips ───────────────────────────────────────────────────────────
-  const activeChips: { key: string; label: string; onRemove: () => void }[] = [
+  const activeChips: {
+    key: string;
+    label: string;
+    onRemove: () => void;
+    isExcluded?: boolean;
+  }[] = [
     ...selectedGenres.map((g) => ({
       key: `genre-${g}`,
       label: g,
       onRemove: () => toggleGenre(g),
+      isExcluded: false,
+    })),
+    ...excludedGenres.map((g) => ({
+      key: `genre-excluded-${g}`,
+      label: `−${g}`,
+      onRemove: () => toggleGenre(g),
+      isExcluded: true,
     })),
     ...selectedTags.map((t) => ({
       key: `tag-${t}`,
       label: t,
       onRemove: () => toggleTag(t),
+      isExcluded: false,
+    })),
+    ...excludedTags.map((t) => ({
+      key: `tag-excluded-${t}`,
+      label: `−${t}`,
+      onRemove: () => toggleTag(t),
+      isExcluded: true,
     })),
     ...(selectedFormat
       ? [
@@ -670,11 +755,17 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                     type="button"
                     onClick={() => setShowGenreDropdown((prev) => !prev)}
                     onKeyDown={handleGenreDropdownKeyDown}
-                    className={`${selectBase} ${selectedGenres.length > 0 ? activeSelect : inactiveSelect}`}
+                    className={`${selectBase} ${
+                      selectedGenres.length > 0
+                        ? activeSelect
+                        : excludedGenres.length > 0
+                          ? 'border-red-500 text-white'
+                          : inactiveSelect
+                    }`}
                     aria-haspopup="listbox"
                     aria-expanded={showGenreDropdown}
                   >
-                    {genreButtonLabel(selectedGenres)}
+                    {genreButtonLabel(selectedGenres, excludedGenres)}
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs pointer-events-none">
                       ▼
                     </span>
@@ -703,34 +794,86 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                               No matches
                             </p>
                           ) : (
-                            filteredGenres.map((genre, idx) => (
-                              <label
-                                key={genre}
-                                className={`flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-700 cursor-pointer transition-colors ${genreDropdownIndex === idx ? 'bg-blue-600/30' : ''}`}
-                                tabIndex={-1}
-                                onMouseEnter={() => setGenreDropdownIndex(idx)}
-                                onClick={() => toggleGenre(genre)}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={selectedGenres.includes(genre)}
-                                  readOnly
-                                  className="accent-blue-500 w-4 h-4 cursor-pointer"
-                                />
-                                <span className="text-sm text-white">
-                                  {genre}
-                                </span>
-                              </label>
-                            ))
+                            filteredGenres.map((genre, idx) => {
+                              const state = selectedGenres.includes(genre)
+                                ? 'include'
+                                : excludedGenres.includes(genre)
+                                  ? 'exclude'
+                                  : 'none';
+                              return (
+                                <label
+                                  key={genre}
+                                  className={`flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-700 cursor-pointer transition-colors ${
+                                    genreDropdownIndex === idx
+                                      ? 'bg-blue-600/30'
+                                      : ''
+                                  }`}
+                                  tabIndex={-1}
+                                  onMouseEnter={() =>
+                                    setGenreDropdownIndex(idx)
+                                  }
+                                  onClick={() => toggleGenre(genre)}
+                                >
+                                  <span
+                                    className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                                      state === 'include'
+                                        ? 'bg-blue-500 border-blue-500'
+                                        : state === 'exclude'
+                                          ? 'bg-red-500 border-red-500'
+                                          : 'border-zinc-600'
+                                    }`}
+                                  >
+                                    {state === 'include' && (
+                                      <svg
+                                        className="w-2.5 h-2.5 text-white"
+                                        fill="currentColor"
+                                        viewBox="0 0 12 12"
+                                      >
+                                        <path
+                                          d="M10 3L5 8.5 2 5.5"
+                                          stroke="currentColor"
+                                          strokeWidth="1.5"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          fill="none"
+                                        />
+                                      </svg>
+                                    )}
+                                    {state === 'exclude' && (
+                                      <span className="text-white text-xs font-bold leading-none">
+                                        −
+                                      </span>
+                                    )}
+                                  </span>
+                                  <span
+                                    className={`text-sm ${
+                                      state === 'include'
+                                        ? 'text-blue-200'
+                                        : state === 'exclude'
+                                          ? 'text-red-200'
+                                          : 'text-white'
+                                    }`}
+                                  >
+                                    {genre}
+                                  </span>
+                                </label>
+                              );
+                            })
                           )}
                         </div>
-                        {selectedGenres.length > 0 && (
+                        {(selectedGenres.length > 0 ||
+                          excludedGenres.length > 0) && (
                           <div className="p-2 border-t border-zinc-700">
                             <button
-                              onClick={() => setSelectedGenres([])}
+                              onClick={() => {
+                                setSelectedGenres([]);
+                                setExcludedGenres([]);
+                              }}
                               className="w-full text-xs text-zinc-400 hover:text-white transition-colors py-1"
                             >
-                              Clear {selectedGenres.length} selected
+                              Clear{' '}
+                              {selectedGenres.length + excludedGenres.length}{' '}
+                              active
                             </button>
                           </div>
                         )}
@@ -749,11 +892,17 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                   <button
                     type="button"
                     onClick={() => setShowTagDropdown((prev) => !prev)}
-                    className={`${selectBase} ${selectedTags.length > 0 ? activeSelect : inactiveSelect}`}
+                    className={`${selectBase} ${
+                      selectedTags.length > 0
+                        ? activeSelect
+                        : excludedTags.length > 0
+                          ? 'border-red-500 text-white'
+                          : inactiveSelect
+                    }`}
                     aria-haspopup="listbox"
                     aria-expanded={showTagDropdown}
                   >
-                    {tagButtonLabel(selectedTags)}
+                    {tagButtonLabel(selectedTags, excludedTags)}
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs pointer-events-none">
                       ▼
                     </span>
@@ -770,12 +919,17 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                           <span className="text-sm font-semibold text-white">
                             Select Tags
                           </span>
-                          {selectedTags.length > 0 && (
+                          {(selectedTags.length > 0 ||
+                            excludedTags.length > 0) && (
                             <button
-                              onClick={() => setSelectedTags([])}
+                              onClick={() => {
+                                setSelectedTags([]);
+                                setExcludedTags([]);
+                              }}
                               className="text-xs text-zinc-400 hover:text-white transition-colors"
                             >
-                              Clear {selectedTags.length} selected
+                              Clear {selectedTags.length + excludedTags.length}{' '}
+                              active
                             </button>
                           )}
                         </div>
@@ -806,7 +960,8 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                         </div>
 
                         {/* Selected tags chips */}
-                        {selectedTags.length > 0 && (
+                        {(selectedTags.length > 0 ||
+                          excludedTags.length > 0) && (
                           <div className="px-4 py-2.5 border-b border-zinc-700/70 shrink-0 flex flex-wrap gap-1.5">
                             {selectedTags.map((t) => (
                               <span
@@ -815,8 +970,33 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                               >
                                 {t}
                                 <button
-                                  onClick={() => toggleTag(t)}
+                                  onClick={() =>
+                                    setSelectedTags((prev) =>
+                                      prev.filter((x) => x !== t),
+                                    )
+                                  }
                                   className="text-blue-400 hover:text-white transition-colors leading-none ml-0.5"
+                                >
+                                  ✕
+                                </button>
+                              </span>
+                            ))}
+                            {excludedTags.map((t) => (
+                              <span
+                                key={`exc-${t}`}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-500/15 border border-red-500/40 text-red-300 text-xs rounded-lg"
+                              >
+                                <span className="text-red-400 font-bold mr-0.5">
+                                  −
+                                </span>
+                                {t}
+                                <button
+                                  onClick={() =>
+                                    setExcludedTags((prev) =>
+                                      prev.filter((x) => x !== t),
+                                    )
+                                  }
+                                  className="text-red-400 hover:text-white transition-colors leading-none ml-0.5"
                                 >
                                   ✕
                                 </button>
@@ -860,6 +1040,9 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                                         {tags.map((tag) => {
                                           const isSelected =
                                             selectedTags.includes(tag.name);
+                                          const isExcluded =
+                                            excludedTags.includes(tag.name);
+
                                           return (
                                             <button
                                               key={tag.id}
@@ -870,15 +1053,20 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                                               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-left transition-all duration-150 border text-xs ${
                                                 isSelected
                                                   ? 'bg-blue-500/15 border-blue-500/50 text-blue-200'
-                                                  : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700/60 hover:text-white hover:border-zinc-600'
+                                                  : isExcluded
+                                                    ? 'bg-red-500/15 border-red-500/50 text-red-200'
+                                                    : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700/60 hover:text-white hover:border-zinc-600'
                                               }`}
                                             >
                                               <span
                                                 className={`w-3 h-3 rounded border shrink-0 flex items-center justify-center transition-colors ${
                                                   isSelected
                                                     ? 'bg-blue-500 border-blue-500'
-                                                    : 'border-zinc-600'
+                                                    : isExcluded
+                                                      ? 'bg-red-500 border-red-500'
+                                                      : 'border-zinc-600'
                                                 }`}
+                                                aria-hidden="true"
                                               >
                                                 {isSelected && (
                                                   <svg
@@ -893,6 +1081,20 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                                                       strokeLinecap="round"
                                                       strokeLinejoin="round"
                                                       fill="none"
+                                                    />
+                                                  </svg>
+                                                )}
+                                                {isExcluded && (
+                                                  <svg
+                                                    className="w-2 h-2 text-white"
+                                                    fill="currentColor"
+                                                    viewBox="0 0 12 12"
+                                                  >
+                                                    <path
+                                                      d="M2 6h8"
+                                                      stroke="currentColor"
+                                                      strokeWidth="2"
+                                                      strokeLinecap="round"
                                                     />
                                                   </svg>
                                                 )}
@@ -1155,12 +1357,20 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                 {activeChips.map((chip) => (
                   <span
                     key={chip.key}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/15 border border-blue-500/40 text-blue-300 text-xs rounded-lg"
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg ${
+                      chip.isExcluded
+                        ? 'bg-red-500/15 border border-red-500/40 text-red-300'
+                        : 'bg-blue-500/15 border border-blue-500/40 text-blue-300'
+                    }`}
                   >
                     {chip.label}
                     <button
                       onClick={chip.onRemove}
-                      className="text-blue-400 hover:text-white transition-colors leading-none"
+                      className={`transition-colors leading-none ${
+                        chip.isExcluded
+                          ? 'text-red-400 hover:text-white'
+                          : 'text-blue-400 hover:text-white'
+                      }`}
                       aria-label={`Remove ${chip.label}`}
                     >
                       ✕

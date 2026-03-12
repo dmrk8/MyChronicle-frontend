@@ -12,7 +12,9 @@ export interface SearchAnilistParams {
   format?: string;
   status?: string;
   genreIn?: string[];
+  genreNotIn?: string[];   
   tagIn?: string[];
+  tagNotIn?: string[];    
   isAdult?: boolean;
   countryOfOrigin?: string;
 }
