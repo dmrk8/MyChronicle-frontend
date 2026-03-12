@@ -632,7 +632,11 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     if (selectedStatus) params.set('status', selectedStatus);
     if (selectedGenres.length > 0)
       params.set('genres', selectedGenres.join(','));
+    if (excludedGenres.length > 0)
+      params.set('genresExclude', excludedGenres.join(','));
     if (selectedTags.length > 0) params.set('tags', selectedTags.join(','));
+    if (excludedTags.length > 0)
+      params.set('tagsExclude', excludedTags.join(','));
     if (selectedCountry) params.set('country', selectedCountry);
     if (isAdult) params.set('adult', '1');
     if (selectedFormat) params.set('format', selectedFormat);
@@ -644,7 +648,9 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     selectedYear,
     selectedStatus,
     selectedGenres,
+    excludedGenres,
     selectedTags,
+    excludedTags,
     selectedCountry,
     isAdult,
     selectedFormat,
