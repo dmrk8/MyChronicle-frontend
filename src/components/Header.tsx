@@ -491,7 +491,7 @@ const Header = () => {
                             onClick={() =>
                               navigateWithFilters(
                                 'anime',
-                                { sort: ANILIST_SORT_OPTIONS.POPULARITY_DESC },
+                                { sort: ANILIST_SORT_OPTIONS.TRENDING_DESC },
                                 'searchAnilist',
                                 true,
                               )
@@ -545,7 +545,7 @@ const Header = () => {
                             onClick={() =>
                               navigateWithFilters(
                                 'manga',
-                                { sort: ANILIST_SORT_OPTIONS.POPULARITY_DESC },
+                                { sort: ANILIST_SORT_OPTIONS.TRENDING_DESC },
                                 'searchAnilist',
                                 true,
                               )
@@ -597,7 +597,7 @@ const Header = () => {
                               navigateWithFilters(
                                 'movie',
                                 {
-                                  sort: TMDB_MOVIE_SORT_OPTIONS.RELEASE_DATE_ASC,
+                                  sort: TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC,
                                   dateFrom: movieDates.upcoming.from,
                                   dateTo: movieDates.upcoming.to,
                                 },
