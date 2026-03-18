@@ -220,13 +220,13 @@ const LibraryPage = () => {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12">
           {/* ── Media Type Header Bar ── */}
-          <div className="border-b border-zinc-800 mb-20">
-            <div className="flex items-center justify-center gap-0">
+          <div className="border-b border-zinc-800 mb-10">
+            <div className="flex items-center overflow-x-auto scrollbar-none">
               {mediaTypes.map((type) => (
                 <button
                   key={type}
                   onClick={() => setSelectedType(type)}
-                  className={`relative px-8 py-5 text-base font-bold transition-all duration-200 whitespace-nowrap shrink-0 ${
+                  className={`relative flex-1 min-w-fit px-6 py-5 text-base font-bold transition-all duration-200 whitespace-nowrap ${
                     selectedType === type
                       ? 'text-white'
                       : 'text-zinc-500 hover:text-zinc-300'
@@ -254,7 +254,7 @@ const LibraryPage = () => {
             </p>
           </div>
 
-          {/* Search Bar - Bigger */}
+          {/* Search Bar */}
           <div className="max-w-2xl mx-auto mb-8">
             <div className="relative group flex-1">
               <div className="absolute inset-0 bg-linear-to-r from-purple-500 to-pink-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
@@ -302,21 +302,20 @@ const LibraryPage = () => {
           </div>
 
           {/* ── Status Filter — Browser Tab Style ── */}
-          <div className="flex justify-center mb-8">
-            <div className="flex items-end gap-0 border-b border-zinc-700">
+          <div className="mb-8 -mx-4 sm:mx-0 px-4 sm:px-0 sm:flex sm:justify-center">
+            <div className="flex items-end gap-0 border-b border-zinc-700 overflow-x-auto scrollbar-none">
               {statuses.map((status) => {
                 const isActive = selectedStatus === status;
                 return (
                   <button
                     key={status}
                     onClick={() => setSelectedStatus(status)}
-                    className={`relative px-4 py-2.5 text-xs font-semibold transition-all duration-200 whitespace-nowrap rounded-t-lg border-t border-l border-r -mb-px ${
+                    className={`relative shrink-0 px-4 py-2.5 text-xs font-semibold transition-all duration-200 whitespace-nowrap rounded-t-lg border-t border-l border-r -mb-px ${
                       isActive
                         ? 'bg-zinc-800 border-zinc-700 text-white z-10'
                         : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/40'
                     }`}
                   >
-                    {/* Colored top accent on active tab */}
                     {isActive && (
                       <span
                         className={`absolute top-0 left-0 right-0 h-0.5 rounded-t-lg ${statusTabAccent[status]}`}
@@ -329,7 +328,7 @@ const LibraryPage = () => {
             </div>
           </div>
 
-          {/* Other Filters - Below status */}
+          {/* Other Filters  */}
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center justify-center mb-4">
               <div className="flex-1 border-t border-zinc-700" />
