@@ -1,3 +1,5 @@
+'use client';
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import {
@@ -30,6 +32,63 @@ import { MediaTags } from './components/MediaTags';
 import { MediaAlternativeTitles } from './components/MediaAlternativeTitles';
 import { MediaTabs } from './components/MediaTabs';
 
+const BannerSkeleton = () => (
+  <div className="relative h-96 w-full bg-zinc-800 animate-pulse" />
+);
+
+const CoverImageSkeleton = () => (
+  <div className="w-full aspect-2/3 rounded-lg bg-zinc-800 animate-pulse mb-4" />
+);
+
+const ButtonSkeleton = () => (
+  <div className="w-full h-11 rounded-lg bg-zinc-800 animate-pulse" />
+);
+
+const InfoSectionSkeleton = () => (
+  <div className="space-y-4 mb-6">
+    <div className="h-4 bg-zinc-800 rounded w-3/4 animate-pulse" />
+    <div className="h-4 bg-zinc-800 rounded w-2/3 animate-pulse" />
+    <div className="h-4 bg-zinc-800 rounded w-4/5 animate-pulse" />
+  </div>
+);
+
+const MainContentSkeleton = () => (
+  <div className="space-y-6 flex-1">
+    {/* Title and meta info */}
+    <div className="space-y-3">
+      <div className="h-8 bg-zinc-800 rounded w-2/3 animate-pulse" />
+      <div className="h-4 bg-zinc-800 rounded w-1/2 animate-pulse" />
+      <div className="flex gap-2">
+        <div className="h-6 bg-zinc-800 rounded-full w-20 animate-pulse" />
+        <div className="h-6 bg-zinc-800 rounded-full w-20 animate-pulse" />
+        <div className="h-6 bg-zinc-800 rounded-full w-20 animate-pulse" />
+      </div>
+    </div>
+
+    {/* Synopsis */}
+    <div className="space-y-2">
+      <div className="h-4 bg-zinc-800 rounded w-full animate-pulse" />
+      <div className="h-4 bg-zinc-800 rounded w-full animate-pulse" />
+      <div className="h-4 bg-zinc-800 rounded w-3/4 animate-pulse" />
+    </div>
+
+    {/* Tabs skeleton */}
+    <div>
+      <div className="flex gap-4 border-b border-zinc-700 mb-4">
+        <div className="h-4 bg-zinc-800 rounded w-20 animate-pulse" />
+        <div className="h-4 bg-zinc-800 rounded w-20 animate-pulse" />
+        <div className="h-4 bg-zinc-800 rounded w-20 animate-pulse" />
+      </div>
+      <div className="space-y-3">
+        <div className="h-10 bg-zinc-800 rounded animate-pulse" />
+        <div className="h-10 bg-zinc-800 rounded animate-pulse" />
+        <div className="h-10 bg-zinc-800 rounded animate-pulse" />
+      </div>
+    </div>
+  </div>
+);
+
+// ── Main Component ────────────────────────────────────────────────────────
 export const MediaDetailPage = () => {
   const { mediaType: rawMediaType, id } = useParams<{
     mediaType: string;
@@ -215,10 +274,25 @@ export const MediaDetailPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-xl text-gray-600 dark:text-gray-400">
-            Loading...
+      <div className="min-h-screen bg-linear-to-b from-zinc-900 to-black text-white mb-30">
+        {/* Banner Skeleton */}
+        <BannerSkeleton />
+
+        <div className="max-w-full mx-auto px-4 sm:px-8 lg:px-60 -mt-32 relative z-10">
+          <div className="flex flex-col md:flex-row gap-8">
+            {/* Left Sidebar Skeleton */}
+            <div className="shrink-0 w-full md:w-64 space-y-4">
+              <CoverImageSkeleton />
+              <div className="flex gap-2 mb-4">
+                <ButtonSkeleton />
+              </div>
+              <InfoSectionSkeleton />
+              <InfoSectionSkeleton />
+              <InfoSectionSkeleton />
+            </div>
+
+            {/* Right Side Skeleton */}
+            <MainContentSkeleton />
           </div>
         </div>
       </div>

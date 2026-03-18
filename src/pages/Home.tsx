@@ -13,6 +13,84 @@ const SEASON_LABEL: Record<string, string> = {
   FALL: 'Fall',
 };
 
+// ── Skeleton Components (with loaded state colors) ────────────────────────
+const HeroSkeleton = () => (
+  <div className="relative min-h-screen w-full flex items-center bg-black">
+    {/* Background blur effect */}
+    <div className="absolute inset-0 overflow-hidden">
+      <div className="w-full h-full bg-linear-to-r from-black via-black/80 to-black/20" />
+      <div className="absolute bottom-0 left-0 right-0 h-48 bg-linear-to-t from-black to-transparent" />
+    </div>
+
+    {/* Content */}
+    <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
+      <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-20">
+        {/* ── Left: Info Skeleton ── */}
+        <div className="flex-1 min-w-0 space-y-6">
+          {/* Badge skeleton */}
+          <div className="inline-block px-3 py-1 bg-white/10 border border-white/20 rounded-full">
+            <div className="h-4 bg-white/5 rounded w-20 animate-pulse" />
+          </div>
+
+          {/* Title skeleton */}
+          <div className="space-y-3">
+            <div className="h-14 bg-white/5 rounded-lg w-4/5 animate-pulse" />
+            <div className="h-14 bg-white/5 rounded-lg w-3/5 animate-pulse" />
+          </div>
+
+          {/* Meta badges skeleton */}
+          <div className="flex flex-wrap gap-3">
+            <div className="h-8 bg-black/40 border border-white/10 rounded-lg w-20 animate-pulse" />
+            <div className="h-8 bg-black/40 border border-white/10 rounded-lg w-20 animate-pulse" />
+            <div className="h-8 bg-black/40 border border-white/10 rounded-lg w-24 animate-pulse" />
+            <div className="h-8 bg-purple-600/20 rounded-lg w-20 animate-pulse" />
+          </div>
+
+          {/* Genres skeleton */}
+          <div className="flex flex-wrap gap-2">
+            <div className="h-6 bg-white/5 border border-white/10 rounded-full w-20 animate-pulse" />
+            <div className="h-6 bg-white/5 border border-white/10 rounded-full w-20 animate-pulse" />
+            <div className="h-6 bg-white/5 border border-white/10 rounded-full w-20 animate-pulse" />
+            <div className="h-6 bg-white/5 border border-white/10 rounded-full w-20 animate-pulse" />
+          </div>
+
+          {/* Button skeleton */}
+          <div className="h-12 bg-white/80 rounded-xl w-36 animate-pulse" />
+        </div>
+
+        {/* ── Right: Cover Image Skeleton ── */}
+        <div className="shrink-0 w-56 sm:w-64 md:w-72 lg:w-80">
+          <div className="relative">
+            <div className="absolute -inset-4 bg-linear-to-br from-purple-500/10 to-blue-500/10 rounded-3xl blur-2xl" />
+            <div className="relative w-full aspect-2/3 rounded-2xl bg-white/5 border border-white/10 animate-pulse ring-1 ring-white/10" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div className="absolute bottom-0 left-0 right-0 h-32 bg-linear-to-t from-black to-transparent pointer-events-none" />
+  </div>
+);
+
+const TrendingRowSkeleton = () => (
+  <section>
+    <div className="mb-4 space-y-2">
+      <div className="h-7 bg-white/5 rounded w-40 animate-pulse" />
+      <div className="h-4 bg-white/5 rounded w-48 animate-pulse" />
+    </div>
+    {/* Simplified row skeleton - 6 items */}
+    <div className="flex gap-4 overflow-x-auto pb-4">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={`skeleton-${i}`} className="shrink-0 w-40">
+          <div className="aspect-2/3 bg-white/5 border border-white/10 rounded-lg animate-pulse mb-3" />
+          <div className="h-3 bg-white/5 rounded w-3/4 animate-pulse mb-2" />
+          <div className="h-3 bg-white/5 rounded w-1/2 animate-pulse" />
+        </div>
+      ))}
+    </div>
+  </section>
+);
+
 const HomePage = () => {
   const navigate = useNavigate();
   const { season, year } = getCurrentSeason();
@@ -63,7 +141,9 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-black overflow-x-hidden">
       {/* ── Hero ── */}
-      {heroContent && (
+      {isLoading ? (
+        <HeroSkeleton />
+      ) : heroContent ? (
         <div className="relative min-h-screen w-full flex items-center">
           {/* Blurred background from cover image */}
           <div className="absolute inset-0 overflow-hidden">
@@ -184,18 +264,17 @@ const HomePage = () => {
 
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-linear-to-t from-black to-transparent pointer-events-none" />
         </div>
-      )}
+      ) : null}
 
       {/* ── Trending Rows ── */}
       <div className="relative pb-20 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-32">
-              <div className="relative w-16 h-16 mb-6">
-                <div className="absolute inset-0 border-4 border-red-500/30 rounded-full" />
-                <div className="absolute inset-0 border-4 border-red-500 rounded-full border-t-transparent animate-spin" />
-              </div>
-              <p className="text-zinc-400 text-lg">Loading content...</p>
+            <div className="space-y-14">
+              <TrendingRowSkeleton />
+              <TrendingRowSkeleton />
+              <TrendingRowSkeleton />
+              <TrendingRowSkeleton />
             </div>
           ) : (
             <div className="space-y-14">
