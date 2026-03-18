@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 
 interface UseInfiniteScrollProps {
   fetchNextPage: () => void;
@@ -13,53 +13,33 @@ export function useInfiniteScroll({
   fetchNextPage,
   hasNextPage,
   isFetchingNextPage,
-  rootMargin = '200px',
-  threshold = 0.1,
+  rootMargin = '600px',
+  threshold = 0,
   enabled = true,
 }: UseInfiniteScrollProps) {
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-
+  const stateRef = useRef({ hasNextPage, isFetchingNextPage, fetchNextPage });
   useEffect(() => {
-    // Don't setup observer if disabled or no more pages
-    if (!enabled || !hasNextPage) {
-      return;
-    }
+    stateRef.current = { hasNextPage, isFetchingNextPage, fetchNextPage };
+  });
 
-    // Disconnect previous observer
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
+  const sentinelRef = useCallback((el: HTMLDivElement | null) => {
+    if (!el || !enabled) return;
 
-    // Create new observer
-    observerRef.current = new IntersectionObserver(
+    const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
-        
-        // Trigger fetch when sentinel is visible and not already fetching
+        const { hasNextPage, isFetchingNextPage, fetchNextPage } = stateRef.current;
         if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
           fetchNextPage();
         }
       },
-      {
-        rootMargin,
-        threshold,
-      }
+      { rootMargin, threshold }
     );
 
-    // Observe the sentinel element
-    const currentSentinel = sentinelRef.current;
-    if (currentSentinel) {
-      observerRef.current.observe(currentSentinel);
-    }
-
-    // Cleanup
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, [enabled, hasNextPage, isFetchingNextPage, fetchNextPage, rootMargin, threshold]);
+    observer.observe(el);
+    
+    return () => observer.disconnect();
+  }, [enabled, rootMargin, threshold]);
 
   return sentinelRef;
 }

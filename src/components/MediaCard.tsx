@@ -1,4 +1,5 @@
-import type { MediaMinimal } from "../types/Media";
+import { useState } from 'react';
+import type { MediaMinimal } from '../types/Media';
 
 interface MediaCardProps {
   media: MediaMinimal;
@@ -7,6 +8,8 @@ interface MediaCardProps {
 }
 
 const MediaCard = ({ media, onClick, href }: MediaCardProps) => {
+  const [imgLoaded, setImgLoaded] = useState(false);
+
   const handleClick = (e: React.MouseEvent) => {
     // Only prevent default and call onClick for left clicks
     if (e.button === 0 && !e.ctrlKey && !e.metaKey) {
@@ -31,11 +34,16 @@ const MediaCard = ({ media, onClick, href }: MediaCardProps) => {
         <div className="relative aspect-2/3 overflow-hidden bg-zinc-800 shrink-0">
           {media.coverImage ? (
             <>
+              <div
+                className={`absolute inset-0 bg-zinc-800 transition-opacity duration-500 ${imgLoaded ? 'opacity-0' : 'opacity-100'}`}
+              />
               <img
                 src={media.coverImage}
                 alt={media.title}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                loading="lazy"
+                onLoad={() => setImgLoaded(true)}
+                className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+                loading="eager"
+                decoding="async"
               />
               {/* Gradient Overlay */}
               <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

@@ -385,6 +385,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   } = useSearchAnilist(anilistParams, { enabled: true });
 
   const mediaResults = mediaData?.pages.flatMap((page) => page.results) ?? [];
+  const isInitialLoading = isFetching && mediaResults.length === 0;
 
   const sentinelRef = useInfiniteScroll({
     fetchNextPage,
@@ -1426,45 +1427,29 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
 
       {/* Results */}
       <div className="relative z-0 max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 py-10">
-        {isFetching && mediaResults.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-32">
-            <div className="relative w-16 h-16 mb-6">
-              <div className="absolute inset-0 border-4 border-blue-500/30 rounded-full" />
-              <div className="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin" />
-            </div>
-            <p className="text-zinc-400 text-lg">
-              {isSearching
-                ? `Searching for "${debouncedSearchQuery}"...`
-                : 'Loading...'}
-            </p>
-          </div>
-        )}
-
-        {mediaResults.length > 0 && (
+        {(mediaResults.length > 0 || isInitialLoading) && (
           <>
             <MediaGrid
               title=""
               mediaList={mediaResults}
               onMediaClick={openDetails}
+              isLoading={isFetching}
             />
             {hasNextPage && (
-              <div
-                ref={sentinelRef}
-                className="flex items-center justify-center py-12"
-              >
-                {isFetchingNextPage ? (
-                  <div className="flex items-center gap-3">
-                    {[0, 150, 300].map((delay) => (
-                      <div
-                        key={delay}
-                        className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
-                        style={{ animationDelay: `${delay}ms` }}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-zinc-500 text-sm">Scroll for more</span>
-                )}
+              <div ref={sentinelRef}>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 px-4 sm:px-8 lg:px-12 py-10">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div
+                      key={`skeleton-${i}`}
+                      className="flex flex-col animate-pulse"
+                      style={{ animationDelay: `${i * 60}ms` }}
+                    >
+                      <div className="w-full aspect-2/3 bg-zinc-800 rounded-lg mb-3" />
+                      <div className="h-4 bg-zinc-800 rounded w-3/4 mb-2" />
+                      <div className="h-3 bg-zinc-800 rounded w-1/2" />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
             {!hasNextPage && (
