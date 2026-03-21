@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import {
   FaHeart,
@@ -31,6 +31,7 @@ import type {
 import { MediaTags } from './components/MediaTags';
 import { MediaAlternativeTitles } from './components/MediaAlternativeTitles';
 import { MediaTabs } from './components/MediaTabs';
+import NotFound from '../NotFound';
 
 const BannerSkeleton = () => (
   <div className="relative h-96 w-full bg-zinc-800 animate-pulse" />
@@ -94,7 +95,6 @@ export const MediaDetailPage = () => {
     mediaType: string;
     id: string;
   }>();
-  const navigate = useNavigate();
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -300,39 +300,11 @@ export const MediaDetailPage = () => {
   }
 
   if (isError || !media) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">❌</div>
-          <div className="text-xl text-red-500">
-            Failed to load media details
-          </div>
-          <button
-            onClick={() => navigate(-1)}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-          >
-            Go Back
-          </button>
-        </div>
-      </div>
-    );
+    return <NotFound errorType="data" />;
   }
 
   if (!isValidMediaType) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">❌</div>
-          <div className="text-xl text-red-500">Invalid media type</div>
-          <button
-            onClick={() => navigate('/home')}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-          >
-            Go Home
-          </button>
-        </div>
-      </div>
-    );
+    return <NotFound errorType="route" />;
   }
 
   return (
