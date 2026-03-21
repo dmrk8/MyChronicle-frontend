@@ -221,7 +221,7 @@ const LibraryPage = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12">
           {/* ── Media Type Header Bar ── */}
           <div className="border-b border-zinc-800 mb-10">
-            <div className="flex items-center overflow-x-auto scrollbar-none">
+            <div className="flex items-center overflow-x-auto sm:overflow-hidden scrollbar-none">
               {mediaTypes.map((type) => (
                 <button
                   key={type}
@@ -303,7 +303,7 @@ const LibraryPage = () => {
 
           {/* ── Status Filter — Browser Tab Style ── */}
           <div className="mb-8 -mx-4 sm:mx-0 px-4 sm:px-0 sm:flex sm:justify-center">
-            <div className="flex items-end gap-0 border-b border-zinc-700 overflow-x-auto scrollbar-none">
+            <div className="flex items-end gap-0 border-b border-zinc-700 overflow-x-auto sm:overflow-hidden scrollbar-none">
               {statuses.map((status) => {
                 const isActive = selectedStatus === status;
                 return (
@@ -564,16 +564,6 @@ const LibraryPage = () => {
 
       {/* Content Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {(isLoading || isFetching) && entries.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-32">
-            <div className="relative w-16 h-16 mb-6">
-              <div className="absolute inset-0 border-4 border-purple-500/30 rounded-full" />
-              <div className="absolute inset-0 border-4 border-purple-500 rounded-full border-t-transparent animate-spin" />
-            </div>
-            <p className="text-zinc-400 text-lg">Loading your library...</p>
-          </div>
-        )}
-
         {isError && (
           <div className="flex flex-col items-center justify-center py-32">
             <div className="text-6xl mb-4">❌</div>
@@ -661,17 +651,6 @@ const LibraryPage = () => {
                 ) : (
                   <span className="text-zinc-500 text-sm">Scroll for more</span>
                 )}
-              </div>
-            )}
-
-            {!hasNextPage && (
-              <div className="text-center py-12 border-t border-zinc-800 mt-8">
-                <p className="text-lg font-medium text-zinc-300">
-                  You've reached the end!
-                </p>
-                <p className="text-sm text-zinc-500 mt-1">
-                  Showing all {entries.length} results
-                </p>
               </div>
             )}
           </>
