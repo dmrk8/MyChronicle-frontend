@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, startTransition } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useInfiniteScroll } from '../../../hooks/useInfiniteScroll';
-import MediaGrid from '../../../components/MediaGrid';
 import { MediaType } from '../../../constants/mediaConstants';
 import { useSearchAnilist } from '../../../hooks/useAnilist';
 import {
@@ -28,6 +27,7 @@ import type {
   SearchAnilistParams,
 } from '../../../api/anilistApi';
 import useSessionState from '../../../hooks/useSessionState';
+import SearchResults from './SearchResults';
 
 const STORAGE_KEY_PREFIX = 'searchAnilist';
 
@@ -289,7 +289,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state?.filtersApplied]);
 
-  // Reset effect 
+  // Reset effect
   // No need to manually remove sessionStorage keys — setting state to defaults
   // triggers useSessionState's write effect, which overwrites them automatically.
   useEffect(() => {
@@ -361,7 +361,6 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   } = useSearchAnilist(anilistParams, { enabled: true });
 
   const mediaResults = mediaData?.pages.flatMap((page) => page.results) ?? [];
-  const isInitialLoading = isFetching && mediaResults.length === 0;
 
   const sentinelRef = useInfiniteScroll({
     fetchNextPage,
@@ -1402,40 +1401,13 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       </div>
 
       {/* Results */}
-      <div className="relative z-0 max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 py-10">
-        {(mediaResults.length > 0 || isInitialLoading) && (
-          <>
-            <MediaGrid
-              title=""
-              mediaList={mediaResults}
-              onMediaClick={openDetails}
-              isLoading={isFetching}
-            />
-            {hasNextPage && (
-              <div ref={sentinelRef}>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 px-4 sm:px-8 lg:px-12 py-10">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div
-                      key={`skeleton-${i}`}
-                      className="flex flex-col animate-pulse"
-                      style={{ animationDelay: `${i * 60}ms` }}
-                    >
-                      <div className="w-full aspect-2/3 bg-zinc-800 rounded-lg mb-3" />
-                      <div className="h-4 bg-zinc-800 rounded w-3/4 mb-2" />
-                      <div className="h-3 bg-zinc-800 rounded w-1/2" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-        {!isFetching && mediaResults.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-32">
-            <p className="text-2xl font-bold text-white mb-2">No results</p>
-          </div>
-        )}
-      </div>
+      <SearchResults
+      mediaResults={mediaResults}
+      isFetching={isFetching}
+      isFetchingNextPage={isFetchingNextPage}
+      hasNextPage={hasNextPage}
+      sentinelRef={sentinelRef}
+      onMediaClick={openDetails}/>
     </div>
   );
 };

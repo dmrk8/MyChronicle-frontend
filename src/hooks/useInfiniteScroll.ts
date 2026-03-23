@@ -16,7 +16,7 @@ export function useInfiniteScroll({
   rootMargin = '600px',
   threshold = 0,
   enabled = true,
-}: UseInfiniteScrollProps) {
+}: UseInfiniteScrollProps): React.RefCallback<HTMLDivElement> {
   const stateRef = useRef({ hasNextPage, isFetchingNextPage, fetchNextPage });
   useEffect(() => {
     stateRef.current = { hasNextPage, isFetchingNextPage, fetchNextPage };
