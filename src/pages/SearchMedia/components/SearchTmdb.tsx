@@ -21,8 +21,9 @@ import {
   useSearchTmdbTv,
   useTmdbKeywordSearch,
 } from '../../../hooks/useTmdb';
-import useSessionState from '../../../hooks/useSessionState';
+import useSessionState from '../hooks/useSessionState';
 import SearchResults from './SearchResults';
+import SearchBar from './SearchBar';
 
 const STORAGE_KEY_PREFIX = 'searchTmdb';
 
@@ -677,529 +678,479 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-zinc-900 via-black to-zinc-900">
-      <div className="relative overflow-visible">
-        <div className="absolute inset-0 bg-linear-to-b from-blue-600/10 via-transparent to-transparent pointer-events-none" />
-        <div className="relative max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 pt-20 pb-16">
-          <div className="text-center mb-10">
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
-              Search{' '}
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-600">
-                {mediaType.charAt(0).toUpperCase() + mediaType.slice(1)}
-              </span>
-            </h1>
-            <p className="text-zinc-400 text-lg">
-              Explore trending, popular, and upcoming titles
-            </p>
-          </div>
+      <SearchBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        mediaType={mediaType}
+      />
 
-          {/* Search Bar */}
-          <div className="max-w-3xl mx-auto">
+      {/* Filters */}
+      <div className="max-w-3xl mx-auto">
+        <div className="flex items-center justify-between mb-3 pl-1">
+          <p className="text-zinc-500 text-xs font-semibold uppercase tracking-widest">
+            Filters
+          </p>
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="text-xs text-zinc-500 hover:text-white transition-colors"
+            >
+              Clear all ✕
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-start gap-4 flex-wrap">
+          {/* ── Sort By ── */}
+          <div className="flex flex-col gap-1 shrink-0">
+            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
+              Sort By
+            </label>
             <div className="relative group">
-              <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-              <div className="relative flex items-center">
-                <span className="absolute left-5 text-zinc-400 text-xl">
-                  🔍
-                </span>
-                <input
-                  type="text"
-                  placeholder={`Search for ${mediaType}...`}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-14 pr-4 py-5 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-lg"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-4 text-zinc-400 hover:text-white transition-colors"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
+              <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as TmdbSortOption)}
+                className={`${selectBase} ${inactiveSelect}`}
+              >
+                {Object.entries(sortOptions).map(([key, value]) => (
+                  <option key={value} value={value} className="bg-zinc-800">
+                    {key
+                      .split('_')
+                      .map((w) => {
+                        if (w === 'DESC') return 'Descending';
+                        if (w === 'ASC') return 'Ascending';
+                        return (
+                          w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+                        );
+                      })
+                      .join(' ')}
+                  </option>
+                ))}
+              </select>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
+                ▼
+              </span>
             </div>
           </div>
 
-          {/* Filters */}
-          <div className="max-w-3xl mx-auto mt-5">
-            <div className="flex items-center justify-between mb-3 pl-1">
-              <p className="text-zinc-500 text-xs font-semibold uppercase tracking-widest">
-                Filters
-              </p>
-              {hasActiveFilters && (
-                <button
-                  onClick={clearFilters}
-                  className="text-xs text-zinc-500 hover:text-white transition-colors"
-                >
-                  Clear all ✕
-                </button>
+          {/* ── Genres ── */}
+          <div className="flex flex-col gap-1 shrink-0">
+            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
+              Genre
+            </label>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowGenreDropdown((prev) => !prev)}
+                onKeyDown={handleGenreDropdownKeyDown}
+                className={`${selectBase} ${selectedGenres.length > 0 ? activeSelect : inactiveSelect}`}
+                aria-haspopup="listbox"
+                aria-expanded={showGenreDropdown}
+              >
+                {genreButtonLabel(selectedGenres)}
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs pointer-events-none">
+                  ▼
+                </span>
+              </button>
+
+              {showGenreDropdown && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowGenreDropdown(false)}
+                  />
+                  <div className="absolute top-full mt-2 left-0 z-50 w-60 bg-zinc-800 border border-zinc-700 rounded-xl shadow-2xl flex flex-col">
+                    <div className="p-2 border-b border-zinc-700">
+                      <input
+                        ref={genreSearchRef}
+                        type="text"
+                        placeholder="Search genres..."
+                        value={genreSearch}
+                        onChange={(e) => setGenreSearch(e.target.value)}
+                        onKeyDown={handleGenreDropdownKeyDown}
+                        className="w-full px-3 py-2 bg-zinc-700 rounded-lg text-sm text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="max-h-72 overflow-y-auto" tabIndex={-1}>
+                      {filteredGenres.length === 0 ? (
+                        <p className="px-4 py-3 text-sm text-zinc-500">
+                          No matches
+                        </p>
+                      ) : (
+                        filteredGenres.map((genre, idx) => (
+                          <label
+                            key={genre.id}
+                            className={`flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-700 cursor-pointer transition-colors ${genreDropdownIndex === idx ? 'bg-blue-600/30' : ''}`}
+                            tabIndex={-1}
+                            onMouseEnter={() => setGenreDropdownIndex(idx)}
+                            onClick={() => toggleGenre(genre)}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedGenres.some(
+                                (g) => g.id === genre.id,
+                              )}
+                              readOnly
+                              className="accent-blue-500 w-4 h-4 cursor-pointer"
+                            />
+                            <span className="text-sm text-white">
+                              {genre.name}
+                            </span>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                    {selectedGenres.length > 0 && (
+                      <div className="p-2 border-t border-zinc-700">
+                        <button
+                          onClick={() => setSelectedGenres([])}
+                          className="w-full text-xs text-zinc-400 hover:text-white transition-colors py-1"
+                        >
+                          Clear {selectedGenres.length} selected
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
+          </div>
 
-            <div className="flex items-start gap-4 flex-wrap">
-              {/* ── Sort By ── */}
-              <div className="flex flex-col gap-1 shrink-0">
-                <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-                  Sort By
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-                  <select
-                    value={sortBy}
-                    onChange={(e) =>
-                      setSortBy(e.target.value as TmdbSortOption)
-                    }
-                    className={`${selectBase} ${inactiveSelect}`}
-                  >
-                    {Object.entries(sortOptions).map(([key, value]) => (
-                      <option key={value} value={value} className="bg-zinc-800">
-                        {key
-                          .split('_')
-                          .map((w) => {
-                            if (w === 'DESC') return 'Descending';
-                            if (w === 'ASC') return 'Ascending';
-                            return (
-                              w.charAt(0).toUpperCase() +
-                              w.slice(1).toLowerCase()
-                            );
-                          })
-                          .join(' ')}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
-                    ▼
-                  </span>
-                </div>
-              </div>
+          {/* ── Year ── */}
+          <div className="flex flex-col gap-1 shrink-0">
+            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
+              Year
+            </label>
+            <div className="relative">
+              <button
+                onClick={() => setShowYearDropdown((prev) => !prev)}
+                onKeyDown={handleYearDropdownKeyDown}
+                className={`${selectBase} ${selectedYear ? activeSelect : inactiveSelect}`}
+              >
+                {selectedYear ? String(selectedYear) : 'Any'}
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs pointer-events-none">
+                  ▼
+                </span>
+              </button>
 
-              {/* ── Genres ── */}
-              <div className="flex flex-col gap-1 shrink-0">
-                <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-                  Genre
-                </label>
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowGenreDropdown((prev) => !prev)}
-                    onKeyDown={handleGenreDropdownKeyDown}
-                    className={`${selectBase} ${selectedGenres.length > 0 ? activeSelect : inactiveSelect}`}
-                    aria-haspopup="listbox"
-                    aria-expanded={showGenreDropdown}
-                  >
-                    {genreButtonLabel(selectedGenres)}
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs pointer-events-none">
-                      ▼
-                    </span>
-                  </button>
-
-                  {showGenreDropdown && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setShowGenreDropdown(false)}
+              {showYearDropdown && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowYearDropdown(false)}
+                  />
+                  <div className="absolute top-full mt-2 left-0 z-50 w-40 bg-zinc-800 border border-zinc-700 rounded-xl shadow-2xl flex flex-col">
+                    <div className="p-2 border-b border-zinc-700">
+                      <input
+                        ref={yearSearchRef}
+                        type="text"
+                        placeholder="Search year..."
+                        value={yearSearch}
+                        onChange={(e) => setYearSearch(e.target.value)}
+                        onKeyDown={handleYearDropdownKeyDown}
+                        className="w-full px-3 py-2 bg-zinc-700 rounded-lg text-sm text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
-                      <div className="absolute top-full mt-2 left-0 z-50 w-60 bg-zinc-800 border border-zinc-700 rounded-xl shadow-2xl flex flex-col">
-                        <div className="p-2 border-b border-zinc-700">
-                          <input
-                            ref={genreSearchRef}
-                            type="text"
-                            placeholder="Search genres..."
-                            value={genreSearch}
-                            onChange={(e) => setGenreSearch(e.target.value)}
-                            onKeyDown={handleGenreDropdownKeyDown}
-                            className="w-full px-3 py-2 bg-zinc-700 rounded-lg text-sm text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                        <div className="max-h-72 overflow-y-auto" tabIndex={-1}>
-                          {filteredGenres.length === 0 ? (
-                            <p className="px-4 py-3 text-sm text-zinc-500">
-                              No matches
-                            </p>
-                          ) : (
-                            filteredGenres.map((genre, idx) => (
-                              <label
-                                key={genre.id}
-                                className={`flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-700 cursor-pointer transition-colors ${genreDropdownIndex === idx ? 'bg-blue-600/30' : ''}`}
-                                tabIndex={-1}
-                                onMouseEnter={() => setGenreDropdownIndex(idx)}
-                                onClick={() => toggleGenre(genre)}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={selectedGenres.some(
-                                    (g) => g.id === genre.id,
-                                  )}
-                                  readOnly
-                                  className="accent-blue-500 w-4 h-4 cursor-pointer"
-                                />
-                                <span className="text-sm text-white">
-                                  {genre.name}
-                                </span>
-                              </label>
-                            ))
-                          )}
-                        </div>
-                        {selectedGenres.length > 0 && (
-                          <div className="p-2 border-t border-zinc-700">
-                            <button
-                              onClick={() => setSelectedGenres([])}
-                              className="w-full text-xs text-zinc-400 hover:text-white transition-colors py-1"
-                            >
-                              Clear {selectedGenres.length} selected
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* ── Year ── */}
-              <div className="flex flex-col gap-1 shrink-0">
-                <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-                  Year
-                </label>
-                <div className="relative">
-                  <button
-                    onClick={() => setShowYearDropdown((prev) => !prev)}
-                    onKeyDown={handleYearDropdownKeyDown}
-                    className={`${selectBase} ${selectedYear ? activeSelect : inactiveSelect}`}
-                  >
-                    {selectedYear ? String(selectedYear) : 'Any'}
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs pointer-events-none">
-                      ▼
-                    </span>
-                  </button>
-
-                  {showYearDropdown && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setShowYearDropdown(false)}
-                      />
-                      <div className="absolute top-full mt-2 left-0 z-50 w-40 bg-zinc-800 border border-zinc-700 rounded-xl shadow-2xl flex flex-col">
-                        <div className="p-2 border-b border-zinc-700">
-                          <input
-                            ref={yearSearchRef}
-                            type="text"
-                            placeholder="Search year..."
-                            value={yearSearch}
-                            onChange={(e) => setYearSearch(e.target.value)}
-                            onKeyDown={handleYearDropdownKeyDown}
-                            className="w-full px-3 py-2 bg-zinc-700 rounded-lg text-sm text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                        <div className="max-h-72 overflow-y-auto">
+                    </div>
+                    <div className="max-h-72 overflow-y-auto">
+                      <button
+                        onClick={() => {
+                          setSelectedYear('');
+                          setShowYearDropdown(false);
+                        }}
+                        onMouseEnter={() => setYearDropdownIndex(0)}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-700 transition-colors ${yearDropdownIndex === 0 ? 'bg-blue-600/30' : ''} ${!selectedYear ? 'text-blue-400' : 'text-zinc-400'}`}
+                      >
+                        Any
+                      </button>
+                      {filteredYears.length === 0 ? (
+                        <p className="px-4 py-3 text-sm text-zinc-500">
+                          No matches
+                        </p>
+                      ) : (
+                        filteredYears.map((year, idx) => (
                           <button
+                            key={year}
                             onClick={() => {
-                              setSelectedYear('');
+                              setSelectedYear(year);
                               setShowYearDropdown(false);
                             }}
-                            onMouseEnter={() => setYearDropdownIndex(0)}
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-700 transition-colors ${yearDropdownIndex === 0 ? 'bg-blue-600/30' : ''} ${!selectedYear ? 'text-blue-400' : 'text-zinc-400'}`}
+                            onMouseEnter={() => setYearDropdownIndex(idx + 1)}
+                            className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-700 transition-colors ${yearDropdownIndex === idx + 1 ? 'bg-blue-600/30' : ''} ${selectedYear === year ? 'text-blue-400 bg-zinc-700/50' : 'text-white'}`}
                           >
-                            Any
+                            {year}
                           </button>
-                          {filteredYears.length === 0 ? (
-                            <p className="px-4 py-3 text-sm text-zinc-500">
-                              No matches
-                            </p>
-                          ) : (
-                            filteredYears.map((year, idx) => (
-                              <button
-                                key={year}
-                                onClick={() => {
-                                  setSelectedYear(year);
-                                  setShowYearDropdown(false);
-                                }}
-                                onMouseEnter={() =>
-                                  setYearDropdownIndex(idx + 1)
-                                }
-                                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-700 transition-colors ${yearDropdownIndex === idx + 1 ? 'bg-blue-600/30' : ''} ${selectedYear === year ? 'text-blue-400 bg-zinc-700/50' : 'text-white'}`}
-                              >
-                                {year}
-                              </button>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* ── Status (TV only) ── */}
+          {!isMovie && (
+            <div className="flex flex-col gap-1 shrink-0">
+              <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
+                Status
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className={`${selectBase} ${selectedStatus ? activeSelect : inactiveSelect}`}
+                >
+                  <option value="" className="bg-zinc-800 text-zinc-400">
+                    Any
+                  </option>
+                  {TMDB_TV_STATUSES.map((s) => (
+                    <option
+                      key={s.value}
+                      value={s.value}
+                      className="bg-zinc-800 text-white"
+                    >
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
+                  ▼
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* ── Language ── */}
+          <div className="flex flex-col gap-1 shrink-0">
+            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
+              Language
+            </label>
+            <div className="relative group">
+              <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className={`${selectBase} ${selectedLanguage ? activeSelect : inactiveSelect}`}
+              >
+                <option value="" className="bg-zinc-800 text-zinc-400">
+                  Any
+                </option>
+                {TMDB_LANGUAGES.map((lang) => (
+                  <option
+                    key={lang.code}
+                    value={lang.code}
+                    className="bg-zinc-800 text-white"
+                  >
+                    {lang.name}
+                  </option>
+                ))}
+              </select>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
+                ▼
+              </span>
+            </div>
+          </div>
+
+          {/* ── Date Range ── */}
+          <div className="flex flex-col gap-1 shrink-0">
+            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
+              {isMovie ? 'Release Date' : 'Air Date'}
+            </label>
+            <div className="flex items-center gap-2">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  disabled={!!selectedYear}
+                  title={
+                    selectedYear
+                      ? 'Clear the Year filter to use date range'
+                      : ''
+                  }
+                  className={`relative pl-3 pr-3 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer scheme-dark ${dateFrom ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400'} ${selectedYear ? 'opacity-40 cursor-not-allowed' : ''}`}
+                />
+              </div>
+              <span className="text-zinc-500 text-xs">to</span>
+              <div className="relative group">
+                <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  disabled={!!selectedYear}
+                  title={
+                    selectedYear
+                      ? 'Clear the Year filter to use date range'
+                      : ''
+                  }
+                  className={`relative pl-3 pr-3 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer scheme-dark ${dateTo ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400'} ${selectedYear ? 'opacity-40 cursor-not-allowed' : ''}`}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Runtime ── */}
+          <div className="flex flex-col gap-1 shrink-0">
+            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
+              Runtime (min)
+            </label>
+            <div className="bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-xl px-4 py-3 flex flex-col gap-2 min-w-55">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <div
+                    onClick={() => setRuntimeEnabled((prev) => !prev)}
+                    className={`relative w-8 h-4 rounded-full transition-colors duration-200 cursor-pointer ${runtimeEnabled ? 'bg-blue-500' : 'bg-zinc-600'}`}
+                  >
+                    <div
+                      className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform duration-200 ${runtimeEnabled ? 'translate-x-4' : 'translate-x-0.5'}`}
+                    />
+                  </div>
+                  <span
+                    className={`text-xs ${runtimeEnabled ? 'text-white' : 'text-zinc-500'}`}
+                  >
+                    {runtimeEnabled
+                      ? `${runtimeMin} – ${runtimeMax} min`
+                      : 'Any'}
+                  </span>
+                </label>
               </div>
 
-              {/* ── Status (TV only) ── */}
-              {!isMovie && (
-                <div className="flex flex-col gap-1 shrink-0">
-                  <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-                    Status
-                  </label>
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-                    <select
-                      value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value)}
-                      className={`${selectBase} ${selectedStatus ? activeSelect : inactiveSelect}`}
-                    >
-                      <option value="" className="bg-zinc-800 text-zinc-400">
-                        Any
-                      </option>
-                      {TMDB_TV_STATUSES.map((s) => (
-                        <option
-                          key={s.value}
-                          value={s.value}
-                          className="bg-zinc-800 text-white"
-                        >
-                          {s.label}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
-                      ▼
+              {runtimeEnabled && (
+                <div className="flex flex-col gap-2 pt-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-zinc-500 text-xs w-6">Min</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={360}
+                      step={5}
+                      value={runtimeMin}
+                      onChange={(e) =>
+                        setRuntimeMin(
+                          Math.min(Number(e.target.value), runtimeMax - 5),
+                        )
+                      }
+                      className="flex-1 accent-blue-500 cursor-pointer"
+                    />
+                    <span className="text-white text-xs w-10 text-right">
+                      {runtimeMin}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-zinc-500 text-xs w-6">Max</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={360}
+                      step={5}
+                      value={runtimeMax}
+                      onChange={(e) =>
+                        setRuntimeMax(
+                          Math.max(Number(e.target.value), runtimeMin + 5),
+                        )
+                      }
+                      className="flex-1 accent-blue-500 cursor-pointer"
+                    />
+                    <span className="text-white text-xs w-10 text-right">
+                      {runtimeMax === 360 ? '360+' : runtimeMax}
                     </span>
                   </div>
                 </div>
               )}
+            </div>
+          </div>
 
-              {/* ── Language ── */}
-              <div className="flex flex-col gap-1 shrink-0">
-                <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-                  Language
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-                  <select
-                    value={selectedLanguage}
-                    onChange={(e) => setSelectedLanguage(e.target.value)}
-                    className={`${selectBase} ${selectedLanguage ? activeSelect : inactiveSelect}`}
-                  >
-                    <option value="" className="bg-zinc-800 text-zinc-400">
-                      Any
-                    </option>
-                    {TMDB_LANGUAGES.map((lang) => (
-                      <option
-                        key={lang.code}
-                        value={lang.code}
-                        className="bg-zinc-800 text-white"
-                      >
-                        {lang.name}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
-                    ▼
-                  </span>
-                </div>
+          {/* ── Keywords ── */}
+          <div className="flex flex-col gap-1 shrink-0">
+            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
+              Keywords
+            </label>
+            <div className="relative">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
+                <input
+                  ref={keywordInputRef}
+                  type="text"
+                  placeholder="e.g. time travel..."
+                  value={keywordInput}
+                  onChange={(e) => {
+                    setKeywordInput(e.target.value);
+                    setShowKeywordDropdown(true);
+                    setKeywordDropdownIndex(-1);
+                  }}
+                  onFocus={() => {
+                    if (keywordInput.trim()) setShowKeywordDropdown(true);
+                  }}
+                  onKeyDown={handleKeywordKeyDown}
+                  className={`relative appearance-none pl-4 pr-10 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 w-full ${selectedKeywords.length > 0 ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400 placeholder-zinc-500'}`}
+                />
               </div>
 
-              {/* ── Date Range ── */}
-              <div className="flex flex-col gap-1 shrink-0">
-                <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-                  {isMovie ? 'Release Date' : 'Air Date'}
-                </label>
-                <div className="flex items-center gap-2">
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-                    <input
-                      type="date"
-                      value={dateFrom}
-                      onChange={(e) => setDateFrom(e.target.value)}
-                      disabled={!!selectedYear}
-                      title={
-                        selectedYear
-                          ? 'Clear the Year filter to use date range'
-                          : ''
-                      }
-                      className={`relative pl-3 pr-3 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer scheme-dark ${dateFrom ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400'} ${selectedYear ? 'opacity-40 cursor-not-allowed' : ''}`}
-                    />
-                  </div>
-                  <span className="text-zinc-500 text-xs">to</span>
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-                    <input
-                      type="date"
-                      value={dateTo}
-                      onChange={(e) => setDateTo(e.target.value)}
-                      disabled={!!selectedYear}
-                      title={
-                        selectedYear
-                          ? 'Clear the Year filter to use date range'
-                          : ''
-                      }
-                      className={`relative pl-3 pr-3 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer scheme-dark ${dateTo ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400'} ${selectedYear ? 'opacity-40 cursor-not-allowed' : ''}`}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* ── Runtime ── */}
-              <div className="flex flex-col gap-1 shrink-0">
-                <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-                  Runtime (min)
-                </label>
-                <div className="bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-xl px-4 py-3 flex flex-col gap-2 min-w-55">
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <div
-                        onClick={() => setRuntimeEnabled((prev) => !prev)}
-                        className={`relative w-8 h-4 rounded-full transition-colors duration-200 cursor-pointer ${runtimeEnabled ? 'bg-blue-500' : 'bg-zinc-600'}`}
-                      >
-                        <div
-                          className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform duration-200 ${runtimeEnabled ? 'translate-x-4' : 'translate-x-0.5'}`}
-                        />
+              {showKeywordDropdown && keywordInput.trim().length > 0 && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowKeywordDropdown(false)}
+                  />
+                  <div className="absolute top-full mt-2 left-0 z-50 w-64 bg-zinc-800 border border-zinc-700 rounded-xl shadow-2xl flex flex-col overflow-hidden">
+                    {isFetchingKeywords ? (
+                      <div className="flex items-center gap-2 px-4 py-3 text-sm text-zinc-400">
+                        <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        Searching keywords...
                       </div>
-                      <span
-                        className={`text-xs ${runtimeEnabled ? 'text-white' : 'text-zinc-500'}`}
-                      >
-                        {runtimeEnabled
-                          ? `${runtimeMin} – ${runtimeMax} min`
-                          : 'Any'}
-                      </span>
-                    </label>
-                  </div>
-
-                  {runtimeEnabled && (
-                    <div className="flex flex-col gap-2 pt-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-zinc-500 text-xs w-6">Min</span>
-                        <input
-                          type="range"
-                          min={0}
-                          max={360}
-                          step={5}
-                          value={runtimeMin}
-                          onChange={(e) =>
-                            setRuntimeMin(
-                              Math.min(Number(e.target.value), runtimeMax - 5),
-                            )
-                          }
-                          className="flex-1 accent-blue-500 cursor-pointer"
-                        />
-                        <span className="text-white text-xs w-10 text-right">
-                          {runtimeMin}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-zinc-500 text-xs w-6">Max</span>
-                        <input
-                          type="range"
-                          min={0}
-                          max={360}
-                          step={5}
-                          value={runtimeMax}
-                          onChange={(e) =>
-                            setRuntimeMax(
-                              Math.max(Number(e.target.value), runtimeMin + 5),
-                            )
-                          }
-                          className="flex-1 accent-blue-500 cursor-pointer"
-                        />
-                        <span className="text-white text-xs w-10 text-right">
-                          {runtimeMax === 360 ? '360+' : runtimeMax}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* ── Keywords ── */}
-              <div className="flex flex-col gap-1 shrink-0">
-                <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-                  Keywords
-                </label>
-                <div className="relative">
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-                    <input
-                      ref={keywordInputRef}
-                      type="text"
-                      placeholder="e.g. time travel..."
-                      value={keywordInput}
-                      onChange={(e) => {
-                        setKeywordInput(e.target.value);
-                        setShowKeywordDropdown(true);
-                        setKeywordDropdownIndex(-1);
-                      }}
-                      onFocus={() => {
-                        if (keywordInput.trim()) setShowKeywordDropdown(true);
-                      }}
-                      onKeyDown={handleKeywordKeyDown}
-                      className={`relative appearance-none pl-4 pr-10 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 w-full ${selectedKeywords.length > 0 ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400 placeholder-zinc-500'}`}
-                    />
-                  </div>
-
-                  {showKeywordDropdown && keywordInput.trim().length > 0 && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setShowKeywordDropdown(false)}
-                      />
-                      <div className="absolute top-full mt-2 left-0 z-50 w-64 bg-zinc-800 border border-zinc-700 rounded-xl shadow-2xl flex flex-col overflow-hidden">
-                        {isFetchingKeywords ? (
-                          <div className="flex items-center gap-2 px-4 py-3 text-sm text-zinc-400">
-                            <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                            Searching keywords...
-                          </div>
-                        ) : availableKeywords.length === 0 ? (
-                          <p className="px-4 py-3 text-sm text-zinc-500">
-                            No keywords found
-                          </p>
-                        ) : (
-                          <div className="max-h-60 overflow-y-auto">
-                            {availableKeywords.map(
-                              (
-                                kw: { id: number; name: string },
-                                idx: number,
-                              ) => (
-                                <button
-                                  key={kw.id}
-                                  type="button"
-                                  onClick={() => addKeyword(kw)}
-                                  onMouseEnter={() =>
-                                    setKeywordDropdownIndex(idx)
-                                  }
-                                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-700 transition-colors flex items-center gap-2 ${keywordDropdownIndex === idx ? 'bg-blue-600/30' : ''} text-white`}
-                                >
-                                  <span className="text-zinc-400 text-xs">
-                                    🏷
-                                  </span>
-                                  {kw.name}
-                                </button>
-                              ),
-                            )}
-                          </div>
+                    ) : availableKeywords.length === 0 ? (
+                      <p className="px-4 py-3 text-sm text-zinc-500">
+                        No keywords found
+                      </p>
+                    ) : (
+                      <div className="max-h-60 overflow-y-auto">
+                        {availableKeywords.map(
+                          (kw: { id: number; name: string }, idx: number) => (
+                            <button
+                              key={kw.id}
+                              type="button"
+                              onClick={() => addKeyword(kw)}
+                              onMouseEnter={() => setKeywordDropdownIndex(idx)}
+                              className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-700 transition-colors flex items-center gap-2 ${keywordDropdownIndex === idx ? 'bg-blue-600/30' : ''} text-white`}
+                            >
+                              <span className="text-zinc-400 text-xs">🏷</span>
+                              {kw.name}
+                            </button>
+                          ),
                         )}
                       </div>
-                    </>
-                  )}
-                </div>
-              </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
-
-            {/* ── Active Filter Chips ── */}
-            {activeChips.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-4">
-                {activeChips.map((chip) => (
-                  <span
-                    key={chip.key}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/15 border border-blue-500/40 text-blue-300 text-xs rounded-lg"
-                  >
-                    {chip.label}
-                    <button
-                      onClick={chip.onRemove}
-                      className="text-blue-400 hover:text-white transition-colors leading-none"
-                      aria-label={`Remove ${chip.label}`}
-                    >
-                      ✕
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
         </div>
+
+        {/* ── Active Filter Chips ── */}
+        {activeChips.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-4">
+            {activeChips.map((chip) => (
+              <span
+                key={chip.key}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/15 border border-blue-500/40 text-blue-300 text-xs rounded-lg"
+              >
+                {chip.label}
+                <button
+                  onClick={chip.onRemove}
+                  className="text-blue-400 hover:text-white transition-colors leading-none"
+                  aria-label={`Remove ${chip.label}`}
+                >
+                  ✕
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Results */}
