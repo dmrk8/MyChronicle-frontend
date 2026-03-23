@@ -27,6 +27,7 @@ import type {
   AnilistMediaType,
   SearchAnilistParams,
 } from '../../../api/anilistApi';
+import useSessionState from '../../../hooks/useSessionState';
 
 const STORAGE_KEY_PREFIX = 'searchAnilist';
 
@@ -78,43 +79,9 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
 
   const storageKey = getStorageKey(mediaType);
 
-  const readStorage = () => ({
-    query: sessionStorage.getItem(`${storageKey}_query`) ?? '',
-    sort:
-      (sessionStorage.getItem(`${storageKey}_sort`) as AnilistSortOptions) ??
-      ANILIST_SORT_OPTIONS.POPULARITY_DESC,
-    season:
-      (sessionStorage.getItem(`${storageKey}_season`) as AnilistSeason) ?? '',
-    year: (() => {
-      const v = sessionStorage.getItem(`${storageKey}_year`);
-      return v ? Number(v) : ('' as const);
-    })(),
-    status:
-      (sessionStorage.getItem(`${storageKey}_status`) as
-        | AnilistAiringStatus
-        | AnilistPublishingStatus) ?? '',
-    genres: (() => {
-      const v = sessionStorage.getItem(`${storageKey}_genres`);
-      return v ? (JSON.parse(v) as AnilistGenre[]) : [];
-    })(),
-    excludedGenres: (() => {
-      const v = sessionStorage.getItem(`${storageKey}_genres_excluded`);
-      return v ? (JSON.parse(v) as AnilistGenre[]) : [];
-    })(),
-    tags: (() => {
-      const v = sessionStorage.getItem(`${storageKey}_tags`);
-      return v ? (JSON.parse(v) as string[]) : [];
-    })(),
-    excludedTags: (() => {
-      const v = sessionStorage.getItem(`${storageKey}_tags_excluded`);
-      return v ? (JSON.parse(v) as string[]) : [];
-    })(),
-    country: sessionStorage.getItem(`${storageKey}_country`) ?? '',
-    adult: sessionStorage.getItem(`${storageKey}_adult`) === 'true',
-    format: sessionStorage.getItem(`${storageKey}_format`) ?? '',
-  });
-
-  const _init = (() => {
+  // ── Parse URL params on first mount (shareable links)
+  // Only runs once — after this, state is the source of truth.
+  const _urlInit = (() => {
     const FILTER_KEYS = [
       'q',
       'sort',
@@ -129,7 +96,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       'adult',
       'format',
     ];
-    if (!FILTER_KEYS.some((k) => searchParams.has(k))) return readStorage();
+    if (!FILTER_KEYS.some((k) => searchParams.has(k))) return null;
     return {
       query: searchParams.get('q') ?? '',
       sort:
@@ -167,37 +134,64 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     };
   })();
 
-  const [searchQuery, setSearchQuery] = useState<string>(() => _init.query);
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>(
-    () => _init.query,
+  // ── Filter state — persisted to sessionStorage automatically
+  // If URL params were present on load, they override the stored value.
+  const [sortBy, setSortBy] = useSessionState<AnilistSortOptions>(
+    `${storageKey}_sort`,
+    _urlInit?.sort ?? ANILIST_SORT_OPTIONS.POPULARITY_DESC,
   );
-  const [sortBy, setSortBy] = useState<AnilistSortOptions>(() => _init.sort);
-  const [selectedSeason, setSelectedSeason] = useState<AnilistSeason | ''>(
-    () => _init.season,
+  const [selectedSeason, setSelectedSeason] = useSessionState<
+    AnilistSeason | ''
+  >(`${storageKey}_season`, _urlInit?.season ?? '');
+  const [selectedYear, setSelectedYear] = useSessionState<number | ''>(
+    `${storageKey}_year`,
+    _urlInit?.year ?? '',
   );
-  const [selectedYear, setSelectedYear] = useState<number | ''>(
-    () => _init.year,
-  );
-  const [selectedStatus, setSelectedStatus] = useState<
+  const [selectedStatus, setSelectedStatus] = useSessionState<
     AnilistAiringStatus | AnilistPublishingStatus | ''
-  >(() => _init.status);
-  const [selectedGenres, setSelectedGenres] = useState<AnilistGenre[]>(
-    () => _init.genres,
+  >(`${storageKey}_status`, _urlInit?.status ?? '');
+  const [selectedGenres, setSelectedGenres] = useSessionState<AnilistGenre[]>(
+    `${storageKey}_genres`,
+    _urlInit?.genres ?? [],
   );
-  const [selectedTags, setSelectedTags] = useState<string[]>(() => _init.tags);
-  const [selectedCountry, setSelectedCountry] = useState<string>(
-    () => _init.country,
+  const [excludedGenres, setExcludedGenres] = useSessionState<AnilistGenre[]>(
+    `${storageKey}_genres_excluded`,
+    _urlInit?.excludedGenres ?? [],
   );
-  const [isAdult, setIsAdult] = useState<boolean>(() => _init.adult);
-  const [selectedFormat, setSelectedFormat] = useState<string>(
-    () => _init.format,
+  const [selectedTags, setSelectedTags] = useSessionState<string[]>(
+    `${storageKey}_tags`,
+    _urlInit?.tags ?? [],
   );
-  const [excludedGenres, setExcludedGenres] = useState<AnilistGenre[]>(
-    () => _init.excludedGenres,
+  const [excludedTags, setExcludedTags] = useSessionState<string[]>(
+    `${storageKey}_tags_excluded`,
+    _urlInit?.excludedTags ?? [],
   );
-  const [excludedTags, setExcludedTags] = useState<string[]>(
-    () => _init.excludedTags,
+  const [selectedCountry, setSelectedCountry] = useSessionState<string>(
+    `${storageKey}_country`,
+    _urlInit?.country ?? '',
   );
+  const [isAdult, setIsAdult] = useSessionState<boolean>(
+    `${storageKey}_adult`,
+    _urlInit?.adult ?? false,
+  );
+  const [selectedFormat, setSelectedFormat] = useSessionState<string>(
+    `${storageKey}_format`,
+    _urlInit?.format ?? '',
+  );
+
+  // ── Search query — plain useState because debounce is coupled to its effect ─
+  const [searchQuery, setSearchQuery] = useState<string>(() => {
+    if (_urlInit?.query != null) return _urlInit.query;
+    return sessionStorage.getItem(`${storageKey}_query`) ?? '';
+  });
+  const [debouncedSearchQuery, setDebouncedSearchQuery] =
+    useState<string>(searchQuery);
+
+  useEffect(() => {
+    sessionStorage.setItem(`${storageKey}_query`, searchQuery);
+    const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, storageKey]);
 
   // ── Dropdown UI state ──────────────────────────────────────────────────────
   const [showGenreDropdown, setShowGenreDropdown] = useState(false);
@@ -238,31 +232,66 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     else setTimeout(() => setTagSearch(''), 0);
   }, [showTagDropdown]);
 
-  // ── Apply filters from Header navigation ──────────────────────────────────
+  // ── Apply filters from Header navigation
   useEffect(() => {
     if (!location.state?.filtersApplied) return;
 
-    const s = readStorage();
+    // useSessionState fields re-read from storage automatically on key change;
+    // here mediaType hasn't changed so we nudge them by reading directly.
     startTransition(() => {
-      setSearchQuery(s.query);
-      setDebouncedSearchQuery(s.query);
-      setSortBy(s.sort);
-      setSelectedSeason(s.season);
-      setSelectedYear(s.year);
-      setSelectedStatus(s.status);
-      setSelectedGenres(s.genres);
-      setSelectedTags(s.tags);
-      setSelectedCountry(s.country);
-      setIsAdult(s.adult);
-      setSelectedFormat(s.format);
-      setExcludedGenres(s.excludedGenres);
-      setExcludedTags(s.excludedTags);
+      setSearchQuery(sessionStorage.getItem(`${storageKey}_query`) ?? '');
+      setDebouncedSearchQuery(
+        sessionStorage.getItem(`${storageKey}_query`) ?? '',
+      );
+      setSortBy(
+        (sessionStorage.getItem(`${storageKey}_sort`) as AnilistSortOptions) ??
+          ANILIST_SORT_OPTIONS.POPULARITY_DESC,
+      );
+      setSelectedSeason(
+        (sessionStorage.getItem(`${storageKey}_season`) ?? '') as
+          | AnilistSeason
+          | '',
+      );
+      setSelectedYear(
+        (() => {
+          const v = sessionStorage.getItem(`${storageKey}_year`);
+          return v ? Number(v) : '';
+        })(),
+      );
+      setSelectedStatus(
+        (sessionStorage.getItem(`${storageKey}_status`) ?? '') as
+          | AnilistAiringStatus
+          | AnilistPublishingStatus
+          | '',
+      );
+      setSelectedGenres(
+        JSON.parse(sessionStorage.getItem(`${storageKey}_genres`) ?? '[]'),
+      );
+      setExcludedGenres(
+        JSON.parse(
+          sessionStorage.getItem(`${storageKey}_genres_excluded`) ?? '[]',
+        ),
+      );
+      setSelectedTags(
+        JSON.parse(sessionStorage.getItem(`${storageKey}_tags`) ?? '[]'),
+      );
+      setExcludedTags(
+        JSON.parse(
+          sessionStorage.getItem(`${storageKey}_tags_excluded`) ?? '[]',
+        ),
+      );
+      setSelectedCountry(sessionStorage.getItem(`${storageKey}_country`) ?? '');
+      setIsAdult(sessionStorage.getItem(`${storageKey}_adult`) === 'true');
+      setSelectedFormat(sessionStorage.getItem(`${storageKey}_format`) ?? '');
     });
+
     window.history.replaceState({}, '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state?.filtersApplied]);
 
-  // ── Reset effect ───────────────────────────────────────────────────────────
+  // Reset effect 
+  // No need to manually remove sessionStorage keys — setting state to defaults
+  // triggers useSessionState's write effect, which overwrites them automatically.
   useEffect(() => {
     if (!location.state?.reset) return;
 
@@ -302,59 +331,6 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     window.history.replaceState({}, '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state?.reset]);
-
-  // ── Persist to sessionStorage ──────────────────────────────────────────────
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}_query`, searchQuery);
-    const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 500);
-    return () => clearTimeout(timer);
-  }, [searchQuery, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}_sort`, sortBy);
-  }, [sortBy, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}_season`, selectedSeason);
-  }, [selectedSeason, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(
-      `${storageKey}_year`,
-      selectedYear !== '' ? String(selectedYear) : '',
-    );
-  }, [selectedYear, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}_status`, selectedStatus);
-  }, [selectedStatus, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(
-      `${storageKey}_genres`,
-      JSON.stringify(selectedGenres),
-    );
-  }, [selectedGenres, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}_tags`, JSON.stringify(selectedTags));
-  }, [selectedTags, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}_country`, selectedCountry);
-  }, [selectedCountry, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}_adult`, String(isAdult));
-  }, [isAdult, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}_format`, selectedFormat);
-  }, [selectedFormat, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(
-      `${storageKey}_genres_excluded`,
-      JSON.stringify(excludedGenres),
-    );
-  }, [excludedGenres, storageKey]);
-
-  useEffect(() => {
-    sessionStorage.setItem(
-      `${storageKey}_tags_excluded`,
-      JSON.stringify(excludedTags),
-    );
-  }, [excludedTags, storageKey]);
 
   // ── Query params ───────────────────────────────────────────────────────────
   const isSearching = debouncedSearchQuery.trim().length > 0;
@@ -1452,29 +1428,11 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                 </div>
               </div>
             )}
-            {!hasNextPage && (
-              <div className="text-center py-12 border-t border-zinc-800 mt-8">
-                <p className="text-lg font-medium text-zinc-300">
-                  You've reached the end!
-                </p>
-                <p className="text-sm text-zinc-500 mt-1">
-                  Showing all {mediaResults.length} results
-                </p>
-              </div>
-            )}
           </>
         )}
-
         {!isFetching && mediaResults.length === 0 && (
           <div className="flex flex-col items-center justify-center py-32">
-            <div className="text-8xl mb-6 opacity-50">🔍</div>
-            <p className="text-2xl font-bold text-white mb-2">
-              No results found
-            </p>
-            <p className="text-zinc-400 text-center max-w-md">
-              We couldn't find any {mediaType.toLowerCase()} matching your
-              filters.
-            </p>
+            <p className="text-2xl font-bold text-white mb-2">No results</p>
           </div>
         )}
       </div>

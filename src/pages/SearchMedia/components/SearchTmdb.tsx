@@ -22,6 +22,7 @@ import {
   useSearchTmdbTv,
   useTmdbKeywordSearch,
 } from '../../../hooks/useTmdb';
+import useSessionState from '../../../hooks/useSessionState';
 
 const STORAGE_KEY_PREFIX = 'searchTmdb';
 
@@ -62,45 +63,9 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
   const genreOptions = isMovie ? TMDB_MOVIE_GENRES : TMDB_TV_GENRES;
   const sortOptions = isMovie ? TMDB_MOVIE_SORT_OPTIONS : TMDB_TV_SORT_OPTIONS;
 
-  // ── Helper to read all filters from sessionStorage ─────────────────────────
-  const readStorage = () => ({
-    query: sessionStorage.getItem(`${storageKey}_query`) ?? '',
-    sort:
-      (sessionStorage.getItem(`${storageKey}_sort`) as TmdbSortOption) ??
-      TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC,
-    genres: (() => {
-      const v = sessionStorage.getItem(`${storageKey}_genres`);
-      return v ? (JSON.parse(v) as TmdbGenre[]) : [];
-    })(),
-    year: (() => {
-      const v = sessionStorage.getItem(`${storageKey}_year`);
-      return v ? Number(v) : ('' as const);
-    })(),
-    status: sessionStorage.getItem(`${storageKey}_status`) ?? '',
-    language: sessionStorage.getItem(`${storageKey}_language`) ?? '',
-    minRating: (() => {
-      const v = sessionStorage.getItem(`${storageKey}_minRating`);
-      return v ? Number(v) : ('' as const);
-    })(),
-    runtimeMin: (() => {
-      const v = sessionStorage.getItem(`${storageKey}_runtimeMin`);
-      return v ? Number(v) : 0;
-    })(),
-    runtimeMax: (() => {
-      const v = sessionStorage.getItem(`${storageKey}_runtimeMax`);
-      return v ? Number(v) : 360;
-    })(),
-    runtimeEnabled:
-      sessionStorage.getItem(`${storageKey}_runtimeEnabled`) === 'true',
-    dateFrom: sessionStorage.getItem(`${storageKey}_dateFrom`) ?? '',
-    dateTo: sessionStorage.getItem(`${storageKey}_dateTo`) ?? '',
-    keywords: (() => {
-      const v = sessionStorage.getItem(`${storageKey}_keywords`);
-      return v ? (JSON.parse(v) as { id: number; name: string }[]) : [];
-    })(),
-  });
-
-  const _init = (() => {
+  // ── Parse URL params on first mount (shareable links)
+  // Only runs once - after this, state is the source of truth
+  const _urlInit = (() => {
     const FILTER_KEYS = [
       'q',
       'sort',
@@ -116,7 +81,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
       'dateTo',
       'kw',
     ];
-    if (!FILTER_KEYS.some((k) => searchParams.has(k))) return readStorage();
+    if (!FILTER_KEYS.some((k) => searchParams.has(k))) return null;
 
     const rawGenres = searchParams.get('genres');
     const genres = rawGenres
@@ -174,38 +139,70 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
     };
   })();
 
-  const [searchQuery, setSearchQuery] = useState<string>(() => _init.query);
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>(
-    () => _init.query,
+  // If URL params were present on load, they override the stored value.
+  const [sortBy, setSortBy] = useSessionState<TmdbSortOption>(
+    `${storageKey}_sort`,
+    _urlInit?.sort ?? TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC,
   );
-  const [sortBy, setSortBy] = useState<TmdbSortOption>(() => _init.sort);
-  const [selectedGenres, setSelectedGenres] = useState<TmdbGenre[]>(
-    () => _init.genres,
+  const [selectedGenres, setSelectedGenres] = useSessionState<TmdbGenre[]>(
+    `${storageKey}_genres`,
+    _urlInit?.genres ?? [],
   );
-  const [selectedYear, setSelectedYear] = useState<number | ''>(
-    () => _init.year,
+  const [selectedYear, setSelectedYear] = useSessionState<number | ''>(
+    `${storageKey}_year`,
+    _urlInit?.year ?? '',
   );
-  const [selectedStatus, setSelectedStatus] = useState<string>(
-    () => _init.status,
+  const [selectedStatus, setSelectedStatus] = useSessionState<string>(
+    `${storageKey}_status`,
+    _urlInit?.status ?? '',
   );
-  const [selectedLanguage, setSelectedLanguage] = useState<string>(
-    () => _init.language,
+  const [selectedLanguage, setSelectedLanguage] = useSessionState<string>(
+    `${storageKey}_language`,
+    _urlInit?.language ?? '',
   );
-  const [minRating, setMinRating] = useState<number | ''>(
-    () => _init.minRating,
+  const [minRating, setMinRating] = useSessionState<number | ''>(
+    `${storageKey}_minRating`,
+    _urlInit?.minRating ?? '',
   );
-  const [runtimeMin, setRuntimeMin] = useState<number>(() => _init.runtimeMin);
-  const [runtimeMax, setRuntimeMax] = useState<number>(() => _init.runtimeMax);
-  const [runtimeEnabled, setRuntimeEnabled] = useState<boolean>(
-    () => _init.runtimeEnabled,
+  const [runtimeMin, setRuntimeMin] = useSessionState<number>(
+    `${storageKey}_runtimeMin`,
+    _urlInit?.runtimeMin ?? 0,
   );
-  const [dateFrom, setDateFrom] = useState<string>(() => _init.dateFrom);
-  const [dateTo, setDateTo] = useState<string>(() => _init.dateTo);
-
-  // ── Keyword filter state ───────────────────────────────────────────────────
-  const [selectedKeywords, setSelectedKeywords] = useState<
+  const [runtimeMax, setRuntimeMax] = useSessionState<number>(
+    `${storageKey}_runtimeMax`,
+    _urlInit?.runtimeMax ?? 360,
+  );
+  const [runtimeEnabled, setRuntimeEnabled] = useSessionState<boolean>(
+    `${storageKey}_runtimeEnabled`,
+    _urlInit?.runtimeEnabled ?? false,
+  );
+  const [dateFrom, setDateFrom] = useSessionState<string>(
+    `${storageKey}_dateFrom`,
+    _urlInit?.dateFrom ?? '',
+  );
+  const [dateTo, setDateTo] = useSessionState<string>(
+    `${storageKey}_dateTo`,
+    _urlInit?.dateTo ?? '',
+  );
+  const [selectedKeywords, setSelectedKeywords] = useSessionState<
     { id: number; name: string }[]
-  >(() => _init.keywords);
+  >(`${storageKey}_keywords`, _urlInit?.keywords ?? []);
+
+  // ── Search query — plain useState because debounce is coupled to its effect ─
+  const [searchQuery, setSearchQuery] = useState<string>(() => {
+    if (_urlInit?.query != null) return _urlInit.query;
+    return sessionStorage.getItem(`${storageKey}_query`) ?? '';
+  });
+  const [debouncedSearchQuery, setDebouncedSearchQuery] =
+    useState<string>(searchQuery);
+
+  useEffect(() => {
+    sessionStorage.setItem(`${storageKey}_query`, searchQuery);
+    const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, storageKey]);
+
+  // Keyword filter UI state
   const [keywordInput, setKeywordInput] = useState('');
   const [debouncedKeywordInput, setDebouncedKeywordInput] = useState('');
   const [showKeywordDropdown, setShowKeywordDropdown] = useState(false);
@@ -237,32 +234,59 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
       }, 0);
   }, [showYearDropdown]);
 
-  // ── Debounce keyword input ─────────────────────────────────────────────────
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedKeywordInput(keywordInput), 400);
     return () => clearTimeout(timer);
   }, [keywordInput]);
 
-  // ── Apply filters from Header navigation ──────────────────────────────────
+  // Apply filters from Header navigation
   useEffect(() => {
     if (!location.state?.filtersApplied) return;
 
-    const s = readStorage();
     startTransition(() => {
-      setSearchQuery(s.query);
-      setDebouncedSearchQuery(s.query);
-      setSortBy(s.sort);
-      setSelectedGenres(s.genres);
-      setSelectedYear(s.year);
-      setSelectedStatus(s.status);
-      setSelectedLanguage(s.language);
-      setMinRating(s.minRating);
-      setRuntimeMin(s.runtimeMin);
-      setRuntimeMax(s.runtimeMax);
-      setRuntimeEnabled(s.runtimeEnabled);
-      setDateFrom(s.dateFrom);
-      setDateTo(s.dateTo);
-      setSelectedKeywords(s.keywords);
+      setSearchQuery(sessionStorage.getItem(`${storageKey}_query`) ?? '');
+      setDebouncedSearchQuery(
+        sessionStorage.getItem(`${storageKey}_query`) ?? '',
+      );
+      // useSessionState fields re-read from storage automatically on key change;
+      // here mediaType hasn't changed so we nudge them by reading directly.
+      setSortBy(
+        (sessionStorage.getItem(`${storageKey}_sort`) as TmdbSortOption) ??
+          TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC,
+      );
+      setSelectedGenres(
+        JSON.parse(sessionStorage.getItem(`${storageKey}_genres`) ?? '[]'),
+      );
+      setSelectedYear(
+        (() => {
+          const v = sessionStorage.getItem(`${storageKey}_year`);
+          return v ? Number(v) : '';
+        })(),
+      );
+      setSelectedStatus(sessionStorage.getItem(`${storageKey}_status`) ?? '');
+      setSelectedLanguage(
+        sessionStorage.getItem(`${storageKey}_language`) ?? '',
+      );
+      setMinRating(
+        (() => {
+          const v = sessionStorage.getItem(`${storageKey}_minRating`);
+          return v ? Number(v) : '';
+        })(),
+      );
+      setRuntimeMin(
+        Number(sessionStorage.getItem(`${storageKey}_runtimeMin`) ?? 0),
+      );
+      setRuntimeMax(
+        Number(sessionStorage.getItem(`${storageKey}_runtimeMax`) ?? 360),
+      );
+      setRuntimeEnabled(
+        sessionStorage.getItem(`${storageKey}_runtimeEnabled`) === 'true',
+      );
+      setDateFrom(sessionStorage.getItem(`${storageKey}_dateFrom`) ?? '');
+      setDateTo(sessionStorage.getItem(`${storageKey}_dateTo`) ?? '');
+      setSelectedKeywords(
+        JSON.parse(sessionStorage.getItem(`${storageKey}_keywords`) ?? '[]'),
+      );
     });
 
     setSearchParams({}, { replace: true });
@@ -291,61 +315,8 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
       setKeywordInput('');
     });
     window.history.replaceState({}, '');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state?.reset]);
-
-  // ── Persist to sessionStorage ──────────────────────────────────────────────
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}_query`, searchQuery);
-    const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 500);
-    return () => clearTimeout(timer);
-  }, [searchQuery, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}_sort`, sortBy);
-  }, [sortBy, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(
-      `${storageKey}_genres`,
-      JSON.stringify(selectedGenres),
-    );
-  }, [selectedGenres, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(
-      `${storageKey}_year`,
-      selectedYear !== '' ? String(selectedYear) : '',
-    );
-  }, [selectedYear, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}_status`, selectedStatus);
-  }, [selectedStatus, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}_language`, selectedLanguage);
-  }, [selectedLanguage, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(
-      `${storageKey}_minRating`,
-      minRating !== '' ? String(minRating) : '',
-    );
-  }, [minRating, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}_runtimeMin`, String(runtimeMin));
-    sessionStorage.setItem(`${storageKey}_runtimeMax`, String(runtimeMax));
-    sessionStorage.setItem(
-      `${storageKey}_runtimeEnabled`,
-      String(runtimeEnabled),
-    );
-  }, [runtimeMin, runtimeMax, runtimeEnabled, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}_dateFrom`, dateFrom);
-  }, [dateFrom, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}_dateTo`, dateTo);
-  }, [dateTo, storageKey]);
-  useEffect(() => {
-    sessionStorage.setItem(
-      `${storageKey}_keywords`,
-      JSON.stringify(selectedKeywords),
-    );
-  }, [selectedKeywords, storageKey]);
 
   // ── Keyword search query ───────────────────────────────────────────────────
   const { data: keywordResults, isFetching: isFetchingKeywords } =
@@ -1266,29 +1237,12 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
                 )}
               </div>
             )}
-            {!hasNextPage && (
-              <div className="text-center py-12 border-t border-zinc-800 mt-8">
-                <p className="text-lg font-medium text-zinc-300">
-                  You've reached the end!
-                </p>
-                <p className="text-sm text-zinc-500 mt-1">
-                  Showing all {mediaResults.length} results
-                </p>
-              </div>
-            )}
           </>
         )}
 
         {!isFetching && mediaResults.length === 0 && (
           <div className="flex flex-col items-center justify-center py-32">
-            <div className="text-8xl mb-6 opacity-50">🔍</div>
-            <p className="text-2xl font-bold text-white mb-2">
-              No results found
-            </p>
-            <p className="text-zinc-400 text-center max-w-md">
-              We couldn't find any {mediaType.toLowerCase()} matching your
-              filters.
-            </p>
+            <p className="text-2xl font-bold text-white mb-2">No results</p>
           </div>
         )}
       </div>
