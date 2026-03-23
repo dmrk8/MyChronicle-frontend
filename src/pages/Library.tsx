@@ -1,8 +1,6 @@
 import { useState, useEffect, useTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
 import { useGetUserMediaEntriesPaginated } from '../hooks/useUserMediaEntry';
-import MediaGrid from '../components/MediaGrid';
 import {
   UserMediaEntryStatus,
   UserMediaEntrySortFields,
@@ -10,11 +8,11 @@ import {
 } from '../types/UserMediaEntry';
 import { MediaType } from '../constants/mediaConstants';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import SearchResults from './SearchMedia/components/SearchResults';
 
 const STORAGE_KEY = 'library';
 
 const LibraryPage = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [selectedType, setSelectedType] = useState<MediaType>(
@@ -100,8 +98,6 @@ const LibraryPage = () => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading,
-    isError,
   } = useGetUserMediaEntriesPaginated({
     mediaType: selectedType,
     status: selectedStatus === 'all' ? undefined : selectedStatus,
@@ -147,15 +143,6 @@ const LibraryPage = () => {
     { value: UserMediaEntrySortFields.TITLE, label: 'Title' },
   ];
 
-  const statusTabAccent: Record<UserMediaEntryStatus | 'all', string> = {
-    all: 'bg-linear-to-r from-purple-500 to-pink-500',
-    [UserMediaEntryStatus.CURRENT]: 'bg-blue-500',
-    [UserMediaEntryStatus.COMPLETED]: 'bg-green-500',
-    [UserMediaEntryStatus.ON_HOLD]: 'bg-orange-500',
-    [UserMediaEntryStatus.DROPPED]: 'bg-red-500',
-    [UserMediaEntryStatus.PLANNING]: 'bg-yellow-500',
-  };
-
   const toggleSortDirection = () => {
     setSortDirection((prev) => (prev === 'ASC' ? 'DESC' : 'ASC'));
   };
@@ -195,21 +182,6 @@ const LibraryPage = () => {
     isFavorite !== undefined ||
     searchQuery ||
     includeAdult;
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-linear-to-b from-zinc-900 via-black to-zinc-900 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-xl font-medium text-white mb-2">
-            Please sign in to view your library
-          </p>
-          <p className="text-zinc-400">
-            You need to be logged in to access this page.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-linear-to-b from-zinc-900 via-black to-zinc-900">
@@ -303,7 +275,7 @@ const LibraryPage = () => {
 
           {/* ── Status Filter — Browser Tab Style ── */}
           <div className="mb-8 -mx-4 sm:mx-0 px-4 sm:px-0 sm:flex sm:justify-center">
-            <div className="flex items-end gap-0 border-b border-zinc-700 overflow-x-auto sm:overflow-hidden scrollbar-none">
+            <div className="flex items-end gap-0 border-b border-zinc-700 overflow-x-auto sm:overflow-hidden overflow-y-hidden scrollbar-none">
               {statuses.map((status) => {
                 const isActive = selectedStatus === status;
                 return (
@@ -318,7 +290,7 @@ const LibraryPage = () => {
                   >
                     {isActive && (
                       <span
-                        className={`absolute top-0 left-0 right-0 h-0.5 rounded-t-lg ${statusTabAccent[status]}`}
+                        className={`absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-purple-500 to-pink-500 rounded-full}`}
                       />
                     )}
                     {statusLabels[status]}
@@ -337,17 +309,6 @@ const LibraryPage = () => {
               </p>
               <div className="flex-1 border-t border-zinc-700" />
             </div>
-
-            {hasActiveFilters && (
-              <div className="absolute right-4 top-0">
-                <button
-                  onClick={handleClearFilters}
-                  className="text-xs text-zinc-500 hover:text-white transition-colors"
-                >
-                  Clear all ✕
-                </button>
-              </div>
-            )}
 
             <div className="flex flex-col sm:flex-row items-stretch gap-3 justify-center">
               {/* Sort By */}
@@ -562,100 +523,23 @@ const LibraryPage = () => {
         </div>
       </div>
 
-      {/* Content Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {isError && (
-          <div className="flex flex-col items-center justify-center py-32">
-            <div className="text-6xl mb-4">❌</div>
-            <p className="text-xl font-medium text-red-400 mb-2">
-              Oops! Something went wrong
-            </p>
-            <p className="text-zinc-500">
-              Unable to load your library. Please try again later.
-            </p>
-          </div>
-        )}
-
-        {!isLoading && !isError && entries.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-32">
-            <div className="text-8xl mb-6 opacity-50">📭</div>
-            <p className="text-2xl font-bold text-white mb-2">
-              {debouncedSearchQuery
-                ? 'No results found'
-                : 'Your library is empty'}
-            </p>
-            <p className="text-zinc-400 text-center max-w-md mb-6">
-              {debouncedSearchQuery
-                ? `No ${selectedType} found matching "${debouncedSearchQuery}"`
-                : `Start adding ${selectedType} to your library to track your progress.`}
-            </p>
-            {debouncedSearchQuery ? (
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setDebouncedSearchQuery('');
-                }}
-                className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-xl transition-colors text-sm"
-              >
-                Clear Search
-              </button>
-            ) : (
-              <button
-                onClick={() => navigate(`/${selectedType.toLowerCase()}`)}
-                className="px-6 py-2.5 bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium rounded-xl transition-all shadow-lg shadow-purple-500/25 text-sm"
-              >
-                Explore{' '}
-                {selectedType.charAt(0).toUpperCase() + selectedType.slice(1)}
-              </button>
-            )}
-          </div>
-        )}
-
-        {!isLoading && !isError && entries.length > 0 && (
-          <>
-            <MediaGrid
-              title=""
-              mediaList={entries.map((entry) => ({
-                id: entry.externalId,
-                title: entry.title,
-                coverImage: entry.coverImage,
-                externalSource: entry.externalSource,
-                mediaType: entry.mediaType,
-              }))}
-              onMediaClick={(id) => {
-                const entry = entries.find((e) => e.externalId === id);
-                if (entry) openDetails(id, entry.mediaType);
-              }}
-            />
-
-            {hasNextPage && (
-              <div
-                ref={sentinelRef}
-                className="flex items-center justify-center py-12"
-              >
-                {isFetchingNextPage ? (
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"
-                      style={{ animationDelay: '0ms' }}
-                    />
-                    <div
-                      className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"
-                      style={{ animationDelay: '150ms' }}
-                    />
-                    <div
-                      className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"
-                      style={{ animationDelay: '300ms' }}
-                    />
-                  </div>
-                ) : (
-                  <span className="text-zinc-500 text-sm">Scroll for more</span>
-                )}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      <SearchResults
+        mediaResults={entries.map((entry) => ({
+          id: entry.externalId,
+          title: entry.title,
+          coverImage: entry.coverImage,
+          externalSource: entry.externalSource,
+          mediaType: entry.mediaType,
+        }))}
+        isFetching={isFetching}
+        isFetchingNextPage={isFetchingNextPage}
+        hasNextPage={hasNextPage}
+        sentinelRef={sentinelRef}
+        onMediaClick={(id) => {
+          const entry = entries.find((e) => e.externalId === id);
+          if (entry) openDetails(id, entry.mediaType);
+        }}
+      />
     </div>
   );
 };
