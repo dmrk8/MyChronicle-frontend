@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { FaChevronDown } from 'react-icons/fa';
 import {
@@ -9,6 +9,7 @@ import {
   ANILIST_AIRING_STATUS,
 } from '../constants/anilistFilters';
 import { TMDB_MOVIE_SORT_OPTIONS } from '../constants/tmdbFilters';
+import { NavigationLink } from './NavigationLink';
 
 const formatDate = (date: Date): string => {
   const y = date.getFullYear();
@@ -57,7 +58,6 @@ const Header = () => {
   );
   const movieDates = getTmdbMovieDateRanges();
 
-  // Only anime, manga, movie have dropdown items — tv title still navigates to search
   const mediaTypes = [
     { name: 'Anime', path: 'anime' },
     { name: 'Manga', path: 'manga' },
@@ -66,15 +66,14 @@ const Header = () => {
   ];
 
   const navLinks = [{ path: '/library', label: 'Library' }];
-
   const isActive = (path: string) => location.pathname === path;
 
   const handleMouseEnter = (mediaPath: string) => {
-    // Only open dropdown for paths that have items
     if (['anime', 'manga', 'movie'].includes(mediaPath)) {
       setActiveDropdown(mediaPath);
     }
   };
+
   const handleMouseLeave = () => setActiveDropdown(null);
 
   const clearSearchStorage = (mediaPath: string) => {
@@ -160,7 +159,11 @@ const Header = () => {
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/home" className="flex items-center gap-3 group">
+          <NavigationLink
+            href="/home"
+            onClick={() => navigate('/home')}
+            className="flex items-center gap-3 group cursor-pointer"
+          >
             <div className="flex flex-col">
               <span className="text-2xl font-black tracking-tight">
                 <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-600">
@@ -172,7 +175,7 @@ const Header = () => {
                 Your Media Hub
               </span>
             </div>
-          </Link>
+          </NavigationLink>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-2">
@@ -183,21 +186,23 @@ const Header = () => {
                 onMouseEnter={() => handleMouseEnter(media.path)}
                 onMouseLeave={handleMouseLeave}
               >
-                <button
+                <NavigationLink
+                  href={`/${media.path}/search`}
                   onClick={() => handleTitleNavigate(media.path)}
-                  className="flex items-center gap-2 px-4 py-2.5 font-semibold text-sm tracking-wide text-zinc-400 hover:text-white transition-all duration-300"
+                  className="flex items-center gap-2 px-4 py-2.5 font-semibold text-sm tracking-wide text-zinc-400 hover:text-white transition-all duration-300 cursor-pointer"
                 >
                   {media.name}
-                  {/* Only show chevron for paths with dropdown items */}
                   {['anime', 'manga', 'movie'].includes(media.path) && (
                     <FaChevronDown
                       size={10}
-                      className={`transition-transform duration-300 ${activeDropdown === media.path ? 'rotate-180' : ''}`}
+                      className={`transition-transform duration-300 ${
+                        activeDropdown === media.path ? 'rotate-180' : ''
+                      }`}
                     />
                   )}
-                </button>
+                </NavigationLink>
 
-                {/* Only render dropdown for paths that have items */}
+                {/* Dropdown */}
                 {['anime', 'manga', 'movie'].includes(media.path) && (
                   <div
                     className={`absolute top-full left-0 mt-2 w-52 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800 rounded-xl shadow-2xl transition-all duration-300 ${
@@ -210,18 +215,20 @@ const Header = () => {
                       {/* Anime */}
                       {media.path === 'anime' && (
                         <>
-                          <button
+                          <NavigationLink
+                            href="/anime/search"
                             onClick={() =>
                               navigateWithFilters('anime', {
                                 sort: ANILIST_SORT_OPTIONS.TRENDING_DESC,
                               })
                             }
-                            className={dropdownItemClass}
+                            className={`${dropdownItemClass} block cursor-pointer`}
                           >
                             <span className={dropdownLabelClass}>Trending</span>
-                          </button>
+                          </NavigationLink>
 
-                          <button
+                          <NavigationLink
+                            href="/anime/search"
                             onClick={() =>
                               navigateWithFilters('anime', {
                                 sort: ANILIST_SORT_OPTIONS.POPULARITY_DESC,
@@ -230,7 +237,7 @@ const Header = () => {
                                 status: airingNowStatus,
                               })
                             }
-                            className={dropdownItemClass}
+                            className={`${dropdownItemClass} block cursor-pointer`}
                           >
                             <span className={dropdownLabelClass}>
                               Airing Now
@@ -240,9 +247,10 @@ const Header = () => {
                                 currentSeason.slice(1).toLowerCase()}{' '}
                               {currentYear}
                             </p>
-                          </button>
+                          </NavigationLink>
 
-                          <button
+                          <NavigationLink
+                            href="/anime/search"
                             onClick={() =>
                               navigateWithFilters('anime', {
                                 sort: ANILIST_SORT_OPTIONS.POPULARITY_DESC,
@@ -251,7 +259,7 @@ const Header = () => {
                                 status: notYetReleasedStatus,
                               })
                             }
-                            className={dropdownItemClass}
+                            className={`${dropdownItemClass} block cursor-pointer`}
                           >
                             <span className={dropdownLabelClass}>Upcoming</span>
                             <p className={dropdownSubClass}>
@@ -259,32 +267,34 @@ const Header = () => {
                                 nextSeason.slice(1).toLowerCase()}{' '}
                               {nextYear}
                             </p>
-                          </button>
+                          </NavigationLink>
                         </>
                       )}
 
                       {/* Manga */}
                       {media.path === 'manga' && (
                         <>
-                          <button
+                          <NavigationLink
+                            href="/manga/search"
                             onClick={() =>
                               navigateWithFilters('manga', {
                                 sort: ANILIST_SORT_OPTIONS.TRENDING_DESC,
                               })
                             }
-                            className={dropdownItemClass}
+                            className={`${dropdownItemClass} block cursor-pointer`}
                           >
                             <span className={dropdownLabelClass}>Trending</span>
-                          </button>
+                          </NavigationLink>
 
-                          <button
+                          <NavigationLink
+                            href="/manga/search"
                             onClick={() =>
                               navigateWithFilters('manga', {
                                 sort: ANILIST_SORT_OPTIONS.POPULARITY_DESC,
                                 country: 'KR',
                               })
                             }
-                            className={dropdownItemClass}
+                            className={`${dropdownItemClass} block cursor-pointer`}
                           >
                             <span className={dropdownLabelClass}>
                               Popular Manhwa
@@ -292,14 +302,15 @@ const Header = () => {
                             <p className={dropdownSubClass}>
                               Top from South Korea
                             </p>
-                          </button>
+                          </NavigationLink>
                         </>
                       )}
 
                       {/* Movies */}
                       {media.path === 'movie' && (
                         <>
-                          <button
+                          <NavigationLink
+                            href="/movie/search"
                             onClick={() =>
                               navigateWithFilters(
                                 'movie',
@@ -311,14 +322,15 @@ const Header = () => {
                                 'searchTmdb',
                               )
                             }
-                            className={dropdownItemClass}
+                            className={`${dropdownItemClass} block cursor-pointer`}
                           >
                             <span className={dropdownLabelClass}>
                               Playing Now
                             </span>
-                          </button>
+                          </NavigationLink>
 
-                          <button
+                          <NavigationLink
+                            href="/movie/search"
                             onClick={() =>
                               navigateWithFilters(
                                 'movie',
@@ -330,10 +342,10 @@ const Header = () => {
                                 'searchTmdb',
                               )
                             }
-                            className={dropdownItemClass}
+                            className={`${dropdownItemClass} block cursor-pointer`}
                           >
                             <span className={dropdownLabelClass}>Upcoming</span>
-                          </button>
+                          </NavigationLink>
                         </>
                       )}
                     </div>
@@ -344,17 +356,17 @@ const Header = () => {
 
             {/* Regular Nav Links */}
             {navLinks.map((link) => (
-              <Link
+              <NavigationLink
                 key={link.path}
-                to={link.path}
+                href={link.path}
+                onClick={() => navigate(link.path)}
                 className={`flex items-center gap-2 px-4 py-2.5 font-semibold text-sm tracking-wide transition-all duration-300 ${
                   isActive(link.path)
                     ? 'text-white'
                     : 'text-zinc-400 hover:text-white'
                 }`}
-              >
-                {link.label}
-              </Link>
+                label={link.label}
+              />
             ))}
           </div>
 
@@ -377,7 +389,9 @@ const Header = () => {
                     </p>
                   </div>
                   <svg
-                    className={`w-4 h-4 text-zinc-400 transition-transform duration-300 ${isUserMenuOpen ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 text-zinc-400 transition-transform duration-300 ${
+                      isUserMenuOpen ? 'rotate-180' : ''
+                    }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -404,13 +418,12 @@ const Header = () => {
                         </p>
                       </div>
                       <div className="py-2">
-                        <Link
-                          to="/profile"
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-zinc-300 hover:bg-zinc-800/50 hover:text-white transition-colors"
+                        <NavigationLink
+                          href="/profile"
                           onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <span>Profile Settings</span>
-                        </Link>
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-zinc-300 hover:bg-zinc-800/50 hover:text-white transition-colors cursor-pointer"
+                          label="Profile Settings"
+                        />
                       </div>
                       <div className="border-t border-zinc-800 pt-2">
                         <button
@@ -428,14 +441,15 @@ const Header = () => {
                 )}
               </div>
             ) : (
-              <Link
-                to="/login"
-                className="relative px-8 py-3 font-semibold text-sm text-white rounded-xl overflow-hidden group"
+              <NavigationLink
+                href="/login"
+                onClick={() => navigate('/login')}
+                className="relative px-8 py-3 font-semibold text-sm text-white rounded-xl overflow-hidden group cursor-pointer"
               >
                 <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 transition-transform group-hover:scale-105" />
                 <div className="absolute inset-0 bg-linear-to-r from-blue-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <span className="relative z-10">Sign In</span>
-              </Link>
+              </NavigationLink>
             )}
           </div>
 
@@ -475,32 +489,34 @@ const Header = () => {
             <div className="space-y-4">
               {mediaTypes.map((media) => (
                 <div key={media.path} className="px-4">
-                  <button
+                  <NavigationLink
+                    href={`/${media.path}/search`}
                     onClick={() => handleMobileTitleNavigate(media.path)}
-                    className="w-full text-left mb-2 text-white font-semibold text-sm hover:text-blue-400 transition-colors"
-                  >
-                    {media.name}
-                  </button>
+                    className="w-full text-left mb-2 text-white font-semibold text-sm hover:text-blue-400 transition-colors cursor-pointer"
+                    label={media.name}
+                  />
 
-                  {/* Only render sub-items for paths that have them */}
                   {['anime', 'manga', 'movie'].includes(media.path) && (
                     <div className="space-y-1 pl-2 border-l border-zinc-800">
                       {media.path === 'anime' && (
                         <>
-                          <button
+                          <NavigationLink
+                            href="/anime/search"
                             onClick={() =>
                               navigateWithFilters(
                                 'anime',
-                                { sort: ANILIST_SORT_OPTIONS.TRENDING_DESC },
+                                {
+                                  sort: ANILIST_SORT_OPTIONS.TRENDING_DESC,
+                                },
                                 'searchAnilist',
                                 true,
                               )
                             }
                             className={mobileItemClass}
-                          >
-                            Trending
-                          </button>
-                          <button
+                            label="Trending"
+                          />
+                          <NavigationLink
+                            href="/anime/search"
                             onClick={() =>
                               navigateWithFilters(
                                 'anime',
@@ -515,10 +531,10 @@ const Header = () => {
                               )
                             }
                             className={mobileItemClass}
-                          >
-                            Airing Now
-                          </button>
-                          <button
+                            label="Airing Now"
+                          />
+                          <NavigationLink
+                            href="/anime/search"
                             onClick={() =>
                               navigateWithFilters(
                                 'anime',
@@ -533,28 +549,30 @@ const Header = () => {
                               )
                             }
                             className={mobileItemClass}
-                          >
-                            Upcoming
-                          </button>
+                            label="Upcoming"
+                          />
                         </>
                       )}
 
                       {media.path === 'manga' && (
                         <>
-                          <button
+                          <NavigationLink
+                            href="/manga/search"
                             onClick={() =>
                               navigateWithFilters(
                                 'manga',
-                                { sort: ANILIST_SORT_OPTIONS.TRENDING_DESC },
+                                {
+                                  sort: ANILIST_SORT_OPTIONS.TRENDING_DESC,
+                                },
                                 'searchAnilist',
                                 true,
                               )
                             }
                             className={mobileItemClass}
-                          >
-                            Trending
-                          </button>
-                          <button
+                            label="Trending"
+                          />
+                          <NavigationLink
+                            href="/manga/search"
                             onClick={() =>
                               navigateWithFilters(
                                 'manga',
@@ -567,15 +585,15 @@ const Header = () => {
                               )
                             }
                             className={mobileItemClass}
-                          >
-                            Popular Manhwa
-                          </button>
+                            label="Popular Manhwa"
+                          />
                         </>
                       )}
 
                       {media.path === 'movie' && (
                         <>
-                          <button
+                          <NavigationLink
+                            href="/movie/search"
                             onClick={() =>
                               navigateWithFilters(
                                 'movie',
@@ -589,10 +607,10 @@ const Header = () => {
                               )
                             }
                             className={mobileItemClass}
-                          >
-                            Playing Now
-                          </button>
-                          <button
+                            label="Playing Now"
+                          />
+                          <NavigationLink
+                            href="/movie/search"
                             onClick={() =>
                               navigateWithFilters(
                                 'movie',
@@ -606,9 +624,8 @@ const Header = () => {
                               )
                             }
                             className={mobileItemClass}
-                          >
-                            Upcoming
-                          </button>
+                            label="Upcoming"
+                          />
                         </>
                       )}
                     </div>
@@ -617,18 +634,20 @@ const Header = () => {
               ))}
 
               {navLinks.map((link) => (
-                <Link
+                <NavigationLink
                   key={link.path}
-                  to={link.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  href={link.path}
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    navigate(link.path);
+                  }}
                   className={`block px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
                     isActive(link.path)
                       ? 'bg-linear-to-r from-blue-500/10 to-purple-500/10 text-white border-l-4 border-blue-500'
                       : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
                   }`}
-                >
-                  {link.label}
-                </Link>
+                  label={link.label}
+                />
               ))}
             </div>
 
@@ -643,28 +662,25 @@ const Header = () => {
                       {user?.role}
                     </p>
                   </div>
-                  <Link
-                    to="/"
+                  <NavigationLink
+                    href="/"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800/50 hover:text-white rounded-lg transition-colors"
-                  >
-                    <span>Home</span>
-                  </Link>
-                  <Link
-                    to="/profile"
+                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800/50 hover:text-white rounded-lg transition-colors cursor-pointer"
+                    label="Home"
+                  />
+                  <NavigationLink
+                    href="/profile"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800/50 hover:text-white rounded-lg transition-colors"
-                  >
-                    <span>Profile Settings</span>
-                  </Link>
+                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800/50 hover:text-white rounded-lg transition-colors cursor-pointer"
+                    label="Profile Settings"
+                  />
                   {user?.role === 'admin' && (
-                    <Link
-                      to="/admin"
+                    <NavigationLink
+                      href="/admin"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800/50 hover:text-white rounded-lg transition-colors"
-                    >
-                      <span>Admin Panel</span>
-                    </Link>
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800/50 hover:text-white rounded-lg transition-colors cursor-pointer"
+                      label="Admin Panel"
+                    />
                   )}
                   <button
                     onClick={() => {
@@ -677,13 +693,12 @@ const Header = () => {
                   </button>
                 </>
               ) : (
-                <Link
-                  to="/login"
+                <NavigationLink
+                  href="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block px-4 py-3 bg-linear-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg text-center"
-                >
-                  Sign In
-                </Link>
+                  className="block px-4 py-3 bg-linear-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg text-center cursor-pointer"
+                  label="Sign In"
+                />
               )}
             </div>
           </div>
