@@ -5,10 +5,14 @@ import {
   UserMediaEntryStatus,
   UserMediaEntrySortFields,
   UserMediaEntrySortOptions,
+  sortFieldLabels,
+  statusLabels
 } from '../types/UserMediaEntry';
 import { MediaType } from '../constants/mediaConstants';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import SearchResults from './SearchMedia/components/SearchResults';
+import { ToggleButton } from '../components/ui/ToggleButton';
+import { SingleSelectDropdown } from '../components/ui/dropdowns';
 
 const STORAGE_KEY = 'library';
 
@@ -92,23 +96,18 @@ const LibraryPage = () => {
     `${sortBy.toUpperCase()}_${sortDirection}` as keyof typeof UserMediaEntrySortOptions;
   const sortOrder = UserMediaEntrySortOptions[sortKey];
 
-  const {
-    data,
-    isFetching,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useGetUserMediaEntriesPaginated({
-    mediaType: selectedType,
-    status: selectedStatus === 'all' ? undefined : selectedStatus,
-    isFavorite: isFavorite,
-    sortBy: sortBy,
-    sortOrder: sortOrder,
-    titleSearch: debouncedSearchQuery || undefined,
-    isAdult: includeAdult ? 'true' : 'false',
-    page: 1,
-    perPage: 20,
-  });
+  const { data, isFetching, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useGetUserMediaEntriesPaginated({
+      mediaType: selectedType,
+      status: selectedStatus === 'all' ? undefined : selectedStatus,
+      isFavorite: isFavorite,
+      sortBy: sortBy,
+      sortOrder: sortOrder,
+      titleSearch: debouncedSearchQuery || undefined,
+      isAdult: includeAdult ? 'true' : 'false',
+      page: 1,
+      perPage: 20,
+    });
 
   const entries = data?.pages?.flatMap((page) => page.results) ?? [];
 
@@ -119,33 +118,26 @@ const LibraryPage = () => {
     MediaType.TV,
   ];
 
-  const statuses: (UserMediaEntryStatus | 'all')[] = [
-    'all',
-    UserMediaEntryStatus.CURRENT,
-    UserMediaEntryStatus.COMPLETED,
-    UserMediaEntryStatus.ON_HOLD,
-    UserMediaEntryStatus.DROPPED,
-    UserMediaEntryStatus.PLANNING,
-  ];
+  // Create combined sort options once
+  const combinedSortOptions = Object.entries(sortFieldLabels).flatMap(
+    ([field, labels]) => [
+      { value: `${field}_ASC`, label: labels.asc },
+      { value: `${field}_DESC`, label: labels.desc },
+    ],
+  );
 
-  const statusLabels: Record<UserMediaEntryStatus | 'all', string> = {
-    all: 'All',
-    [UserMediaEntryStatus.CURRENT]: 'Current',
-    [UserMediaEntryStatus.COMPLETED]: 'Completed',
-    [UserMediaEntryStatus.ON_HOLD]: 'On Hold',
-    [UserMediaEntryStatus.DROPPED]: 'Dropped',
-    [UserMediaEntryStatus.PLANNING]: 'Planning',
+  // Helper to parse combined value back to separate states
+  const handleSortChange = (value: string) => {
+    const parts = value.split('_');
+    const direction = parts.pop() as 'ASC' | 'DESC';
+    const field = parts.join('_') as UserMediaEntrySortFields;
+
+    setSortBy(field);
+    setSortDirection(direction);
   };
 
-  const sortOptions = [
-    { value: UserMediaEntrySortFields.CREATED_AT, label: 'Date Added' },
-    { value: UserMediaEntrySortFields.UPDATED_AT, label: 'Last Updated' },
-    { value: UserMediaEntrySortFields.TITLE, label: 'Title' },
-  ];
-
-  const toggleSortDirection = () => {
-    setSortDirection((prev) => (prev === 'ASC' ? 'DESC' : 'ASC'));
-  };
+  // Current sort value for display
+  const currentSortValue = `${sortBy}_${sortDirection}`;
 
   const openDetails = (externalId: number, mediaType: MediaType) => {
     navigate(`/${mediaType.toLowerCase()}/${externalId}`);
@@ -186,7 +178,7 @@ const LibraryPage = () => {
   return (
     <div className="min-h-screen bg-linear-to-b from-zinc-900 via-black to-zinc-900">
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
+      <div className="relative">
         <div className="absolute inset-0 bg-linear-to-b from-purple-600/10 via-transparent to-transparent" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-purple-900/20 via-transparent to-transparent" />
 
@@ -273,185 +265,60 @@ const LibraryPage = () => {
             </div>
           </div>
 
-          {/* ── Status Filter — Browser Tab Style ── */}
-          <div className="mb-8 -mx-4 sm:mx-0 px-4 sm:px-0 sm:flex sm:justify-center">
-            <div className="flex items-end gap-0 border-b border-zinc-700 overflow-x-auto sm:overflow-hidden overflow-y-hidden scrollbar-none">
-              {statuses.map((status) => {
-                const isActive = selectedStatus === status;
-                return (
-                  <button
-                    key={status}
-                    onClick={() => setSelectedStatus(status)}
-                    className={`relative shrink-0 px-4 py-2.5 text-xs font-semibold transition-all duration-200 whitespace-nowrap rounded-t-lg border-t border-l border-r -mb-px ${
-                      isActive
-                        ? 'bg-zinc-800 border-zinc-700 text-white z-10'
-                        : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/40'
-                    }`}
-                  >
-                    {isActive && (
-                      <span
-                        className={`absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-purple-500 to-pink-500 rounded-full}`}
-                      />
-                    )}
-                    {statusLabels[status]}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Other Filters  */}
+          {/*Filters  */}
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center justify-center mb-4">
               <div className="flex-1 border-t border-zinc-700" />
               <p className="text-zinc-500 text-xs font-semibold uppercase tracking-widest px-4">
-                More Filters
+                Filters
               </p>
               <div className="flex-1 border-t border-zinc-700" />
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch gap-3 justify-center">
-              {/* Sort By */}
-              <div className="flex flex-col gap-1 shrink-0">
-                <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-                  Sort By
-                </label>
-                <div className="relative group h-12">
-                  <div className="absolute inset-0 bg-linear-to-r from-purple-500 to-pink-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-                  <select
-                    value={sortBy}
-                    onChange={(e) =>
-                      setSortBy(e.target.value as UserMediaEntrySortFields)
-                    }
-                    className="relative h-full w-full appearance-none pl-4 pr-9 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm cursor-pointer"
+            <div className="flex flex-col sm:flex-row items-stretch gap-3 justify-center overflow-visible">
+              <SingleSelectDropdown
+                label="Sort"
+                value={currentSortValue}
+                onChange={handleSortChange}
+                options={combinedSortOptions}
+                searchable={false}
+                allowClear={false}
+              />
+              {/* Status Dropdown */}
+              {selectedStatus !== 'all' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-pink-600/20 border border-pink-500/30 rounded-full text-xs text-pink-300">
+                  {(() => {
+                    const status = selectedStatus as UserMediaEntryStatus;
+                    return statusLabels[status];
+                  })()}
+                  <button
+                    onClick={() => setSelectedStatus('all')}
+                    className="hover:text-white ml-0.5"
                   >
-                    {sortOptions.map((option) => (
-                      <option
-                        key={option.value}
-                        value={option.value}
-                        className="bg-zinc-800"
-                      >
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
-                    ▼
-                  </span>
-                </div>
-              </div>
-
-              {/* Sort Direction */}
-              <div className="flex flex-col gap-1 shrink-0">
-                <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-                  Order
-                </label>
-                <button
-                  onClick={toggleSortDirection}
-                  title={sortDirection === 'ASC' ? 'Ascending' : 'Descending'}
-                  className="h-12 shrink-0 px-4 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-zinc-300 hover:text-white hover:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200 flex items-center gap-1.5 text-sm"
-                >
-                  {sortDirection === 'ASC' ? (
-                    <svg
-                      className="w-4 h-4 shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 15l7-7 7 7"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      className="w-4 h-4 shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  )}
-                  <span className="sm:inline">
-                    {sortDirection === 'ASC' ? 'Asc' : 'Desc'}
-                  </span>
-                </button>
-              </div>
-
+                    ✕
+                  </button>
+                </span>
+              )}
               {/* Favorites Toggle */}
               <div className="flex flex-col gap-1 shrink-0">
-                <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-                  Favorites
-                </label>
-                <button
-                  onClick={() =>
-                    setIsFavorite(isFavorite === true ? undefined : true)
+                <ToggleButton
+                  label="Favorites"
+                  selected={isFavorite === true}
+                  onChange={(selected) =>
+                    setIsFavorite(selected ? true : undefined)
                   }
-                  title="Favorites only"
-                  className={`h-12 shrink-0 px-4 backdrop-blur-xl border rounded-2xl transition-all duration-200 flex items-center gap-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                    isFavorite === true
-                      ? 'bg-pink-600/20 border-pink-500/50 text-pink-300'
-                      : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-white hover:border-pink-500/50'
-                  }`}
-                >
-                  <svg
-                    className="w-4 h-4 shrink-0"
-                    fill={isFavorite === true ? 'currentColor' : 'none'}
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                    />
-                  </svg>
-                  <span className="sm:inline">Favorites</span>
-                </button>
+                  text={isFavorite === true ? '♥' : '♡'}
+                />
               </div>
 
               {/* Adult Content Toggle */}
               <div className="flex flex-col gap-1 shrink-0">
-                <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-                  Adult
-                </label>
-                <button
-                  onClick={() => setIncludeAdult((prev) => !prev)}
-                  title={
-                    includeAdult
-                      ? 'Showing adult only'
-                      : 'Show adult content only'
-                  }
-                  className={`h-12 shrink-0 px-4 backdrop-blur-xl border rounded-2xl transition-all duration-200 flex items-center gap-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                    includeAdult
-                      ? 'bg-red-600/20 border-red-500/50 text-red-300'
-                      : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-white hover:border-red-500/50'
-                  }`}
-                >
-                  <svg
-                    className="w-4 h-4 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
-                  </svg>
-                  <span className="sm:inline">18+</span>
-                </button>
+                <ToggleButton
+                  label="Adult"
+                  selected={includeAdult}
+                  onChange={(selected) => setIncludeAdult(selected)}
+                  text={'18+'}
+                />
               </div>
             </div>
           </div>

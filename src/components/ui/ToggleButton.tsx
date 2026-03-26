@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { cls } from './ButtonConstants';
+
 interface ToggleButtonProps {
   /** Label rendered above the button */
   label?: string;
@@ -35,13 +36,38 @@ export function ToggleButton({
           buttonRef.current?.blur();
         }}
         className={cls(
-          'px-4 py-2.5 text-sm border rounded-xl transition-all duration-200 bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/70 cursor-pointer select-none',
+          'flex items-center gap-2.5 px-4 py-2.5 text-sm border rounded-xl transition-all duration-200 bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/70 cursor-pointer select-none',
           selected
             ? 'border-blue-500 text-white'
-            : 'border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500',
+            : 'border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-600',
         )}
       >
-        {text}
+        {/* Checkbox */}
+        <span
+          className={cls(
+            'w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors',
+            selected
+              ? 'bg-blue-500 border-blue-500'
+              : 'border-zinc-600 bg-transparent',
+          )}
+        >
+          {selected && (
+            <svg
+              className="w-2.5 h-2.5 text-white"
+              viewBox="0 0 12 12"
+              fill="none"
+            >
+              <path
+                d="M2 6l3 3 5-5"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </span>
+        <span>{text}</span>
       </button>
     </div>
   );

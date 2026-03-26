@@ -69,3 +69,33 @@ export const UserMediaEntrySortOptions = {
 } as const;
 
 export type UserMediaEntrySortOptions = typeof UserMediaEntrySortOptions[keyof typeof UserMediaEntrySortOptions];
+
+export const statusLabels: Record<UserMediaEntryStatus | 'all', string> = {
+  all: 'All',
+  [UserMediaEntryStatus.CURRENT]: 'Current',
+  [UserMediaEntryStatus.COMPLETED]: 'Completed',
+  [UserMediaEntryStatus.ON_HOLD]: 'On Hold',
+  [UserMediaEntryStatus.DROPPED]: 'Dropped',
+  [UserMediaEntryStatus.PLANNING]: 'Planning',
+};
+
+export const statuses: (UserMediaEntryStatus | 'all')[] = [
+  'all',
+  UserMediaEntryStatus.CURRENT,
+  UserMediaEntryStatus.COMPLETED,
+  UserMediaEntryStatus.ON_HOLD,
+  UserMediaEntryStatus.DROPPED,
+  UserMediaEntryStatus.PLANNING,
+];
+
+export const sortFieldLabels: Record<UserMediaEntrySortFields, { asc: string; desc: string }> = {
+  [UserMediaEntrySortFields.CREATED_AT]: { asc: 'Date Added ↑', desc: 'Date Added ↓' },
+  [UserMediaEntrySortFields.UPDATED_AT]: { asc: 'Last Updated ↑', desc: 'Last Updated ↓' },
+  [UserMediaEntrySortFields.TITLE]: { asc: 'Title ↑', desc: 'Title ↓' },
+};
+
+export const sortOptions = [
+  { value: UserMediaEntrySortFields.CREATED_AT, label: 'Date Added' },
+  { value: UserMediaEntrySortFields.UPDATED_AT, label: 'Last Updated' },
+  { value: UserMediaEntrySortFields.TITLE, label: 'Title' },
+];
