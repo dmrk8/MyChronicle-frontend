@@ -24,7 +24,10 @@ import {
 import useSessionState from '../hooks/useSessionState';
 import SearchResults from './SearchResults';
 import SearchBar from './SearchBar';
-
+import {
+  MultiSelectDropdown,
+  SingleSelectDropdown,
+} from '../../../components/ui/dropdowns';
 const STORAGE_KEY_PREFIX = 'searchTmdb';
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -42,12 +45,6 @@ const fuzzyMatch = (query: string, target: string): boolean => {
     if (t[ti] === q[qi]) qi++;
   }
   return qi === q.length;
-};
-
-const genreButtonLabel = (genres: TmdbGenre[]): string => {
-  if (genres.length === 0) return 'Any';
-  if (genres.length === 1) return genres[0].name;
-  return `${genres[0].name} +${genres.length - 1}`;
 };
 
 // storageKey uses lowercase path to match what Header writes (searchTmdb_movie)
@@ -210,84 +207,34 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
   const [keywordDropdownIndex, setKeywordDropdownIndex] = useState(-1);
   const keywordInputRef = useRef<HTMLInputElement>(null);
 
-  const [showGenreDropdown, setShowGenreDropdown] = useState(false);
-  const [genreSearch, setGenreSearch] = useState('');
-  const [genreDropdownIndex, setGenreDropdownIndex] = useState<number>(-1);
-  const [showYearDropdown, setShowYearDropdown] = useState(false);
-  const [yearSearch, setYearSearch] = useState('');
-  const [yearDropdownIndex, setYearDropdownIndex] = useState<number>(-1);
-
-  const genreSearchRef = useRef<HTMLInputElement>(null);
-  const yearSearchRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (showGenreDropdown)
-      setTimeout(() => genreSearchRef.current?.focus(), 50);
-    else setTimeout(() => setGenreSearch(''), 0);
-  }, [showGenreDropdown]);
-
-  useEffect(() => {
-    if (showYearDropdown) setTimeout(() => yearSearchRef.current?.focus(), 50);
-    else
-      setTimeout(() => {
-        setYearSearch('');
-        setYearDropdownIndex(-1);
-      }, 0);
-  }, [showYearDropdown]);
+  const [yearSearch] = useState('');
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedKeywordInput(keywordInput), 400);
     return () => clearTimeout(timer);
   }, [keywordInput]);
 
-  // Apply filters from Header navigation
+  // ── Apply filters from Header navigation
   useEffect(() => {
-    if (!location.state?.filtersApplied) return;
+    if (!location.state?.filtersApplied || !location.state?.filters) return;
+
+    const s = location.state.filters;
 
     startTransition(() => {
-      setSearchQuery(sessionStorage.getItem(`${storageKey}_query`) ?? '');
-      setDebouncedSearchQuery(
-        sessionStorage.getItem(`${storageKey}_query`) ?? '',
-      );
-      // useSessionState fields re-read from storage automatically on key change;
-      // here mediaType hasn't changed so we nudge them by reading directly.
-      setSortBy(
-        (sessionStorage.getItem(`${storageKey}_sort`) as TmdbSortOption) ??
-          TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC,
-      );
-      setSelectedGenres(
-        JSON.parse(sessionStorage.getItem(`${storageKey}_genres`) ?? '[]'),
-      );
-      setSelectedYear(
-        (() => {
-          const v = sessionStorage.getItem(`${storageKey}_year`);
-          return v ? Number(v) : '';
-        })(),
-      );
-      setSelectedStatus(sessionStorage.getItem(`${storageKey}_status`) ?? '');
-      setSelectedLanguage(
-        sessionStorage.getItem(`${storageKey}_language`) ?? '',
-      );
-      setMinRating(
-        (() => {
-          const v = sessionStorage.getItem(`${storageKey}_minRating`);
-          return v ? Number(v) : '';
-        })(),
-      );
-      setRuntimeMin(
-        Number(sessionStorage.getItem(`${storageKey}_runtimeMin`) ?? 0),
-      );
-      setRuntimeMax(
-        Number(sessionStorage.getItem(`${storageKey}_runtimeMax`) ?? 360),
-      );
-      setRuntimeEnabled(
-        sessionStorage.getItem(`${storageKey}_runtimeEnabled`) === 'true',
-      );
-      setDateFrom(sessionStorage.getItem(`${storageKey}_dateFrom`) ?? '');
-      setDateTo(sessionStorage.getItem(`${storageKey}_dateTo`) ?? '');
-      setSelectedKeywords(
-        JSON.parse(sessionStorage.getItem(`${storageKey}_keywords`) ?? '[]'),
-      );
+      setSearchQuery(s.query ?? '');
+      setDebouncedSearchQuery(s.query ?? '');
+      setSortBy(s.sort ?? TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC);
+      setSelectedGenres(s.genres ?? []);
+      setSelectedYear(s.year ?? '');
+      setSelectedStatus(s.status ?? '');
+      setSelectedLanguage(s.language ?? '');
+      setMinRating(s.minRating ?? '');
+      setRuntimeMin(s.runtimeMin ?? 0);
+      setRuntimeMax(s.runtimeMax ?? 360);
+      setRuntimeEnabled(s.runtimeEnabled ?? false);
+      setDateFrom(s.dateFrom ?? '');
+      setDateTo(s.dateTo ?? '');
+      setSelectedKeywords(s.keywords ?? []);
     });
 
     setSearchParams({}, { replace: true });
@@ -454,17 +401,6 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
     }
   };
 
-  const hasActiveFilters =
-    selectedGenres.length > 0 ||
-    selectedYear !== '' ||
-    selectedStatus !== '' ||
-    selectedLanguage !== '' ||
-    minRating !== '' ||
-    runtimeEnabled ||
-    dateFrom !== '' ||
-    dateTo !== '' ||
-    selectedKeywords.length > 0;
-
   const clearFilters = () => {
     setSelectedGenres([]);
     setSelectedYear('');
@@ -480,9 +416,6 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
     setKeywordInput('');
   };
 
-  const filteredGenres = [...genreOptions].filter((g) =>
-    fuzzyMatch(genreSearch, g.name),
-  );
   const filteredYears = YEAR_OPTIONS.filter((y) =>
     fuzzyMatch(yearSearch, String(y)),
   );
@@ -572,61 +505,6 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
       : []),
   ];
 
-  const selectBase =
-    'relative appearance-none pl-4 pr-10 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200';
-  const activeSelect = 'border-blue-500 text-white';
-  const inactiveSelect = 'border-zinc-700 text-zinc-400';
-
-  const handleGenreDropdownKeyDown = (
-    e: React.KeyboardEvent<HTMLButtonElement | HTMLInputElement>,
-  ) => {
-    if (!showGenreDropdown) return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setGenreDropdownIndex((p) => Math.min(p + 1, filteredGenres.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setGenreDropdownIndex((p) => Math.max(p - 1, 0));
-    } else if (e.key === 'Escape') {
-      setShowGenreDropdown(false);
-    } else if (
-      e.key === 'Enter' &&
-      genreDropdownIndex >= 0 &&
-      genreDropdownIndex < filteredGenres.length
-    ) {
-      e.preventDefault();
-      toggleGenre(filteredGenres[genreDropdownIndex]);
-    }
-  };
-
-  const handleYearDropdownKeyDown = (
-    e: React.KeyboardEvent<HTMLButtonElement | HTMLInputElement>,
-  ) => {
-    if (!showYearDropdown) return;
-    const totalItems = filteredYears.length + 1;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setYearDropdownIndex((p) => Math.min(p + 1, totalItems - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setYearDropdownIndex((p) => Math.max(p - 1, 0));
-    } else if (e.key === 'Escape') {
-      setShowYearDropdown(false);
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (yearDropdownIndex === 0) {
-        setSelectedYear('');
-        setShowYearDropdown(false);
-      } else if (
-        yearDropdownIndex > 0 &&
-        yearDropdownIndex <= filteredYears.length
-      ) {
-        setSelectedYear(filteredYears[yearDropdownIndex - 1]);
-        setShowYearDropdown(false);
-      }
-    }
-  };
-
   // ── Sync filter state to URL params (shareable links) ──────────────────────
   useEffect(() => {
     const params = new URLSearchParams();
@@ -690,268 +568,85 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
           <p className="text-zinc-500 text-xs font-semibold uppercase tracking-widest">
             Filters
           </p>
-          {hasActiveFilters && (
-            <button
-              onClick={clearFilters}
-              className="text-xs text-zinc-500 hover:text-white transition-colors"
-            >
-              Clear all ✕
-            </button>
-          )}
         </div>
 
         <div className="flex items-start gap-4 flex-wrap">
           {/* ── Sort By ── */}
-          <div className="flex flex-col gap-1 shrink-0">
-            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-              Sort By
-            </label>
-            <div className="relative group">
-              <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as TmdbSortOption)}
-                className={`${selectBase} ${inactiveSelect}`}
-              >
-                {Object.entries(sortOptions).map(([key, value]) => (
-                  <option key={value} value={value} className="bg-zinc-800">
-                    {key
-                      .split('_')
-                      .map((w) => {
-                        if (w === 'DESC') return 'Descending';
-                        if (w === 'ASC') return 'Ascending';
-                        return (
-                          w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
-                        );
-                      })
-                      .join(' ')}
-                  </option>
-                ))}
-              </select>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
-                ▼
-              </span>
-            </div>
-          </div>
+          <SingleSelectDropdown
+            label="Sort By"
+            value={sortBy}
+            onChange={(value) => setSortBy(value as TmdbSortOption)}
+            options={Object.entries(sortOptions).map(([key, value]) => ({
+              value,
+              label: key
+                .split('_')
+                .map((w) => {
+                  if (w === 'DESC') return 'Descending';
+                  if (w === 'ASC') return 'Ascending';
+                  return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+                })
+                .join(' '),
+            }))}
+            placeholder="Any"
+            searchable={false}
+            allowClear={false}
+          />
 
           {/* ── Genres ── */}
-          <div className="flex flex-col gap-1 shrink-0">
-            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-              Genre
-            </label>
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowGenreDropdown((prev) => !prev)}
-                onKeyDown={handleGenreDropdownKeyDown}
-                className={`${selectBase} ${selectedGenres.length > 0 ? activeSelect : inactiveSelect}`}
-                aria-haspopup="listbox"
-                aria-expanded={showGenreDropdown}
-              >
-                {genreButtonLabel(selectedGenres)}
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs pointer-events-none">
-                  ▼
-                </span>
-              </button>
-
-              {showGenreDropdown && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowGenreDropdown(false)}
-                  />
-                  <div className="absolute top-full mt-2 left-0 z-50 w-60 bg-zinc-800 border border-zinc-700 rounded-xl shadow-2xl flex flex-col">
-                    <div className="p-2 border-b border-zinc-700">
-                      <input
-                        ref={genreSearchRef}
-                        type="text"
-                        placeholder="Search genres..."
-                        value={genreSearch}
-                        onChange={(e) => setGenreSearch(e.target.value)}
-                        onKeyDown={handleGenreDropdownKeyDown}
-                        className="w-full px-3 py-2 bg-zinc-700 rounded-lg text-sm text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div className="max-h-72 overflow-y-auto" tabIndex={-1}>
-                      {filteredGenres.length === 0 ? (
-                        <p className="px-4 py-3 text-sm text-zinc-500">
-                          No matches
-                        </p>
-                      ) : (
-                        filteredGenres.map((genre, idx) => (
-                          <label
-                            key={genre.id}
-                            className={`flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-700 cursor-pointer transition-colors ${genreDropdownIndex === idx ? 'bg-blue-600/30' : ''}`}
-                            tabIndex={-1}
-                            onMouseEnter={() => setGenreDropdownIndex(idx)}
-                            onClick={() => toggleGenre(genre)}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedGenres.some(
-                                (g) => g.id === genre.id,
-                              )}
-                              readOnly
-                              className="accent-blue-500 w-4 h-4 cursor-pointer"
-                            />
-                            <span className="text-sm text-white">
-                              {genre.name}
-                            </span>
-                          </label>
-                        ))
-                      )}
-                    </div>
-                    {selectedGenres.length > 0 && (
-                      <div className="p-2 border-t border-zinc-700">
-                        <button
-                          onClick={() => setSelectedGenres([])}
-                          className="w-full text-xs text-zinc-400 hover:text-white transition-colors py-1"
-                        >
-                          Clear {selectedGenres.length} selected
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+          <MultiSelectDropdown<TmdbGenre>
+            label="Genre"
+            selected={selectedGenres}
+            onChange={(genres: TmdbGenre[]) => setSelectedGenres(genres)}
+            options={[...genreOptions]}
+            getId={(genre) => genre.id}
+            getLabel={(genre) => genre.name}
+            placeholder="Any"
+            searchable={true}
+          />
 
           {/* ── Year ── */}
-          <div className="flex flex-col gap-1 shrink-0">
-            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-              Year
-            </label>
-            <div className="relative">
-              <button
-                onClick={() => setShowYearDropdown((prev) => !prev)}
-                onKeyDown={handleYearDropdownKeyDown}
-                className={`${selectBase} ${selectedYear ? activeSelect : inactiveSelect}`}
-              >
-                {selectedYear ? String(selectedYear) : 'Any'}
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs pointer-events-none">
-                  ▼
-                </span>
-              </button>
-
-              {showYearDropdown && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowYearDropdown(false)}
-                  />
-                  <div className="absolute top-full mt-2 left-0 z-50 w-40 bg-zinc-800 border border-zinc-700 rounded-xl shadow-2xl flex flex-col">
-                    <div className="p-2 border-b border-zinc-700">
-                      <input
-                        ref={yearSearchRef}
-                        type="text"
-                        placeholder="Search year..."
-                        value={yearSearch}
-                        onChange={(e) => setYearSearch(e.target.value)}
-                        onKeyDown={handleYearDropdownKeyDown}
-                        className="w-full px-3 py-2 bg-zinc-700 rounded-lg text-sm text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div className="max-h-72 overflow-y-auto">
-                      <button
-                        onClick={() => {
-                          setSelectedYear('');
-                          setShowYearDropdown(false);
-                        }}
-                        onMouseEnter={() => setYearDropdownIndex(0)}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-700 transition-colors ${yearDropdownIndex === 0 ? 'bg-blue-600/30' : ''} ${!selectedYear ? 'text-blue-400' : 'text-zinc-400'}`}
-                      >
-                        Any
-                      </button>
-                      {filteredYears.length === 0 ? (
-                        <p className="px-4 py-3 text-sm text-zinc-500">
-                          No matches
-                        </p>
-                      ) : (
-                        filteredYears.map((year, idx) => (
-                          <button
-                            key={year}
-                            onClick={() => {
-                              setSelectedYear(year);
-                              setShowYearDropdown(false);
-                            }}
-                            onMouseEnter={() => setYearDropdownIndex(idx + 1)}
-                            className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-700 transition-colors ${yearDropdownIndex === idx + 1 ? 'bg-blue-600/30' : ''} ${selectedYear === year ? 'text-blue-400 bg-zinc-700/50' : 'text-white'}`}
-                          >
-                            {year}
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+          <SingleSelectDropdown
+            label="Year"
+            value={selectedYear ? String(selectedYear) : ''}
+            onChange={(value) => setSelectedYear(value ? Number(value) : '')}
+            options={filteredYears.map((year) => ({
+              value: String(year),
+              label: String(year),
+            }))}
+            placeholder="Any"
+            searchable={true}
+            allowClear={true}
+          />
 
           {/* ── Status (TV only) ── */}
           {!isMovie && (
-            <div className="flex flex-col gap-1 shrink-0">
-              <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-                Status
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className={`${selectBase} ${selectedStatus ? activeSelect : inactiveSelect}`}
-                >
-                  <option value="" className="bg-zinc-800 text-zinc-400">
-                    Any
-                  </option>
-                  {TMDB_TV_STATUSES.map((s) => (
-                    <option
-                      key={s.value}
-                      value={s.value}
-                      className="bg-zinc-800 text-white"
-                    >
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
-                  ▼
-                </span>
-              </div>
-            </div>
+            <SingleSelectDropdown
+              label="Status"
+              value={selectedStatus}
+              onChange={setSelectedStatus}
+              options={TMDB_TV_STATUSES.map((s) => ({
+                value: s.value,
+                label: s.label,
+              }))}
+              placeholder="Any"
+              searchable={false}
+              allowClear={true}
+            />
           )}
 
           {/* ── Language ── */}
-          <div className="flex flex-col gap-1 shrink-0">
-            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-              Language
-            </label>
-            <div className="relative group">
-              <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-              <select
-                value={selectedLanguage}
-                onChange={(e) => setSelectedLanguage(e.target.value)}
-                className={`${selectBase} ${selectedLanguage ? activeSelect : inactiveSelect}`}
-              >
-                <option value="" className="bg-zinc-800 text-zinc-400">
-                  Any
-                </option>
-                {TMDB_LANGUAGES.map((lang) => (
-                  <option
-                    key={lang.code}
-                    value={lang.code}
-                    className="bg-zinc-800 text-white"
-                  >
-                    {lang.name}
-                  </option>
-                ))}
-              </select>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
-                ▼
-              </span>
-            </div>
-          </div>
+          <SingleSelectDropdown
+            label="Language"
+            value={selectedLanguage}
+            onChange={setSelectedLanguage}
+            options={TMDB_LANGUAGES.map((lang) => ({
+              value: lang.code,
+              label: lang.name,
+            }))}
+            placeholder="Any"
+            searchable={true}
+            allowClear={true}
+          />
 
           {/* ── Date Range ── */}
           <div className="flex flex-col gap-1 shrink-0">
@@ -960,7 +655,6 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
             </label>
             <div className="flex items-center gap-2">
               <div className="relative group">
-                <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
                 <input
                   type="date"
                   value={dateFrom}
@@ -971,12 +665,11 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
                       ? 'Clear the Year filter to use date range'
                       : ''
                   }
-                  className={`relative pl-3 pr-3 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer scheme-dark ${dateFrom ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400'} ${selectedYear ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  className={`relative flex items-center pl-3.5 pr-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/70 transition-all duration-200 bg-zinc-900 cursor-pointer select-none ${dateFrom ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400'} ${selectedYear ? 'opacity-40 cursor-not-allowed' : ''}`}
                 />
               </div>
               <span className="text-zinc-500 text-xs">to</span>
               <div className="relative group">
-                <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
                 <input
                   type="date"
                   value={dateTo}
@@ -987,14 +680,14 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
                       ? 'Clear the Year filter to use date range'
                       : ''
                   }
-                  className={`relative pl-3 pr-3 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer scheme-dark ${dateTo ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400'} ${selectedYear ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  className={`relative flex items-center pl-3.5 pr-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/70 transition-all duration-200 bg-zinc-900 cursor-pointer select-none ${dateFrom ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400'} ${selectedYear ? 'opacity-40 cursor-not-allowed' : ''}`}
                 />
               </div>
             </div>
           </div>
 
           {/* ── Runtime ── */}
-          <div className="flex flex-col gap-1 shrink-0">
+          <div className="relative flex items-center gap-2 pl-3.5 pr-3 py-2.5 border rounded-xl text-sm border-zinc-700 bg-zinc-900 transition-all duration-200 select-none min-w-45">
             <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
               Runtime (min)
             </label>
@@ -1071,7 +764,6 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
             </label>
             <div className="relative">
               <div className="relative group">
-                <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
                 <input
                   ref={keywordInputRef}
                   type="text"
@@ -1086,7 +778,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
                     if (keywordInput.trim()) setShowKeywordDropdown(true);
                   }}
                   onKeyDown={handleKeywordKeyDown}
-                  className={`relative appearance-none pl-4 pr-10 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 w-full ${selectedKeywords.length > 0 ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400 placeholder-zinc-500'}`}
+                  className={`relative flex items-center gap-2 pl-3.5 pr-9 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/70 transition-all duration-200 bg-zinc-900 cursor-pointer select-none w-45 ${selectedKeywords.length > 0 ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400 placeholder-zinc-500'}`}
                 />
               </div>
 
@@ -1133,11 +825,18 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
 
         {/* ── Active Filter Chips ── */}
         {activeChips.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4">
+          <div className="flex flex-wrap gap-2 items-center mt-4">
+            <button
+              onClick={clearFilters}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-red-500/15 border border-red-500/40 text-red-300 hover:bg-red-500/25 hover:text-red-200 hover:border-red-500/60 transition-colors"
+            >
+              Clear all
+              <span>✕</span>
+            </button>
             {activeChips.map((chip) => (
               <span
                 key={chip.key}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/15 border border-blue-500/40 text-blue-300 text-xs rounded-lg"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-blue-500/15 border border-blue-500/40 text-blue-300"
               >
                 {chip.label}
                 <button

@@ -21,6 +21,7 @@ import {
   type AnilistTag,
   ANILIST_ANIME_FORMATS,
   ANILIST_MANGA_FORMATS,
+  ANILIST_SEASON_LABEL,
 } from '../../../constants/anilistFilters';
 import type {
   AnilistMediaType,
@@ -29,6 +30,11 @@ import type {
 import useSessionState from '../hooks/useSessionState';
 import SearchResults from './SearchResults';
 import SearchBar from './SearchBar';
+import {
+  MultiExcludeDropdown,
+  SingleSelectDropdown,
+} from '../../../components/ui/dropdowns';
+import { ToggleButton } from '../../../components/ui/ToggleButton';
 
 const STORAGE_KEY_PREFIX = 'searchAnilist';
 
@@ -47,16 +53,6 @@ const fuzzyMatch = (query: string, target: string): boolean => {
     if (t[ti] === q[qi]) qi++;
   }
   return qi === q.length;
-};
-
-const genreButtonLabel = (
-  included: AnilistGenre[],
-  excluded: AnilistGenre[],
-): string => {
-  const total = included.length + excluded.length;
-  if (total === 0) return 'Any';
-  if (total === 1) return included[0] ?? `−${excluded[0]}`;
-  return `${total} active`;
 };
 
 const tagButtonLabel = (included: string[], excluded: string[]): string => {
@@ -194,39 +190,11 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     return () => clearTimeout(timer);
   }, [searchQuery, storageKey]);
 
-  // ── Dropdown UI state ──────────────────────────────────────────────────────
-  const [showGenreDropdown, setShowGenreDropdown] = useState(false);
-  const [genreSearch, setGenreSearch] = useState('');
-  const [genreDropdownIndex, setGenreDropdownIndex] = useState<number>(-1);
-
+  // custom Tags dropdown with categories
   const [showTagDropdown, setShowTagDropdown] = useState(false);
   const [tagSearch, setTagSearch] = useState('');
   const [showAdultTags, setShowAdultTags] = useState(false);
-
-  const [showYearDropdown, setShowYearDropdown] = useState(false);
-  const [yearSearch, setYearSearch] = useState('');
-  const [yearDropdownIndex, setYearDropdownIndex] = useState<number>(-1);
-
-  const genreSearchRef = useRef<HTMLInputElement>(null);
-  const yearSearchRef = useRef<HTMLInputElement>(null);
   const tagSearchRef = useRef<HTMLInputElement>(null);
-
-  // ── Dropdown focus effects ─────────────────────────────────────────────────
-  useEffect(() => {
-    if (showGenreDropdown)
-      setTimeout(() => genreSearchRef.current?.focus(), 50);
-    else setTimeout(() => setGenreSearch(''), 0);
-  }, [showGenreDropdown]);
-
-  useEffect(() => {
-    if (showYearDropdown) setTimeout(() => yearSearchRef.current?.focus(), 50);
-    else {
-      setTimeout(() => {
-        setYearSearch('');
-        setYearDropdownIndex(-1);
-      }, 0);
-    }
-  }, [showYearDropdown]);
 
   useEffect(() => {
     if (showTagDropdown) setTimeout(() => tagSearchRef.current?.focus(), 50);
@@ -235,55 +203,24 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
 
   // ── Apply filters from Header navigation
   useEffect(() => {
-    if (!location.state?.filtersApplied) return;
+    if (!location.state?.filtersApplied || !location.state?.filters) return;
 
-    // useSessionState fields re-read from storage automatically on key change;
-    // here mediaType hasn't changed so we nudge them by reading directly.
+    const s = location.state.filters;
+
     startTransition(() => {
-      setSearchQuery(sessionStorage.getItem(`${storageKey}_query`) ?? '');
-      setDebouncedSearchQuery(
-        sessionStorage.getItem(`${storageKey}_query`) ?? '',
-      );
-      setSortBy(
-        (sessionStorage.getItem(`${storageKey}_sort`) as AnilistSortOptions) ??
-          ANILIST_SORT_OPTIONS.POPULARITY_DESC,
-      );
-      setSelectedSeason(
-        (sessionStorage.getItem(`${storageKey}_season`) ?? '') as
-          | AnilistSeason
-          | '',
-      );
-      setSelectedYear(
-        (() => {
-          const v = sessionStorage.getItem(`${storageKey}_year`);
-          return v ? Number(v) : '';
-        })(),
-      );
-      setSelectedStatus(
-        (sessionStorage.getItem(`${storageKey}_status`) ?? '') as
-          | AnilistAiringStatus
-          | AnilistPublishingStatus
-          | '',
-      );
-      setSelectedGenres(
-        JSON.parse(sessionStorage.getItem(`${storageKey}_genres`) ?? '[]'),
-      );
-      setExcludedGenres(
-        JSON.parse(
-          sessionStorage.getItem(`${storageKey}_genres_excluded`) ?? '[]',
-        ),
-      );
-      setSelectedTags(
-        JSON.parse(sessionStorage.getItem(`${storageKey}_tags`) ?? '[]'),
-      );
-      setExcludedTags(
-        JSON.parse(
-          sessionStorage.getItem(`${storageKey}_tags_excluded`) ?? '[]',
-        ),
-      );
-      setSelectedCountry(sessionStorage.getItem(`${storageKey}_country`) ?? '');
-      setIsAdult(sessionStorage.getItem(`${storageKey}_adult`) === 'true');
-      setSelectedFormat(sessionStorage.getItem(`${storageKey}_format`) ?? '');
+      setSearchQuery(s.query ?? '');
+      setDebouncedSearchQuery(s.query ?? '');
+      setSortBy(s.sort ?? ANILIST_SORT_OPTIONS.POPULARITY_DESC);
+      setSelectedSeason(s.season ?? '');
+      setSelectedYear(s.year ?? '');
+      setSelectedStatus(s.status ?? '');
+      setSelectedGenres(s.genres ?? []);
+      setExcludedGenres(s.excludedGenres ?? []);
+      setSelectedTags(s.tags ?? []);
+      setExcludedTags(s.excludedTags ?? []);
+      setSelectedCountry(s.country ?? '');
+      setIsAdult(s.adult ?? false);
+      setSelectedFormat(s.format ?? '');
     });
 
     window.history.replaceState({}, '');
@@ -375,20 +312,6 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
 
   // ── Filter helpers ─────────────────────────────────────────────────────────
 
-  const toggleGenre = (genre: AnilistGenre) => {
-    if (selectedGenres.includes(genre)) {
-      // selected → excluded
-      setSelectedGenres((prev) => prev.filter((g) => g !== genre));
-      setExcludedGenres((prev) => [...prev, genre]);
-    } else if (excludedGenres.includes(genre)) {
-      // excluded → none
-      setExcludedGenres((prev) => prev.filter((g) => g !== genre));
-    } else {
-      // none → selected
-      setSelectedGenres((prev) => [...prev, genre]);
-    }
-  };
-
   const toggleTag = (tagName: string) => {
     if (selectedTags.includes(tagName)) {
       // selected → excluded
@@ -402,18 +325,6 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       setSelectedTags((prev) => [...prev, tagName]);
     }
   };
-
-  const hasActiveFilters =
-    selectedSeason !== '' ||
-    selectedYear !== '' ||
-    selectedStatus !== '' ||
-    selectedGenres.length > 0 ||
-    excludedGenres.length > 0 ||
-    selectedTags.length > 0 ||
-    excludedTags.length > 0 ||
-    selectedCountry !== '' ||
-    isAdult ||
-    selectedFormat !== '';
 
   const clearFilters = () => {
     setSelectedSeason('');
@@ -431,12 +342,6 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   const statusOptions = isAnime
     ? ANILIST_AIRING_STATUS
     : ANILIST_PUBLISHING_STATUS;
-  const filteredGenres = ANILIST_GENRES.filter((g) =>
-    fuzzyMatch(genreSearch, g),
-  );
-  const filteredYears = YEAR_OPTIONS.filter((y) =>
-    fuzzyMatch(yearSearch, String(y)),
-  );
 
   const filteredTagsByCategory = Object.entries(ANILIST_TAGS_BY_CATEGORY)
     .sort(([a], [b]) => {
@@ -453,55 +358,6 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       ),
     }))
     .filter(({ tags }) => tags.length > 0);
-
-  // ── Keyboard handlers ──────────────────────────────────────────────────────
-  const handleGenreDropdownKeyDown = (
-    e: React.KeyboardEvent<HTMLButtonElement | HTMLInputElement>,
-  ) => {
-    if (!showGenreDropdown) return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setGenreDropdownIndex((p) => Math.min(p + 1, filteredGenres.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setGenreDropdownIndex((p) => Math.max(p - 1, 0));
-    } else if (e.key === 'Escape') setShowGenreDropdown(false);
-    else if (
-      e.key === 'Enter' &&
-      genreDropdownIndex >= 0 &&
-      genreDropdownIndex < filteredGenres.length
-    ) {
-      e.preventDefault();
-      toggleGenre(filteredGenres[genreDropdownIndex]);
-    }
-  };
-
-  const handleYearDropdownKeyDown = (
-    e: React.KeyboardEvent<HTMLButtonElement | HTMLInputElement>,
-  ) => {
-    if (!showYearDropdown) return;
-    const totalItems = filteredYears.length + 1;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setYearDropdownIndex((p) => Math.min(p + 1, totalItems - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setYearDropdownIndex((p) => Math.max(p - 1, 0));
-    } else if (e.key === 'Escape') setShowYearDropdown(false);
-    else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (yearDropdownIndex === 0) {
-        setSelectedYear('');
-        setShowYearDropdown(false);
-      } else if (
-        yearDropdownIndex > 0 &&
-        yearDropdownIndex <= filteredYears.length
-      ) {
-        setSelectedYear(filteredYears[yearDropdownIndex - 1]);
-        setShowYearDropdown(false);
-      }
-    }
-  };
 
   // ── Active chips ───────────────────────────────────────────────────────────
   const activeChips: {
@@ -590,8 +446,6 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   ];
 
   // ── Shared select styles ───────────────────────────────────────────────────
-  const selectBase =
-    'relative appearance-none pl-4 pr-10 py-3 bg-zinc-800/80 backdrop-blur-xl border rounded-xl text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200';
   const activeSelect = 'border-blue-500 text-white';
   const inactiveSelect = 'border-zinc-700 text-zinc-400';
 
@@ -649,708 +503,450 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
         mediaType={mediaType}
       />
 
-      {/* Filters */}
+      {/* Filters*/}
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-3 pl-1">
           <p className="text-zinc-500 text-xs font-semibold uppercase tracking-widest">
             Filters
           </p>
-          {hasActiveFilters && (
-            <button
-              onClick={clearFilters}
-              className="text-xs text-zinc-500 hover:text-white transition-colors"
-            >
-              Clear all ✕
-            </button>
-          )}
         </div>
 
-        <div className="flex items-start gap-4 flex-wrap">
-          {/* ── Sort By ── */}
-          <div className="flex flex-col gap-1 shrink-0">
-            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-              Sort By
-            </label>
-            <div className="relative group">
-              <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-              <select
-                value={sortBy}
-                onChange={(e) =>
-                  setSortBy(e.target.value as AnilistSortOptions)
-                }
-                className={`${selectBase} ${inactiveSelect}`}
-              >
-                {(
-                  Object.entries(ANILIST_SORT_OPTIONS) as [
-                    string,
-                    AnilistSortOptions,
-                  ][]
-                ).map(([key, value]) => (
-                  <option key={value} value={value} className="bg-zinc-800">
-                    {sortLabel(key)}
-                  </option>
-                ))}
-              </select>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
-                ▼
-              </span>
-            </div>
-          </div>
-
-          {/* ── Genres ── */}
-          <div className="flex flex-col gap-1 shrink-0">
-            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-              Genre
-            </label>
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowGenreDropdown((prev) => !prev)}
-                onKeyDown={handleGenreDropdownKeyDown}
-                className={`${selectBase} ${
-                  selectedGenres.length > 0
-                    ? activeSelect
-                    : excludedGenres.length > 0
-                      ? 'border-red-500 text-white'
-                      : inactiveSelect
-                }`}
-                aria-haspopup="listbox"
-                aria-expanded={showGenreDropdown}
-              >
-                {genreButtonLabel(selectedGenres, excludedGenres)}
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs pointer-events-none">
-                  ▼
-                </span>
-              </button>
-              {showGenreDropdown && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowGenreDropdown(false)}
-                  />
-                  <div className="absolute top-full mt-2 left-0 z-50 w-60 bg-zinc-800 border border-zinc-700 rounded-xl shadow-2xl flex flex-col">
-                    <div className="p-2 border-b border-zinc-700">
-                      <input
-                        ref={genreSearchRef}
-                        type="text"
-                        placeholder="Search genres..."
-                        value={genreSearch}
-                        onChange={(e) => setGenreSearch(e.target.value)}
-                        onKeyDown={handleGenreDropdownKeyDown}
-                        className="w-full px-3 py-2 bg-zinc-700 rounded-lg text-sm text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div className="max-h-72 overflow-y-auto" tabIndex={-1}>
-                      {filteredGenres.length === 0 ? (
-                        <p className="px-4 py-3 text-sm text-zinc-500">
-                          No matches
-                        </p>
-                      ) : (
-                        filteredGenres.map((genre, idx) => {
-                          const state = selectedGenres.includes(genre)
-                            ? 'include'
-                            : excludedGenres.includes(genre)
-                              ? 'exclude'
-                              : 'none';
-                          return (
-                            <label
-                              key={genre}
-                              className={`flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-700 cursor-pointer transition-colors ${
-                                genreDropdownIndex === idx
-                                  ? 'bg-blue-600/30'
-                                  : ''
-                              }`}
-                              tabIndex={-1}
-                              onMouseEnter={() => setGenreDropdownIndex(idx)}
-                              onClick={() => toggleGenre(genre)}
-                            >
-                              <span
-                                className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                                  state === 'include'
-                                    ? 'bg-blue-500 border-blue-500'
-                                    : state === 'exclude'
-                                      ? 'bg-red-500 border-red-500'
-                                      : 'border-zinc-600'
-                                }`}
-                              >
-                                {state === 'include' && (
-                                  <svg
-                                    className="w-2.5 h-2.5 text-white"
-                                    fill="currentColor"
-                                    viewBox="0 0 12 12"
-                                  >
-                                    <path
-                                      d="M10 3L5 8.5 2 5.5"
-                                      stroke="currentColor"
-                                      strokeWidth="1.5"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      fill="none"
-                                    />
-                                  </svg>
-                                )}
-                                {state === 'exclude' && (
-                                  <span className="text-white text-xs font-bold leading-none">
-                                    −
-                                  </span>
-                                )}
-                              </span>
-                              <span
-                                className={`text-sm ${
-                                  state === 'include'
-                                    ? 'text-blue-200'
-                                    : state === 'exclude'
-                                      ? 'text-red-200'
-                                      : 'text-white'
-                                }`}
-                              >
-                                {genre}
-                              </span>
-                            </label>
-                          );
-                        })
-                      )}
-                    </div>
-                    {(selectedGenres.length > 0 ||
-                      excludedGenres.length > 0) && (
-                      <div className="p-2 border-t border-zinc-700">
-                        <button
-                          onClick={() => {
-                            setSelectedGenres([]);
-                            setExcludedGenres([]);
-                          }}
-                          className="w-full text-xs text-zinc-400 hover:text-white transition-colors py-1"
-                        >
-                          Clear {selectedGenres.length + excludedGenres.length}{' '}
-                          active
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start gap-4 flex-wrap">
+            <SingleSelectDropdown<AnilistSortOptions>
+              label="Sort By"
+              value={sortBy}
+              onChange={(value) => setSortBy(value as AnilistSortOptions)}
+              options={Object.entries(ANILIST_SORT_OPTIONS).map(
+                ([key, val]) => ({
+                  value: val,
+                  label: sortLabel(key),
+                }),
               )}
-            </div>
-          </div>
+              placeholder="Any"
+              searchable={false}
+              allowClear={false}
+            />
 
-          {/* ── Tags ── */}
-          <div className="flex flex-col gap-1 shrink-0">
-            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-              Tags
-            </label>
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowTagDropdown((prev) => !prev)}
-                className={`${selectBase} ${
-                  selectedTags.length > 0
-                    ? activeSelect
-                    : excludedTags.length > 0
-                      ? 'border-red-500 text-white'
-                      : inactiveSelect
-                }`}
-                aria-haspopup="listbox"
-                aria-expanded={showTagDropdown}
-              >
-                {tagButtonLabel(selectedTags, excludedTags)}
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs pointer-events-none">
-                  ▼
-                </span>
-              </button>
-              {showTagDropdown && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowTagDropdown(false)}
-                  />
-                  <div className="fixed left-1/2 -translate-x-1/2 top-[8%] z-50 w-[min(96vw,1000px)] bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl flex flex-col max-h-[82vh]">
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-700/70 shrink-0">
-                      <span className="text-sm font-semibold text-white">
-                        Select Tags
-                      </span>
-                      {(selectedTags.length > 0 || excludedTags.length > 0) && (
-                        <button
-                          onClick={() => {
-                            setSelectedTags([]);
-                            setExcludedTags([]);
-                          }}
-                          className="text-xs text-zinc-400 hover:text-white transition-colors"
-                        >
-                          Clear {selectedTags.length + excludedTags.length}{' '}
-                          active
-                        </button>
-                      )}
-                    </div>
+            <MultiExcludeDropdown
+              label="Genre"
+              included={selectedGenres}
+              excluded={excludedGenres}
+              onIncludedChange={(genres) =>
+                setSelectedGenres(genres as AnilistGenre[])
+              }
+              onExcludedChange={(genres) =>
+                setExcludedGenres(genres as AnilistGenre[])
+              }
+              options={[...ANILIST_GENRES]}
+              placeholder="Any"
+              searchable={true}
+            />
 
-                    {/* Search + Adult toggle */}
-                    <div className="px-4 py-3 border-b border-zinc-700/70 flex items-center gap-4 shrink-0">
-                      <input
-                        ref={tagSearchRef}
-                        type="text"
-                        placeholder="Search tags..."
-                        value={tagSearch}
-                        onChange={(e) => setTagSearch(e.target.value)}
-                        className="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                      <label className="flex items-center gap-2 cursor-pointer select-none shrink-0">
-                        <input
-                          type="checkbox"
-                          checked={showAdultTags}
-                          onChange={(e) => setShowAdultTags(e.target.checked)}
-                          className="accent-blue-500 w-4 h-4"
-                        />
-                        <span className="text-xs text-zinc-400 whitespace-nowrap">
-                          Show 18+ tags
-                        </span>
-                      </label>
-                    </div>
-
-                    {/* Selected tags chips */}
-                    {(selectedTags.length > 0 || excludedTags.length > 0) && (
-                      <div className="px-4 py-2.5 border-b border-zinc-700/70 shrink-0 flex flex-wrap gap-1.5">
-                        {selectedTags.map((t) => (
-                          <span
-                            key={t}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-500/15 border border-blue-500/40 text-blue-300 text-xs rounded-lg"
-                          >
-                            {t}
-                            <button
-                              onClick={() =>
-                                setSelectedTags((prev) =>
-                                  prev.filter((x) => x !== t),
-                                )
-                              }
-                              className="text-blue-400 hover:text-white transition-colors leading-none ml-0.5"
-                            >
-                              ✕
-                            </button>
-                          </span>
-                        ))}
-                        {excludedTags.map((t) => (
-                          <span
-                            key={`exc-${t}`}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-500/15 border border-red-500/40 text-red-300 text-xs rounded-lg"
-                          >
-                            <span className="text-red-400 font-bold mr-0.5">
-                              −
-                            </span>
-                            {t}
-                            <button
-                              onClick={() =>
-                                setExcludedTags((prev) =>
-                                  prev.filter((x) => x !== t),
-                                )
-                              }
-                              className="text-red-400 hover:text-white transition-colors leading-none ml-0.5"
-                            >
-                              ✕
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* All tags grouped by category */}
-                    <div className="flex-1 overflow-y-auto p-4">
-                      {filteredTagsByCategory.length === 0 ? (
-                        <p className="text-center py-12 text-sm text-zinc-500">
-                          No matches
-                        </p>
-                      ) : (
-                        <div className="flex flex-col gap-4">
-                          {filteredTagsByCategory.map(({ category, tags }) => {
-                            const selectedInCategory = tags.filter(
-                              (t) =>
-                                selectedTags.includes(t.name) ||
-                                excludedTags.includes(t.name),
-                            ).length;
-                            return (
-                              <div
-                                key={category}
-                                className="border border-zinc-700/60 rounded-xl overflow-hidden"
-                              >
-                                {/* Category header */}
-                                <div className="flex items-center gap-2 px-4 py-2 bg-zinc-800/70 border-b border-zinc-700/60">
-                                  <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
-                                    {category}
-                                  </span>
-                                  {selectedInCategory > 0 && (
-                                    <span className="px-1.5 py-0.5 bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs rounded-md">
-                                      {selectedInCategory} selected
-                                    </span>
-                                  )}
-                                </div>
-
-                                {/* Tags grid */}
-                                <div
-                                  className="p-2 grid gap-1"
-                                  style={{
-                                    gridTemplateColumns:
-                                      'repeat(auto-fill, minmax(140px, 1fr))',
-                                  }}
-                                >
-                                  {tags.map((tag) => {
-                                    const isSelected = selectedTags.includes(
-                                      tag.name,
-                                    );
-                                    const isExcluded = excludedTags.includes(
-                                      tag.name,
-                                    );
-
-                                    return (
-                                      <div
-                                        key={tag.id}
-                                        className="relative group"
-                                      >
-                                        <button
-                                          type="button"
-                                          onClick={() => toggleTag(tag.name)}
-                                          className={`w-full min-w-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-left transition-all duration-150 border text-xs relative group ${
-                                            isSelected
-                                              ? 'bg-blue-500/15 border-blue-500/50 text-blue-200'
-                                              : isExcluded
-                                                ? 'bg-red-500/15 border-red-500/50 text-red-200'
-                                                : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700/60 hover:text-white hover:border-zinc-600'
-                                          }`}
-                                        >
-                                          <span
-                                            className={`w-3 h-3 rounded border shrink-0 flex items-center justify-center transition-colors ${
-                                              isSelected
-                                                ? 'bg-blue-500 border-blue-500'
-                                                : isExcluded
-                                                  ? 'bg-red-500 border-red-500'
-                                                  : 'border-zinc-600'
-                                            }`}
-                                            aria-hidden="true"
-                                          >
-                                            {isSelected && (
-                                              <svg
-                                                className="w-2 h-2 text-white"
-                                                fill="currentColor"
-                                                viewBox="0 0 12 12"
-                                              >
-                                                <path
-                                                  d="M10 3L5 8.5 2 5.5"
-                                                  stroke="currentColor"
-                                                  strokeWidth="1.5"
-                                                  strokeLinecap="round"
-                                                  strokeLinejoin="round"
-                                                  fill="none"
-                                                />
-                                              </svg>
-                                            )}
-                                            {isExcluded && (
-                                              <svg
-                                                className="w-2 h-2 text-white"
-                                                fill="currentColor"
-                                                viewBox="0 0 12 12"
-                                              >
-                                                <path
-                                                  d="M2 6h8"
-                                                  stroke="currentColor"
-                                                  strokeWidth="2"
-                                                  strokeLinecap="round"
-                                                />
-                                              </svg>
-                                            )}
-                                          </span>
-                                          <span className="truncate flex-1">
-                                            {tag.name}
-                                          </span>
-                                          {tag.isAdult && (
-                                            <span className="text-red-400 shrink-0">
-                                              18+
-                                            </span>
-                                          )}
-                                        </button>
-
-                                        {tag.description && (
-                                          <div className="absolute bottom-[calc(100%+6px)] left-1/2 -translate-x-1/2 w-52 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                                            <p className="text-xs font-medium text-white mb-1">
-                                              {tag.name}
-                                            </p>
-                                            <p className="text-xs text-zinc-400 leading-relaxed">
-                                              {tag.description}
-                                            </p>
-                                            {tag.isAdult && (
-                                              <span className="inline-block mt-2 text-[10px] px-2 py-0.5 bg-red-500/15 text-red-300 rounded-md">
-                                                18+ only
-                                              </span>
-                                            )}
-                                            <div className="absolute -bottom-1.25 left-1/2 -translate-x-1/2 w-2 h-2 bg-zinc-900 border-r border-b border-zinc-700 rotate-45" />
-                                          </div>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Footer */}
-                    <div className="flex items-center justify-between px-5 py-3 border-t border-zinc-700/70 shrink-0">
-                      <span className="text-xs text-zinc-500">
-                        {selectedTags.length > 0
-                          ? `${selectedTags.length} tag${selectedTags.length > 1 ? 's' : ''} selected`
-                          : 'No tags selected'}
-                      </span>
-                      <button
-                        onClick={() => setShowTagDropdown(false)}
-                        className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors"
-                      >
-                        Done
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* ── Format ── */}
-          <div className="flex flex-col gap-1 shrink-0">
-            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-              Format
-            </label>
-            <div className="relative group">
-              <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-              <select
-                value={selectedFormat}
-                onChange={(e) => setSelectedFormat(e.target.value)}
-                className={`${selectBase} ${selectedFormat ? activeSelect : inactiveSelect}`}
-              >
-                <option value="" className="bg-zinc-800 text-zinc-400">
-                  Any
-                </option>
-                {getFormatOptions(mediaType).map((format) => (
-                  <option
-                    key={format}
-                    value={format}
-                    className="bg-zinc-800 text-white"
-                  >
-                    {format
-                      .replace(/_/g, ' ')
-                      .replace(/\b\w/g, (l) => l.toUpperCase())}
-                  </option>
-                ))}
-              </select>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
-                ▼
-              </span>
-            </div>
-          </div>
-
-          {/* ── Season (anime only) ── */}
-          {isAnime && (
+            {/* ── Tags ── */}
             <div className="flex flex-col gap-1 shrink-0">
               <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-                Season
+                Tags
               </label>
-              <div className="relative group">
-                <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-                <select
-                  value={selectedSeason}
-                  onChange={(e) =>
-                    setSelectedSeason(e.target.value as AnilistSeason | '')
-                  }
-                  className={`${selectBase} ${selectedSeason ? activeSelect : inactiveSelect}`}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowTagDropdown((prev) => !prev)}
+                  className={`relative flex items-center gap-2 pl-3.5 pr-9 py-2.5 bg-zinc-900 border rounded-xl text-sm cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-blue-500/70 transition-all duration-150 w-45 ${
+                    selectedTags.length > 0
+                      ? activeSelect
+                      : excludedTags.length > 0
+                        ? 'border-red-500 text-white'
+                        : inactiveSelect
+                  }`}
+                  aria-haspopup="listbox"
+                  aria-expanded={showTagDropdown}
                 >
-                  <option value="" className="bg-zinc-800 text-zinc-400">
-                    Any
-                  </option>
-                  {ANILIST_SEASONS.map((season) => (
-                    <option
-                      key={season}
-                      value={season}
-                      className="bg-zinc-800 text-white"
-                    >
-                      {season.charAt(0) + season.slice(1).toLowerCase()}
-                    </option>
-                  ))}
-                </select>
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
-                  ▼
-                </span>
+                  {tagButtonLabel(selectedTags, excludedTags)}
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs pointer-events-none">
+                    ▼
+                  </span>
+                </button>
+                {showTagDropdown && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowTagDropdown(false)}
+                    />
+                    <div className="fixed left-1/2 -translate-x-1/2 top-[8%] z-50 w-[min(96vw,1000px)] bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl flex flex-col max-h-[82vh]">
+                      {/* Header */}
+                      <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-700/70 shrink-0">
+                        <span className="text-sm font-semibold text-white">
+                          Select Tags
+                        </span>
+                        {(selectedTags.length > 0 ||
+                          excludedTags.length > 0) && (
+                          <button
+                            onClick={() => {
+                              setSelectedTags([]);
+                              setExcludedTags([]);
+                            }}
+                            className="text-xs text-zinc-400 hover:text-white transition-colors"
+                          >
+                            Clear {selectedTags.length + excludedTags.length}{' '}
+                            active
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Search + Adult toggle */}
+                      <div className="px-4 py-3 border-b border-zinc-700/70 flex items-center gap-4 shrink-0">
+                        <input
+                          ref={tagSearchRef}
+                          type="text"
+                          placeholder="Search tags..."
+                          value={tagSearch}
+                          onChange={(e) => setTagSearch(e.target.value)}
+                          className="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <label className="flex items-center gap-2 cursor-pointer select-none shrink-0">
+                          <input
+                            type="checkbox"
+                            checked={showAdultTags}
+                            onChange={(e) => setShowAdultTags(e.target.checked)}
+                            className="accent-blue-500 w-4 h-4"
+                          />
+                          <span className="text-xs text-zinc-400 whitespace-nowrap">
+                            Show 18+ tags
+                          </span>
+                        </label>
+                      </div>
+
+                      {/* Selected tags chips */}
+                      {(selectedTags.length > 0 || excludedTags.length > 0) && (
+                        <div className="px-4 py-2.5 border-b border-zinc-700/70 shrink-0 flex flex-wrap gap-1.5">
+                          {selectedTags.map((t) => (
+                            <span
+                              key={t}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-500/15 border border-blue-500/40 text-blue-300 text-xs rounded-lg"
+                            >
+                              {t}
+                              <button
+                                onClick={() =>
+                                  setSelectedTags((prev) =>
+                                    prev.filter((x) => x !== t),
+                                  )
+                                }
+                                className="text-blue-400 hover:text-white transition-colors leading-none ml-0.5"
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                          {excludedTags.map((t) => (
+                            <span
+                              key={`exc-${t}`}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-500/15 border border-red-500/40 text-red-300 text-xs rounded-lg"
+                            >
+                              <span className="text-red-400 font-bold mr-0.5">
+                                −
+                              </span>
+                              {t}
+                              <button
+                                onClick={() =>
+                                  setExcludedTags((prev) =>
+                                    prev.filter((x) => x !== t),
+                                  )
+                                }
+                                className="text-red-400 hover:text-white transition-colors leading-none ml-0.5"
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* All tags grouped by category */}
+                      <div className="flex-1 overflow-y-auto p-4">
+                        {filteredTagsByCategory.length === 0 ? (
+                          <p className="text-center py-12 text-sm text-zinc-500">
+                            No matches
+                          </p>
+                        ) : (
+                          <div className="flex flex-col gap-4">
+                            {filteredTagsByCategory.map(
+                              ({ category, tags }) => {
+                                const selectedInCategory = tags.filter(
+                                  (t) =>
+                                    selectedTags.includes(t.name) ||
+                                    excludedTags.includes(t.name),
+                                ).length;
+                                return (
+                                  <div
+                                    key={category}
+                                    className="border border-zinc-700/60 rounded-xl overflow-hidden"
+                                  >
+                                    {/* Category header */}
+                                    <div className="flex items-center gap-2 px-4 py-2 bg-zinc-800/70 border-b border-zinc-700/60">
+                                      <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
+                                        {category}
+                                      </span>
+                                      {selectedInCategory > 0 && (
+                                        <span className="px-1.5 py-0.5 bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs rounded-md">
+                                          {selectedInCategory} selected
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {/* Tags grid */}
+                                    <div
+                                      className="p-2 grid gap-1"
+                                      style={{
+                                        gridTemplateColumns:
+                                          'repeat(auto-fill, minmax(140px, 1fr))',
+                                      }}
+                                    >
+                                      {tags.map((tag) => {
+                                        const isSelected =
+                                          selectedTags.includes(tag.name);
+                                        const isExcluded =
+                                          excludedTags.includes(tag.name);
+
+                                        return (
+                                          <div
+                                            key={tag.id}
+                                            className="relative group"
+                                          >
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                toggleTag(tag.name)
+                                              }
+                                              className={`w-full min-w-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-left transition-all duration-150 border text-xs relative group ${
+                                                isSelected
+                                                  ? 'bg-blue-500/15 border-blue-500/50 text-blue-200'
+                                                  : isExcluded
+                                                    ? 'bg-red-500/15 border-red-500/50 text-red-200'
+                                                    : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700/60 hover:text-white hover:border-zinc-600'
+                                              }`}
+                                            >
+                                              <span
+                                                className={`w-3 h-3 rounded border shrink-0 flex items-center justify-center transition-colors ${
+                                                  isSelected
+                                                    ? 'bg-blue-500 border-blue-500'
+                                                    : isExcluded
+                                                      ? 'bg-red-500 border-red-500'
+                                                      : 'border-zinc-600'
+                                                }`}
+                                                aria-hidden="true"
+                                              >
+                                                {isSelected && (
+                                                  <svg
+                                                    className="w-2 h-2 text-white"
+                                                    fill="currentColor"
+                                                    viewBox="0 0 12 12"
+                                                  >
+                                                    <path
+                                                      d="M10 3L5 8.5 2 5.5"
+                                                      stroke="currentColor"
+                                                      strokeWidth="1.5"
+                                                      strokeLinecap="round"
+                                                      strokeLinejoin="round"
+                                                      fill="none"
+                                                    />
+                                                  </svg>
+                                                )}
+                                                {isExcluded && (
+                                                  <svg
+                                                    className="w-2 h-2 text-white"
+                                                    fill="currentColor"
+                                                    viewBox="0 0 12 12"
+                                                  >
+                                                    <path
+                                                      d="M2 6h8"
+                                                      stroke="currentColor"
+                                                      strokeWidth="2"
+                                                      strokeLinecap="round"
+                                                    />
+                                                  </svg>
+                                                )}
+                                              </span>
+                                              <span className="truncate flex-1">
+                                                {tag.name}
+                                              </span>
+                                              {tag.isAdult && (
+                                                <span className="text-red-400 shrink-0">
+                                                  18+
+                                                </span>
+                                              )}
+                                            </button>
+
+                                            {tag.description && (
+                                              <div className="absolute bottom-[calc(100%+6px)] left-1/2 -translate-x-1/2 w-52 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                                                <p className="text-xs font-medium text-white mb-1">
+                                                  {tag.name}
+                                                </p>
+                                                <p className="text-xs text-zinc-400 leading-relaxed">
+                                                  {tag.description}
+                                                </p>
+                                                {tag.isAdult && (
+                                                  <span className="inline-block mt-2 text-[10px] px-2 py-0.5 bg-red-500/15 text-red-300 rounded-md">
+                                                    18+ only
+                                                  </span>
+                                                )}
+                                                <div className="absolute -bottom-1.25 left-1/2 -translate-x-1/2 w-2 h-2 bg-zinc-900 border-r border-b border-zinc-700 rotate-45" />
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              },
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between px-5 py-3 border-t border-zinc-700/70 shrink-0">
+                        <span className="text-xs text-zinc-500">
+                          {selectedTags.length > 0
+                            ? `${selectedTags.length} tag${selectedTags.length > 1 ? 's' : ''} selected`
+                            : 'No tags selected'}
+                        </span>
+                        <button
+                          onClick={() => setShowTagDropdown(false)}
+                          className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors"
+                        >
+                          Done
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
-          )}
 
-          {/* ── Year ── */}
-          <div className="flex flex-col gap-1 shrink-0">
-            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-              Year
-            </label>
-            <div className="relative">
-              <button
-                onClick={() => setShowYearDropdown((prev) => !prev)}
-                onKeyDown={handleYearDropdownKeyDown}
-                className={`${selectBase} ${selectedYear ? activeSelect : inactiveSelect}`}
-              >
-                {selectedYear ? String(selectedYear) : 'Any'}
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs pointer-events-none">
-                  ▼
-                </span>
-              </button>
-              {showYearDropdown && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowYearDropdown(false)}
-                  />
-                  <div className="absolute top-full mt-2 left-0 z-50 w-40 bg-zinc-800 border border-zinc-700 rounded-xl shadow-2xl flex flex-col">
-                    <div className="p-2 border-b border-zinc-700">
-                      <input
-                        ref={yearSearchRef}
-                        type="text"
-                        placeholder="Search year..."
-                        value={yearSearch}
-                        onChange={(e) => setYearSearch(e.target.value)}
-                        onKeyDown={handleYearDropdownKeyDown}
-                        className="w-full px-3 py-2 bg-zinc-700 rounded-lg text-sm text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div className="max-h-72 overflow-y-auto">
-                      <button
-                        onClick={() => {
-                          setSelectedYear('');
-                          setShowYearDropdown(false);
-                        }}
-                        onMouseEnter={() => setYearDropdownIndex(0)}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-700 transition-colors ${yearDropdownIndex === 0 ? 'bg-blue-600/30' : ''} ${!selectedYear ? 'text-blue-400' : 'text-zinc-400'}`}
-                      >
-                        Any
-                      </button>
-                      {filteredYears.map((year, idx) => (
-                        <button
-                          key={year}
-                          onClick={() => {
-                            setSelectedYear(year);
-                            setShowYearDropdown(false);
-                          }}
-                          onMouseEnter={() => setYearDropdownIndex(idx + 1)}
-                          className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-700 transition-colors ${yearDropdownIndex === idx + 1 ? 'bg-blue-600/30' : ''} ${selectedYear === year ? 'text-blue-400 bg-zinc-700/50' : 'text-white'}`}
-                        >
-                          {year}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+            {/* ── Format ── */}
+            <SingleSelectDropdown
+              label="Format"
+              value={selectedFormat}
+              onChange={(value) => setSelectedFormat(value)}
+              options={getFormatOptions(mediaType).map((format) => ({
+                value: format,
+                label: format
+                  .replace(/_/g, ' ')
+                  .replace(/\b\w/g, (l) => l.toUpperCase()),
+              }))}
+              placeholder="Any"
+              searchable={false}
+              allowClear={true}
+            />
 
-          {/* ── Status ── */}
-          <div className="flex flex-col gap-1 shrink-0">
-            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-              {isAnime ? 'Airing Status' : 'Publishing Status'}
-            </label>
-            <div className="relative group">
-              <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-              <select
-                value={selectedStatus}
-                onChange={(e) =>
-                  setSelectedStatus(e.target.value as typeof selectedStatus)
+            {/* ── Season (anime only) ── */}
+            {isAnime && (
+              <SingleSelectDropdown<AnilistSeason>
+                label="Season"
+                value={selectedSeason}
+                onChange={(value) =>
+                  setSelectedSeason(value as AnilistSeason | '')
                 }
-                className={`${selectBase} ${selectedStatus ? activeSelect : inactiveSelect}`}
-              >
-                <option value="" className="bg-zinc-800 text-zinc-400">
-                  Any
-                </option>
-                {statusOptions.map((status) => (
-                  <option
-                    key={status}
-                    value={status}
-                    className="bg-zinc-800 text-white"
-                  >
-                    {formatStatusDisplay(status)}
-                  </option>
-                ))}
-              </select>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
-                ▼
-              </span>
-            </div>
-          </div>
+                options={ANILIST_SEASONS.map((season) => ({
+                  value: season,
+                  label: ANILIST_SEASON_LABEL[season],
+                }))}
+                placeholder="Any"
+                searchable={false}
+                allowClear={true}
+              />
+            )}
 
-          {/* ── Country ── */}
-          <div className="flex flex-col gap-1 shrink-0">
-            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-              Country
-            </label>
-            <div className="relative group">
-              <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-              <select
-                value={selectedCountry}
-                onChange={(e) => setSelectedCountry(e.target.value)}
-                className={`${selectBase} ${selectedCountry ? activeSelect : inactiveSelect}`}
-              >
-                <option value="" className="bg-zinc-800 text-zinc-400">
-                  Any
-                </option>
-                {ANILIST_COUNTRIES.map((country) => (
-                  <option
-                    key={country.code}
-                    value={country.code}
-                    className="bg-zinc-800 text-white"
-                  >
-                    {country.name}
-                  </option>
-                ))}
-              </select>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none text-xs">
-                ▼
-              </span>
-            </div>
-          </div>
+            {/* ── Year ── */}
+            <SingleSelectDropdown
+              label="Year"
+              value={selectedYear ? String(selectedYear) : ''}
+              onChange={(value) => setSelectedYear(value ? Number(value) : '')}
+              options={YEAR_OPTIONS.map((year) => ({
+                value: String(year),
+                label: String(year),
+              }))}
+              placeholder="Any"
+              searchable={true}
+              allowClear={true}
+            />
 
-          {/* ── Adult ── */}
-          <div className="flex flex-col gap-1 shrink-0">
-            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-              Adult
-            </label>
-            <button
-              onClick={() => setIsAdult((prev) => !prev)}
-              className={`px-4 py-3 text-sm border rounded-xl transition-all duration-200 bg-zinc-800/80 backdrop-blur-xl
-                    ${isAdult ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500'}`}
-            >
-              18+ {isAdult ? '✓' : ''}
-            </button>
-          </div>
-        </div>
+            {/* ── Status ── */}
+            <SingleSelectDropdown
+              label={isAnime ? 'Airing Status' : 'Publishing Status'}
+              value={selectedStatus}
+              onChange={(value) =>
+                setSelectedStatus(value as typeof selectedStatus)
+              }
+              options={statusOptions.map((status) => ({
+                value: status,
+                label: formatStatusDisplay(status),
+              }))}
+              placeholder="Any"
+              searchable={false}
+              allowClear={true}
+            />
 
-        {/* ── Active Filter Chips ── */}
-        {activeChips.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4">
-            {activeChips.map((chip) => (
-              <span
-                key={chip.key}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg ${
-                  chip.isExcluded
-                    ? 'bg-red-500/15 border border-red-500/40 text-red-300'
-                    : 'bg-blue-500/15 border border-blue-500/40 text-blue-300'
-                }`}
+            {/* ── Country ── */}
+            <SingleSelectDropdown
+              label="Country"
+              value={selectedCountry}
+              onChange={(value) => setSelectedCountry(value)}
+              options={ANILIST_COUNTRIES.map((country) => ({
+                value: country.code,
+                label: country.name,
+              }))}
+              placeholder="Any"
+              searchable={false}
+              allowClear={true}
+            />
+
+            {/* ── Adult ── */}
+            <ToggleButton
+              label="Adult"
+              selected={isAdult}
+              onChange={setIsAdult}
+              text="18+"
+            />
+          </div>
+          {/* ── Active Filter Chips ── */}
+          {activeChips.length > 0 && (
+            <div className="flex flex-wrap gap-2 items-center">
+              <button
+                onClick={clearFilters}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-red-500/15 border border-red-500/40 text-red-300 hover:bg-red-500/25 hover:text-red-200 hover:border-red-500/60 transition-colors"
               >
-                {chip.label}
-                <button
-                  onClick={chip.onRemove}
-                  className={`transition-colors leading-none ${
+                Clear all
+                <span>✕</span>
+              </button>
+              {activeChips.map((chip) => (
+                <span
+                  key={chip.key}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg ${
                     chip.isExcluded
-                      ? 'text-red-400 hover:text-white'
-                      : 'text-blue-400 hover:text-white'
+                      ? 'bg-red-500/15 border border-red-500/40 text-red-300'
+                      : 'bg-blue-500/15 border border-blue-500/40 text-blue-300'
                   }`}
-                  aria-label={`Remove ${chip.label}`}
                 >
-                  ✕
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
+                  {chip.label}
+                  <button
+                    onClick={chip.onRemove}
+                    className={`transition-colors leading-none ${
+                      chip.isExcluded
+                        ? 'text-red-400 hover:text-white'
+                        : 'text-blue-400 hover:text-white'
+                    }`}
+                    aria-label={`Remove ${chip.label}`}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Results */}

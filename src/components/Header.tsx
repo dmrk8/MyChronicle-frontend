@@ -126,20 +126,18 @@ const Header = () => {
   const navigateWithFilters = (
     mediaPath: string,
     filters: Record<string, string>,
-    storagePrefix: 'searchAnilist' | 'searchTmdb' = 'searchAnilist',
     isMobile = false,
   ) => {
     clearSearchStorage(mediaPath);
-    const storageKey = `${storagePrefix}_${mediaPath}`;
-    Object.entries(filters).forEach(([key, value]) => {
-      sessionStorage.setItem(`${storageKey}_${key}`, value);
-    });
     if (isMobile) setIsMobileMenuOpen(false);
     else setActiveDropdown(null);
     window.scrollTo(0, 0);
     filterNavCounter.current += 1;
     navigate(`/${mediaPath}/search`, {
-      state: { filtersApplied: filterNavCounter.current },
+      state: {
+        filtersApplied: filterNavCounter.current,
+        filters,
+      },
     });
   };
 
@@ -312,15 +310,11 @@ const Header = () => {
                           <NavigationLink
                             href="/movie/search"
                             onClick={() =>
-                              navigateWithFilters(
-                                'movie',
-                                {
-                                  sort: TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC,
-                                  dateFrom: movieDates.playingNow.from,
-                                  dateTo: movieDates.playingNow.to,
-                                },
-                                'searchTmdb',
-                              )
+                              navigateWithFilters('movie', {
+                                sort: TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC,
+                                dateFrom: movieDates.playingNow.from,
+                                dateTo: movieDates.playingNow.to,
+                              })
                             }
                             className={`${dropdownItemClass} block cursor-pointer`}
                           >
@@ -332,15 +326,11 @@ const Header = () => {
                           <NavigationLink
                             href="/movie/search"
                             onClick={() =>
-                              navigateWithFilters(
-                                'movie',
-                                {
-                                  sort: TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC,
-                                  dateFrom: movieDates.upcoming.from,
-                                  dateTo: movieDates.upcoming.to,
-                                },
-                                'searchTmdb',
-                              )
+                              navigateWithFilters('movie', {
+                                sort: TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC,
+                                dateFrom: movieDates.upcoming.from,
+                                dateTo: movieDates.upcoming.to,
+                              })
                             }
                             className={`${dropdownItemClass} block cursor-pointer`}
                           >
@@ -503,14 +493,9 @@ const Header = () => {
                           <NavigationLink
                             href="/anime/search"
                             onClick={() =>
-                              navigateWithFilters(
-                                'anime',
-                                {
-                                  sort: ANILIST_SORT_OPTIONS.TRENDING_DESC,
-                                },
-                                'searchAnilist',
-                                true,
-                              )
+                              navigateWithFilters('anime', {
+                                sort: ANILIST_SORT_OPTIONS.TRENDING_DESC,
+                              })
                             }
                             className={mobileItemClass}
                             label="Trending"
@@ -518,17 +503,12 @@ const Header = () => {
                           <NavigationLink
                             href="/anime/search"
                             onClick={() =>
-                              navigateWithFilters(
-                                'anime',
-                                {
-                                  sort: ANILIST_SORT_OPTIONS.POPULARITY_DESC,
-                                  season: currentSeason,
-                                  year: String(currentYear),
-                                  status: airingNowStatus,
-                                },
-                                'searchAnilist',
-                                true,
-                              )
+                              navigateWithFilters('anime', {
+                                sort: ANILIST_SORT_OPTIONS.POPULARITY_DESC,
+                                season: currentSeason,
+                                year: String(currentYear),
+                                status: airingNowStatus,
+                              })
                             }
                             className={mobileItemClass}
                             label="Airing Now"
@@ -536,17 +516,12 @@ const Header = () => {
                           <NavigationLink
                             href="/anime/search"
                             onClick={() =>
-                              navigateWithFilters(
-                                'anime',
-                                {
-                                  sort: ANILIST_SORT_OPTIONS.POPULARITY_DESC,
-                                  season: nextSeason,
-                                  year: String(nextYear),
-                                  status: notYetReleasedStatus,
-                                },
-                                'searchAnilist',
-                                true,
-                              )
+                              navigateWithFilters('anime', {
+                                sort: ANILIST_SORT_OPTIONS.POPULARITY_DESC,
+                                season: nextSeason,
+                                year: String(nextYear),
+                                status: notYetReleasedStatus,
+                              })
                             }
                             className={mobileItemClass}
                             label="Upcoming"
@@ -559,14 +534,9 @@ const Header = () => {
                           <NavigationLink
                             href="/manga/search"
                             onClick={() =>
-                              navigateWithFilters(
-                                'manga',
-                                {
-                                  sort: ANILIST_SORT_OPTIONS.TRENDING_DESC,
-                                },
-                                'searchAnilist',
-                                true,
-                              )
+                              navigateWithFilters('manga', {
+                                sort: ANILIST_SORT_OPTIONS.TRENDING_DESC,
+                              })
                             }
                             className={mobileItemClass}
                             label="Trending"
@@ -574,15 +544,10 @@ const Header = () => {
                           <NavigationLink
                             href="/manga/search"
                             onClick={() =>
-                              navigateWithFilters(
-                                'manga',
-                                {
-                                  sort: ANILIST_SORT_OPTIONS.POPULARITY_DESC,
-                                  country: 'KR',
-                                },
-                                'searchAnilist',
-                                true,
-                              )
+                              navigateWithFilters('manga', {
+                                sort: ANILIST_SORT_OPTIONS.POPULARITY_DESC,
+                                country: 'KR',
+                              })
                             }
                             className={mobileItemClass}
                             label="Popular Manhwa"
@@ -595,16 +560,11 @@ const Header = () => {
                           <NavigationLink
                             href="/movie/search"
                             onClick={() =>
-                              navigateWithFilters(
-                                'movie',
-                                {
-                                  sort: TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC,
-                                  dateFrom: movieDates.playingNow.from,
-                                  dateTo: movieDates.playingNow.to,
-                                },
-                                'searchTmdb',
-                                true,
-                              )
+                              navigateWithFilters('movie', {
+                                sort: TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC,
+                                dateFrom: movieDates.playingNow.from,
+                                dateTo: movieDates.playingNow.to,
+                              })
                             }
                             className={mobileItemClass}
                             label="Playing Now"
@@ -612,16 +572,11 @@ const Header = () => {
                           <NavigationLink
                             href="/movie/search"
                             onClick={() =>
-                              navigateWithFilters(
-                                'movie',
-                                {
-                                  sort: TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC,
-                                  dateFrom: movieDates.upcoming.from,
-                                  dateTo: movieDates.upcoming.to,
-                                },
-                                'searchTmdb',
-                                true,
-                              )
+                              navigateWithFilters('movie', {
+                                sort: TMDB_MOVIE_SORT_OPTIONS.POPULARITY_DESC,
+                                dateFrom: movieDates.upcoming.from,
+                                dateTo: movieDates.upcoming.to,
+                              })
                             }
                             className={mobileItemClass}
                             label="Upcoming"

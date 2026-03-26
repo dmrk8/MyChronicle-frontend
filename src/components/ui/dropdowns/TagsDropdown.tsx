@@ -1,8 +1,8 @@
 // TagsDropdown.tsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { cls, fuzzyMatch } from './dropdownUtils';
+import { fuzzyMatch } from './dropdownUtils';
 import { Chevron, ItemCheckbox, type ItemState } from './DropdownPrimitives';
-
+import { cls } from '../ButtonConstants';
 export interface Tag {
   id: string;
   name: string;
@@ -145,7 +145,7 @@ export const TagsDropdown: React.FC<TagsDropdownProps> = ({
           type="button"
           onClick={() => setOpen((p) => !p)}
           className={cls(
-            'relative flex items-center gap-2 pl-3.5 pr-9 py-2.5 bg-zinc-900 border rounded-xl text-sm cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-blue-500/70 transition-all w-[180px]',
+            'relative flex items-center gap-2 pl-3.5 pr-9 py-2.5 bg-zinc-900 border rounded-xl text-sm cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-blue-500/70 transition-all w-45',
             borderColor,
           )}
         >
@@ -337,7 +337,7 @@ export const TagsDropdown: React.FC<TagsDropdownProps> = ({
                                   <p className="text-[11px] text-zinc-400 leading-relaxed">
                                     {tag.description}
                                   </p>
-                                  <div className="absolute -bottom-[5px] left-1/2 -translate-x-1/2 w-2 h-2 bg-zinc-950 border-r border-b border-zinc-700 rotate-45" />
+                                  <div className="absolute -bottom-1.25 left-1/2 -translate-x-1/2 w-2 h-2 bg-zinc-950 border-r border-b border-zinc-700 rotate-45" />
                                 </div>
                               )}
                             </div>
