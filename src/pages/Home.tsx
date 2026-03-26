@@ -4,14 +4,9 @@ import { MediaType } from '../constants/mediaConstants';
 import { SlidingMediaRow } from '../components/SlidingMediaRow';
 import { useTrendingAnilist } from '../hooks/useAnilist';
 import { useTmdbTrending } from '../hooks/useTmdb';
-import { getCurrentSeason } from '../constants/anilistFilters';
+import { getCurrentSeason, ANILIST_SEASON_LABEL } from '../constants/anilistFilters';
+import { NavigationLink } from '../components/NavigationLink';
 
-const SEASON_LABEL: Record<string, string> = {
-  WINTER: 'Winter',
-  SPRING: 'Spring',
-  SUMMER: 'Summer',
-  FALL: 'Fall',
-};
 
 // ── Skeleton Components (with loaded state colors) ────────────────────────
 const HeroSkeleton = () => (
@@ -221,7 +216,8 @@ const HomePage = () => {
                 )}
 
                 {/* CTA */}
-                <button
+                <NavigationLink
+                  href={`/${heroContent.mediaType.toLowerCase()}/${heroContent.id}`}
                   onClick={() =>
                     openDetails(
                       heroContent.mediaType as MediaType,
@@ -244,7 +240,7 @@ const HomePage = () => {
                     />
                   </svg>
                   More Info
-                </button>
+                </NavigationLink>
               </div>
 
               {/* ── Right: Cover Image ── */}
@@ -286,7 +282,7 @@ const HomePage = () => {
                       Trending Anime
                     </h2>
                     <p className="text-zinc-500 text-sm mt-1">
-                      {SEASON_LABEL[season]} {year} season
+                      {ANILIST_SEASON_LABEL[season]} {year} season
                     </p>
                   </div>
                   <SlidingMediaRow

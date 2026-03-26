@@ -142,3 +142,10 @@ export const ANILIST_TAG_CATEGORY_ORDER = [
   'Sexual Content',
 ];
 
+export const ANILIST_SEASON_LABEL = Object.fromEntries(
+  ANILIST_SEASONS.map((season) => [
+    season,
+    season.charAt(0) + season.slice(1).toLowerCase(),
+  ]),
+) as Record<AnilistSeason, string>;
+
