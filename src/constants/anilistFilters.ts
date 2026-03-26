@@ -149,3 +149,11 @@ export const ANILIST_SEASON_LABEL = Object.fromEntries(
   ]),
 ) as Record<AnilistSeason, string>;
 
+
+const CURRENT_YEAR = new Date().getFullYear();
+
+export const ANILIST_YEAR_OPTIONS = Array.from(
+  { length: CURRENT_YEAR + 2 - 1940 },
+  (_, i) => CURRENT_YEAR + 1 - i,
+);
+

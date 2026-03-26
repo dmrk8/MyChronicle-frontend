@@ -22,6 +22,7 @@ import {
   ANILIST_ANIME_FORMATS,
   ANILIST_MANGA_FORMATS,
   ANILIST_SEASON_LABEL,
+  ANILIST_YEAR_OPTIONS,
 } from '../../../constants/anilistFilters';
 import type {
   AnilistMediaType,
@@ -38,11 +39,6 @@ import { ToggleButton } from '../../../components/ui/ToggleButton';
 
 const STORAGE_KEY_PREFIX = 'searchAnilist';
 
-const CURRENT_YEAR = new Date().getFullYear();
-const YEAR_OPTIONS = Array.from(
-  { length: CURRENT_YEAR + 2 - 1940 },
-  (_, i) => CURRENT_YEAR + 1 - i,
-);
 
 const fuzzyMatch = (query: string, target: string): boolean => {
   if (!query) return true;
@@ -864,7 +860,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
               label="Year"
               value={selectedYear ? String(selectedYear) : ''}
               onChange={(value) => setSelectedYear(value ? Number(value) : '')}
-              options={YEAR_OPTIONS.map((year) => ({
+              options={ANILIST_YEAR_OPTIONS.map((year) => ({
                 value: String(year),
                 label: String(year),
               }))}
