@@ -11,6 +11,7 @@ import {
   TMDB_LANGUAGES,
   type TmdbSortOption,
   type TmdbGenre,
+  TMDB_YEAR_OPTIONS,
 } from '../../../constants/tmdbFilters';
 import type {
   SearchTmdbMovieParams,
@@ -30,22 +31,6 @@ import {
 } from '../../../components/ui/dropdowns';
 const STORAGE_KEY_PREFIX = 'searchTmdb';
 
-const CURRENT_YEAR = new Date().getFullYear();
-const YEAR_OPTIONS = Array.from(
-  { length: CURRENT_YEAR + 2 - 1900 },
-  (_, i) => CURRENT_YEAR + 1 - i,
-);
-
-const fuzzyMatch = (query: string, target: string): boolean => {
-  if (!query) return true;
-  const q = query.toLowerCase();
-  const t = target.toLowerCase();
-  let qi = 0;
-  for (let ti = 0; ti < t.length && qi < q.length; ti++) {
-    if (t[ti] === q[qi]) qi++;
-  }
-  return qi === q.length;
-};
 
 // storageKey uses lowercase path to match what Header writes (searchTmdb_movie)
 const getStorageKey = (mediaType: MediaType) =>
@@ -206,8 +191,6 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
   const [showKeywordDropdown, setShowKeywordDropdown] = useState(false);
   const [keywordDropdownIndex, setKeywordDropdownIndex] = useState(-1);
   const keywordInputRef = useRef<HTMLInputElement>(null);
-
-  const [yearSearch] = useState('');
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedKeywordInput(keywordInput), 400);
@@ -416,10 +399,6 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
     setKeywordInput('');
   };
 
-  const filteredYears = YEAR_OPTIONS.filter((y) =>
-    fuzzyMatch(yearSearch, String(y)),
-  );
-
   const activeChips: { key: string; label: string; onRemove: () => void }[] = [
     ...selectedGenres.map((g) => ({
       key: `genre-${g.id}`,
@@ -609,7 +588,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
             label="Year"
             value={selectedYear ? String(selectedYear) : ''}
             onChange={(value) => setSelectedYear(value ? Number(value) : '')}
-            options={filteredYears.map((year) => ({
+            options={TMDB_YEAR_OPTIONS.map((year) => ({
               value: String(year),
               label: String(year),
             }))}

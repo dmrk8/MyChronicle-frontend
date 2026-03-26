@@ -183,3 +183,11 @@ export type TmdbSortOption =
 export type TmdbMovieGenre = (typeof TMDB_MOVIE_GENRES)[number];
 export type TmdbTvGenre = (typeof TMDB_TV_GENRES)[number];
 export type TmdbGenre = TmdbMovieGenre | TmdbTvGenre;
+
+
+const CURRENT_YEAR = new Date().getFullYear();
+
+export const TMDB_YEAR_OPTIONS = Array.from(
+  { length: CURRENT_YEAR + 2 - 1900 },
+  (_, i) => CURRENT_YEAR + 1 - i,
+);
