@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { fuzzyMatch } from './dropdownUtils';
-import { cls, TRIGGER_BASE } from '../ButtonConstants';
+import { cls, FILTER_LABEL, TRIGGER_BASE } from '../ButtonConstants';
 import {
   Chevron,
   DropdownShell,
@@ -8,6 +8,7 @@ import {
   ItemCheckbox,
   type ItemState,
 } from './DropdownPrimitives';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -223,11 +224,7 @@ export const MultiExcludeDropdown: React.FC<MultiExcludeDropdownProps> = ({
 
   return (
     <div className="flex flex-col gap-1 shrink-0">
-      {label && (
-        <span className="text-zinc-500 text-[10px] font-semibold uppercase tracking-widest pl-0.5">
-          {label}
-        </span>
-      )}
+      {label && <span className={FILTER_LABEL}>{label}</span>}
 
       <div className="relative">
         {open ? (
@@ -235,7 +232,7 @@ export const MultiExcludeDropdown: React.FC<MultiExcludeDropdownProps> = ({
           <div
             className={cls(
               TRIGGER_BASE,
-              'pl-3.5 justify-start border-blue-500/70 overflow-hidden',
+              ' justify-start border-blue-500/70 overflow-hidden',
             )}
             onClick={(e) => e.stopPropagation()}
           >
@@ -281,10 +278,10 @@ export const MultiExcludeDropdown: React.FC<MultiExcludeDropdownProps> = ({
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors text-[10px] cursor-pointer"
                 aria-label="Clear selections"
               >
-                ✕
+                <XMarkIcon className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             ) : (
-              <Chevron open={open} />
+              <Chevron />
             )}
           </div>
         ) : (
@@ -320,10 +317,10 @@ export const MultiExcludeDropdown: React.FC<MultiExcludeDropdownProps> = ({
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors text-[10px] cursor-pointer"
                 aria-label="Clear selections"
               >
-                ✕
+                <XMarkIcon className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             ) : (
-              <Chevron open={open} />
+              <Chevron />
             )}
           </button>
         )}

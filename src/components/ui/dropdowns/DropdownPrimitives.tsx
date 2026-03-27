@@ -1,21 +1,15 @@
 import React from 'react';
-import { cls, DROPDOWN_WIDTH } from '../ButtonConstants';
+import { BG_BASE, cls, DROPDOWN_WIDTH } from '../ButtonConstants';
+import { ChevronDownIcon } from '@heroicons/react/24/outline';
 
 // ─── Chevron ──────────────────────────────────────────────────────────────────
 
-interface ChevronProps {
-  open: boolean;
-}
-
-export const Chevron: React.FC<ChevronProps> = ({ open }) => (
-  <span
+export const Chevron: React.FC = () => (
+  <ChevronDownIcon
     className={cls(
-      'absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none transition-transform duration-200 text-[10px]',
-      open && 'rotate-180',
+      'absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none transition-transform duration-200 w-4 h-4',
     )}
-  >
-    ▼
-  </span>
+  />
 );
 
 // ─── SearchInput ──────────────────────────────────────────────────────────────
@@ -69,7 +63,8 @@ export const DropdownShell: React.FC<DropdownShellProps> = ({
       <div className="fixed inset-0 z-40" onClick={onClose} />
       <div
         className={cls(
-          'absolute top-full mt-2 left-0 z-50 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl shadow-black/60 flex flex-col overflow-hidden',
+          'absolute top-full mt-2 left-0 z-50 border  border-zinc-800 rounded-xl shadow-2xl shadow-black/60 flex flex-col overflow-hidden',
+          BG_BASE,
           wide ? 'w-[min(92vw,640px)]' : DROPDOWN_WIDTH,
         )}
         style={{ backdropFilter: 'blur(12px)' }}

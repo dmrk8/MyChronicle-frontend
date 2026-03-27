@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  fuzzyMatch,
-  type DropdownOption,
-} from './dropdownUtils';
+import { fuzzyMatch, type DropdownOption } from './dropdownUtils';
 import { Chevron, DropdownShell, EmptyState } from './DropdownPrimitives';
-import { cls, TRIGGER_BASE } from '../ButtonConstants';
+import { BG_BASE, cls, FILTER_LABEL, TRIGGER_BASE } from '../ButtonConstants';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -98,11 +96,7 @@ export function SingleSelectDropdown<T extends string | number = string>({
 
   return (
     <div className="flex flex-col gap-1 shrink-0">
-      {label && (
-        <span className="text-zinc-500 text-[10px] font-semibold uppercase tracking-widest pl-0.5">
-          {label}
-        </span>
-      )}
+      {label && <span className={FILTER_LABEL}>{label}</span>}
 
       <div className="relative">
         {open && searchable ? (
@@ -110,8 +104,9 @@ export function SingleSelectDropdown<T extends string | number = string>({
           <div
             className={cls(
               TRIGGER_BASE,
-              'pl-3.5 justify-start border-blue-500/70 overflow-hidden',
+              ' justify-start border-blue-500/70 overflow-hidden',
             )}
+            onClick={(e) => e.stopPropagation()}
           >
             <input
               ref={inputRef}
@@ -121,10 +116,11 @@ export function SingleSelectDropdown<T extends string | number = string>({
               onKeyDown={onKeyDown}
               className="bg-transparent text-white text-sm placeholder-zinc-400 focus:outline-none px-0 py-0 h-full min-w-0 w-full"
             />
-            <Chevron open={open} />
+            <Chevron />
           </div>
         ) : (
           // Normal trigger button when closed
+
           <button
             type="button"
             onClick={() => setOpen((p) => !p)}
@@ -137,13 +133,15 @@ export function SingleSelectDropdown<T extends string | number = string>({
               searchable ? 'cursor-text' : 'cursor-pointer',
               value !== ''
                 ? 'border-blue-500/70 text-white'
-                : 'border-zinc-700 text-zinc-400',
+                : open
+                  ? 'border-blue-500/70 text-zinc-400'
+                  : 'border-zinc-700 text-zinc-400',
             )}
           >
             <span className="truncate flex-1 text-left">{displayLabel}</span>
 
             {open ? (
-              <Chevron open={open} />
+              <Chevron />
             ) : value !== '' && allowClear ? (
               <button
                 onClick={(e) => {
@@ -153,10 +151,10 @@ export function SingleSelectDropdown<T extends string | number = string>({
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors text-[10px] cursor-pointer"
                 aria-label="Clear selection"
               >
-                ✕
+                <XMarkIcon className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             ) : (
-              <Chevron open={open} />
+              <Chevron />
             )}
           </button>
         )}
@@ -172,7 +170,7 @@ export function SingleSelectDropdown<T extends string | number = string>({
                 onMouseEnter={() => setCursor(idx)}
                 className={cls(
                   'w-full text-left px-4 py-2 text-xs transition-colors flex items-center justify-between',
-                  cursor === idx ? 'bg-zinc-800' : 'hover:bg-zinc-800',
+                  cursor === idx ? BG_BASE : `hover:${BG_BASE}`,
                   value === opt.value
                     ? 'text-blue-400 font-medium'
                     : 'text-white',

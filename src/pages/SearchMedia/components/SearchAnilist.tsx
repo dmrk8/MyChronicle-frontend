@@ -561,7 +561,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
                 <button
                   type="button"
                   onClick={() => setShowTagDropdown((prev) => !prev)}
-                  className={`relative flex items-center gap-2 pl-3.5 pr-9 py-2.5 bg-zinc-900 border rounded-xl text-sm cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-blue-500/70 transition-all duration-150 w-45 ${
+                  className={`relative flex items-center gap-2 pl-3.5 pr-9 py-2.5 bg-zinc-950 border rounded-xl text-sm cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-blue-500/70 transition-all duration-150 w-45 ${
                     selectedTags.length > 0
                       ? activeSelect
                       : excludedTags.length > 0

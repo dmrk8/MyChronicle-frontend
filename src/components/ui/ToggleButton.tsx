@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { cls } from './ButtonConstants';
+import { BUTTON_BASE, cls, FILTER_LABEL } from './ButtonConstants';
 
 interface ToggleButtonProps {
   /** Label rendered above the button */
@@ -22,11 +22,7 @@ export function ToggleButton({
 
   return (
     <div className="flex flex-col gap-1 shrink-0">
-      {label && (
-        <span className="text-zinc-500 text-[10px] font-semibold uppercase tracking-widest pl-0.5">
-          {label}
-        </span>
-      )}
+      {label && <span className={FILTER_LABEL}>{label}</span>}
 
       <button
         ref={buttonRef}
@@ -36,7 +32,8 @@ export function ToggleButton({
           buttonRef.current?.blur();
         }}
         className={cls(
-          'flex items-center gap-2.5 px-4 py-2.5 text-sm border rounded-xl transition-all duration-200 bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/70 cursor-pointer select-none',
+          BUTTON_BASE,
+          'flex items-center gap-2.5 px-4 bg-zinc-900',
           selected
             ? 'border-blue-500 text-white'
             : 'border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-600',

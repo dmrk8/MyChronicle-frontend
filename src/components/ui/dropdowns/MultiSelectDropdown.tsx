@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { fuzzyMatch } from './dropdownUtils';
 import { Chevron, DropdownShell, EmptyState } from './DropdownPrimitives';
-import { cls, TRIGGER_BASE } from '../ButtonConstants';
+import { cls, FILTER_LABEL, TRIGGER_BASE } from '../ButtonConstants';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -108,11 +109,7 @@ export function MultiSelectDropdown<T>({
 
   return (
     <div className="flex flex-col gap-1 shrink-0">
-      {label && (
-        <span className="text-zinc-500 text-[10px] font-semibold uppercase tracking-widest pl-0.5">
-          {label}
-        </span>
-      )}
+      {label && <span className={FILTER_LABEL}>{label}</span>}
 
       <div className="relative">
         {open ? (
@@ -157,10 +154,10 @@ export function MultiSelectDropdown<T>({
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors text-[10px] cursor-pointer"
                 aria-label="Clear selections"
               >
-                ✕
+                <XMarkIcon className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             ) : (
-              <Chevron open={open} />
+              <Chevron />
             )}
           </div>
         ) : (
@@ -191,7 +188,7 @@ export function MultiSelectDropdown<T>({
                 ✕
               </button>
             ) : (
-              <Chevron open={open} />
+              <Chevron />
             )}
           </button>
         )}

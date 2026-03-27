@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { TagIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import { cls } from './ButtonConstants';
+import { cls, FILTER_LABEL } from './ButtonConstants';
 
 interface Keyword {
   id: number;
@@ -18,7 +18,6 @@ interface KeywordsFilterProps {
 }
 
 export function KeywordsFilter({
-  selected,
   suggestions,
   isFetching,
   inputValue,
@@ -30,7 +29,6 @@ export function KeywordsFilter({
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const hasValue = selected.length > 0;
   const showDropdown = open && inputValue.trim().length > 0;
 
   useEffect(() => {
@@ -47,7 +45,6 @@ export function KeywordsFilter({
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -78,14 +75,7 @@ export function KeywordsFilter({
 
   return (
     <div className="flex flex-col gap-1.5 shrink-0">
-      <label
-        className={cls(
-          'text-xs font-semibold uppercase tracking-widest pl-0.5 transition-colors',
-          hasValue ? 'text-blue-400' : 'text-zinc-500',
-        )}
-      >
-        Keywords
-      </label>
+      <label className={FILTER_LABEL}>Keywords</label>
 
       <div className="flex flex-col gap-2">
         {/* Input */}

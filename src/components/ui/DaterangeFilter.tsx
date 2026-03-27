@@ -1,6 +1,10 @@
 import { useRef } from 'react';
-import { CalendarIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { cls } from './ButtonConstants';
+import {
+  ArrowLongRightIcon,
+  CalendarIcon,
+  XMarkIcon,
+} from '@heroicons/react/24/outline';
+import { BG_BASE, cls, FILTER_LABEL } from './ButtonConstants';
 
 interface DateRangeFilterProps {
   label: string;
@@ -29,10 +33,10 @@ function DateInput({
   return (
     <div
       className={cls(
-        'relative flex items-center gap-2 pl-3 pr-2 py-2 rounded-xl border border-zinc-800 bg-zinc-950 text-sm transition-all duration-200',
-        disabled
-          ? 'opacity-40 cursor-not-allowed'
-          : 'cursor-pointer hover:border-zinc-700',
+        'relative flex items-center gap-2 pl-3 pr-2 py-2 rounded-xl border text-sm transition-all duration-200',
+        BG_BASE,
+        isActive ? 'border-blue-500/70' : 'border-zinc-800',
+        disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer',
       )}
       onClick={() => !disabled && inputRef.current?.showPicker?.()}
     >
@@ -58,9 +62,9 @@ function DateInput({
             e.stopPropagation();
             onChange('');
           }}
-          className="ml-0.5 rounded-full p-0.5 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
+          className="ml-0.5 rounded-full p-0.5 text-zinc-400 hover:text-white  transition-colors"
         >
-          <XMarkIcon className="w-3 h-3" />
+          <XMarkIcon className="w-3.5 h-3.5" aria-hidden="true" />
         </button>
       )}
       <input
@@ -85,21 +89,12 @@ export function DateRangeFilter({
   disabled,
   disabledTitle,
 }: DateRangeFilterProps) {
-  const hasValue = !!from || !!to;
-
   return (
     <div
       className="flex flex-col gap-1.5 shrink-0"
       title={disabled ? disabledTitle : undefined}
     >
-      <label
-        className={cls(
-          'text-xs font-semibold uppercase tracking-widest pl-0.5 transition-colors',
-          hasValue ? 'text-blue-400' : 'text-zinc-500',
-        )}
-      >
-        {label}
-      </label>
+      <label className={FILTER_LABEL}>{label}</label>
       <div className="flex items-center gap-2">
         <DateInput
           value={from}
@@ -107,7 +102,10 @@ export function DateRangeFilter({
           placeholder="From"
           disabled={disabled}
         />
-        <span className="text-zinc-600 text-xs select-none">→</span>
+        <ArrowLongRightIcon
+          className="w-3.5 h-3.5 text-zinc-600"
+          aria-hidden="true"
+        />
         <DateInput
           value={to}
           onChange={onToChange}
