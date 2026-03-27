@@ -36,9 +36,12 @@ import {
   SingleSelectDropdown,
 } from '../../../components/ui/dropdowns';
 import { ToggleButton } from '../../../components/ui/ToggleButton';
+import {
+  ActiveFilterChips,
+  type ActiveChip,
+} from '../../../components/ui/ActiveFilterChips';
 
 const STORAGE_KEY_PREFIX = 'searchAnilist';
-
 
 const fuzzyMatch = (query: string, target: string): boolean => {
   if (!query) return true;
@@ -323,6 +326,8 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   };
 
   const clearFilters = () => {
+    setSearchQuery('');
+    setDebouncedSearchQuery('');
     setSelectedSeason('');
     setSelectedYear('');
     setSelectedStatus('');
@@ -356,12 +361,20 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
     .filter(({ tags }) => tags.length > 0);
 
   // ── Active chips ───────────────────────────────────────────────────────────
-  const activeChips: {
-    key: string;
-    label: string;
-    onRemove: () => void;
-    isExcluded?: boolean;
-  }[] = [
+  const activeChips: ActiveChip[] = [
+    ...(searchQuery || debouncedSearchQuery
+      ? [
+          {
+            key: 'search',
+            label: `"${searchQuery || debouncedSearchQuery}"`,
+            loading: searchQuery !== debouncedSearchQuery,
+            onRemove: () => {
+              setSearchQuery('');
+              setDebouncedSearchQuery('');
+            },
+          },
+        ]
+      : []),
     ...selectedGenres.map((g) => ({
       key: `genre-${g}`,
       label: g,
@@ -907,41 +920,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
               text="18+"
             />
           </div>
-          {/* ── Active Filter Chips ── */}
-          {activeChips.length > 0 && (
-            <div className="flex flex-wrap gap-2 items-center">
-              <button
-                onClick={clearFilters}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-red-500/15 border border-red-500/40 text-red-300 hover:bg-red-500/25 hover:text-red-200 hover:border-red-500/60 transition-colors"
-              >
-                Clear all
-                <span>✕</span>
-              </button>
-              {activeChips.map((chip) => (
-                <span
-                  key={chip.key}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg ${
-                    chip.isExcluded
-                      ? 'bg-red-500/15 border border-red-500/40 text-red-300'
-                      : 'bg-blue-500/15 border border-blue-500/40 text-blue-300'
-                  }`}
-                >
-                  {chip.label}
-                  <button
-                    onClick={chip.onRemove}
-                    className={`transition-colors leading-none ${
-                      chip.isExcluded
-                        ? 'text-red-400 hover:text-white'
-                        : 'text-blue-400 hover:text-white'
-                    }`}
-                    aria-label={`Remove ${chip.label}`}
-                  >
-                    ✕
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
+          <ActiveFilterChips chips={activeChips} onClearAll={clearFilters} />
         </div>
       </div>
 

@@ -29,8 +29,11 @@ import {
   MultiSelectDropdown,
   SingleSelectDropdown,
 } from '../../../components/ui/dropdowns';
+import {
+  ActiveFilterChips,
+  type ActiveChip,
+} from '../../../components/ui/ActiveFilterChips';
 const STORAGE_KEY_PREFIX = 'searchTmdb';
-
 
 // storageKey uses lowercase path to match what Header writes (searchTmdb_movie)
 const getStorageKey = (mediaType: MediaType) =>
@@ -385,6 +388,8 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
   };
 
   const clearFilters = () => {
+    setSearchQuery('');
+    setDebouncedSearchQuery('');
     setSelectedGenres([]);
     setSelectedYear('');
     setSelectedStatus('');
@@ -399,7 +404,20 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
     setKeywordInput('');
   };
 
-  const activeChips: { key: string; label: string; onRemove: () => void }[] = [
+  const activeChips: ActiveChip[] = [
+    ...(searchQuery || debouncedSearchQuery
+      ? [
+          {
+            key: 'search',
+            label: `"${searchQuery || debouncedSearchQuery}"`,
+            loading: searchQuery !== debouncedSearchQuery,
+            onRemove: () => {
+              setSearchQuery('');
+              setDebouncedSearchQuery('');
+            },
+          },
+        ]
+      : []),
     ...selectedGenres.map((g) => ({
       key: `genre-${g.id}`,
       label: g.name,
@@ -803,32 +821,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
         </div>
 
         {/* ── Active Filter Chips ── */}
-        {activeChips.length > 0 && (
-          <div className="flex flex-wrap gap-2 items-center mt-4">
-            <button
-              onClick={clearFilters}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-red-500/15 border border-red-500/40 text-red-300 hover:bg-red-500/25 hover:text-red-200 hover:border-red-500/60 transition-colors"
-            >
-              Clear all
-              <span>✕</span>
-            </button>
-            {activeChips.map((chip) => (
-              <span
-                key={chip.key}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-blue-500/15 border border-blue-500/40 text-blue-300"
-              >
-                {chip.label}
-                <button
-                  onClick={chip.onRemove}
-                  className="text-blue-400 hover:text-white transition-colors leading-none"
-                  aria-label={`Remove ${chip.label}`}
-                >
-                  ✕
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
+        <ActiveFilterChips chips={activeChips} onClearAll={clearFilters} />
       </div>
 
       {/* Results */}

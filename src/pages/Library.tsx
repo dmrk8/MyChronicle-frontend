@@ -6,13 +6,14 @@ import {
   UserMediaEntrySortFields,
   UserMediaEntrySortOptions,
   sortFieldLabels,
-  statusLabels
+  statusLabels,
 } from '../types/UserMediaEntry';
 import { MediaType } from '../constants/mediaConstants';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import SearchResults from './SearchMedia/components/SearchResults';
 import { ToggleButton } from '../components/ui/ToggleButton';
 import { SingleSelectDropdown } from '../components/ui/dropdowns';
+import { ActiveFilterChips, type ActiveChip } from '../components/ui/ActiveFilterChips';
 
 const STORAGE_KEY = 'library';
 
@@ -175,6 +176,53 @@ const LibraryPage = () => {
     searchQuery ||
     includeAdult;
 
+  const chips: ActiveChip[] = [
+    ...(searchQuery
+      ? [
+          {
+            key: 'search',
+            label: `"${searchQuery}"`,
+            variant: 'purple' as const,
+            loading: searchQuery !== debouncedSearchQuery,
+            onRemove: () => {
+              setSearchQuery('');
+              setDebouncedSearchQuery('');
+            },
+          },
+        ]
+      : []),
+    ...(selectedStatus !== 'all'
+      ? [
+          {
+            key: 'status',
+            label: statusLabels[selectedStatus],
+            variant: 'pink' as const,
+            onRemove: () => setSelectedStatus('all'),
+          },
+        ]
+      : []),
+    ...(isFavorite !== undefined
+      ? [
+          {
+            key: 'favorites',
+            label: '♥ Favorites',
+            variant: 'pink' as const,
+            onRemove: () => setIsFavorite(undefined),
+          },
+        ]
+      : []),
+    ...(includeAdult
+      ? [
+          {
+            key: 'adult',
+            label: '18+',
+            variant: 'red' as const,
+            onRemove: () => setIncludeAdult(false),
+          },
+        ]
+      : []),
+  ];
+
   return (
     <div className="min-h-screen bg-linear-to-b from-zinc-900 via-black to-zinc-900">
       {/* Hero Section */}
@@ -325,67 +373,7 @@ const LibraryPage = () => {
 
           {/* Active Filters Pills */}
           {hasActiveFilters && (
-            <div className="max-w-4xl mx-auto mt-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-zinc-500">Active:</span>
-                {searchQuery && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-600/20 border border-purple-500/30 rounded-full text-xs text-purple-300">
-                    "{searchQuery}"
-                    {searchQuery !== debouncedSearchQuery && (
-                      <div className="w-2.5 h-2.5 border border-purple-400/50 border-t-purple-400 rounded-full animate-spin" />
-                    )}
-                    <button
-                      onClick={() => {
-                        setSearchQuery('');
-                        setDebouncedSearchQuery('');
-                      }}
-                      className="hover:text-white ml-0.5"
-                    >
-                      ✕
-                    </button>
-                  </span>
-                )}
-                {selectedStatus !== 'all' && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-pink-600/20 border border-pink-500/30 rounded-full text-xs text-pink-300">
-                    {statusLabels[selectedStatus]}
-                    <button
-                      onClick={() => setSelectedStatus('all')}
-                      className="hover:text-white ml-0.5"
-                    >
-                      ✕
-                    </button>
-                  </span>
-                )}
-                {isFavorite !== undefined && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-pink-600/20 border border-pink-500/30 rounded-full text-xs text-pink-300">
-                    ♥ Favorites
-                    <button
-                      onClick={() => setIsFavorite(undefined)}
-                      className="hover:text-white ml-0.5"
-                    >
-                      ✕
-                    </button>
-                  </span>
-                )}
-                {includeAdult && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-600/20 border border-red-500/30 rounded-full text-xs text-red-300">
-                    18+
-                    <button
-                      onClick={() => setIncludeAdult(false)}
-                      className="hover:text-white ml-0.5"
-                    >
-                      ✕
-                    </button>
-                  </span>
-                )}
-                <button
-                  onClick={handleClearFilters}
-                  className="text-xs text-zinc-500 hover:text-white transition-colors underline underline-offset-2"
-                >
-                  Clear all
-                </button>
-              </div>
-            </div>
+            <ActiveFilterChips chips={chips} onClearAll={handleClearFilters} />
           )}
         </div>
       </div>
