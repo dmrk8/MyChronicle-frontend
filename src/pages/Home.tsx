@@ -19,7 +19,7 @@ const HeroSkeleton = () => (
 
     {/* Content */}
     <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
-      <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-20">
+      <div className="flex flex-col-reverse md:flex-row items-center gap-12 lg:gap-20">
         {/* ── Left: Info Skeleton ── */}
         <div className="flex-1 min-w-0 space-y-6">
           {/* Badge skeleton */}
@@ -154,7 +154,7 @@ const HomePage = () => {
 
           {/* Content */}
           <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
-            <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-20">
+            <div className="flex flex-col-reverse md:flex-row items-center gap-12 lg:gap-20">
               {/* ── Left: Info ── */}
               <div className="flex-1 min-w-0">
                 {/* Source badge */}
@@ -354,3 +354,4 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
