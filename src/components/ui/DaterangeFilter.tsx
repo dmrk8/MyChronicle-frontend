@@ -1,0 +1,120 @@
+import { useRef } from 'react';
+import { CalendarIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { cls } from './ButtonConstants';
+
+interface DateRangeFilterProps {
+  label: string;
+  from: string;
+  to: string;
+  onFromChange: (value: string) => void;
+  onToChange: (value: string) => void;
+  disabled?: boolean;
+  disabledTitle?: string;
+}
+
+function DateInput({
+  value,
+  onChange,
+  placeholder,
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  disabled?: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isActive = !!value;
+
+  return (
+    <div
+      className={cls(
+        'relative flex items-center gap-2 pl-3 pr-2 py-2 rounded-xl border border-zinc-800 bg-zinc-950 text-sm transition-all duration-200',
+        disabled
+          ? 'opacity-40 cursor-not-allowed'
+          : 'cursor-pointer hover:border-zinc-700',
+      )}
+      onClick={() => !disabled && inputRef.current?.showPicker?.()}
+    >
+      <CalendarIcon
+        className={cls(
+          'w-3.5 h-3.5 shrink-0 transition-colors',
+          isActive ? 'text-blue-400' : 'text-zinc-500',
+        )}
+      />
+      <span className={cls('text-xs min-w-19')}>
+        {value
+          ? new Date(value + 'T00:00:00').toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })
+          : placeholder}
+      </span>
+      {isActive && !disabled && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onChange('');
+          }}
+          className="ml-0.5 rounded-full p-0.5 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
+        >
+          <XMarkIcon className="w-3 h-3" />
+        </button>
+      )}
+      <input
+        ref={inputRef}
+        type="date"
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer disabled:cursor-not-allowed pointer-events-none"
+        tabIndex={-1}
+      />
+    </div>
+  );
+}
+
+export function DateRangeFilter({
+  label,
+  from,
+  to,
+  onFromChange,
+  onToChange,
+  disabled,
+  disabledTitle,
+}: DateRangeFilterProps) {
+  const hasValue = !!from || !!to;
+
+  return (
+    <div
+      className="flex flex-col gap-1.5 shrink-0"
+      title={disabled ? disabledTitle : undefined}
+    >
+      <label
+        className={cls(
+          'text-xs font-semibold uppercase tracking-widest pl-0.5 transition-colors',
+          hasValue ? 'text-blue-400' : 'text-zinc-500',
+        )}
+      >
+        {label}
+      </label>
+      <div className="flex items-center gap-2">
+        <DateInput
+          value={from}
+          onChange={onFromChange}
+          placeholder="From"
+          disabled={disabled}
+        />
+        <span className="text-zinc-600 text-xs select-none">→</span>
+        <DateInput
+          value={to}
+          onChange={onToChange}
+          placeholder="To"
+          disabled={disabled}
+        />
+      </div>
+    </div>
+  );
+}

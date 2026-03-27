@@ -1,7 +1,7 @@
 // ─── Shared class strings ─────────────────────────────────────────────────────
 
 export const BUTTON_BASE =
-  'py-2.5 text-sm border rounded-xl transition-all duration-200 bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/70 cursor-pointer select-none';
+  'py-2.5 text-sm border rounded-xl transition-all duration-200 bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-blue-500/70 cursor-pointer select-none';
 
 export const DROPDOWN_WIDTH = 'w-45';
 

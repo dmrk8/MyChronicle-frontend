@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, startTransition } from 'react';
+import { useState, useEffect, startTransition } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useInfiniteScroll } from '../../../hooks/useInfiniteScroll';
 import { MediaType } from '../../../constants/mediaConstants';
@@ -33,6 +33,8 @@ import {
   ActiveFilterChips,
   type ActiveChip,
 } from '../../../components/ui/ActiveFilterChips';
+import { DateRangeFilter } from '../../../components/ui/DaterangeFilter';
+import { KeywordsFilter } from '../../../components/ui/KeywordsFilter';
 const STORAGE_KEY_PREFIX = 'searchTmdb';
 
 // storageKey uses lowercase path to match what Header writes (searchTmdb_movie)
@@ -191,9 +193,6 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
   // Keyword filter UI state
   const [keywordInput, setKeywordInput] = useState('');
   const [debouncedKeywordInput, setDebouncedKeywordInput] = useState('');
-  const [showKeywordDropdown, setShowKeywordDropdown] = useState(false);
-  const [keywordDropdownIndex, setKeywordDropdownIndex] = useState(-1);
-  const keywordInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedKeywordInput(keywordInput), 400);
@@ -353,38 +352,10 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
       prev.some((k) => k.id === kw.id) ? prev : [...prev, kw],
     );
     setKeywordInput('');
-    setDebouncedKeywordInput('');
-    setShowKeywordDropdown(false);
-    setKeywordDropdownIndex(-1);
-    keywordInputRef.current?.focus();
   };
 
   const removeKeyword = (id: number) => {
     setSelectedKeywords((prev) => prev.filter((k) => k.id !== id));
-  };
-
-  const handleKeywordKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showKeywordDropdown && e.key !== 'ArrowDown') return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setShowKeywordDropdown(true);
-      setKeywordDropdownIndex((p) =>
-        Math.min(p + 1, availableKeywords.length - 1),
-      );
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setKeywordDropdownIndex((p) => Math.max(p - 1, 0));
-    } else if (e.key === 'Escape') {
-      setShowKeywordDropdown(false);
-      setKeywordDropdownIndex(-1);
-    } else if (
-      e.key === 'Enter' &&
-      keywordDropdownIndex >= 0 &&
-      keywordDropdownIndex < availableKeywords.length
-    ) {
-      e.preventDefault();
-      addKeyword(availableKeywords[keywordDropdownIndex]);
-    }
   };
 
   const clearFilters = () => {
@@ -588,7 +559,6 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
             searchable={false}
             allowClear={false}
           />
-
           {/* ── Genres ── */}
           <MultiSelectDropdown<TmdbGenre>
             label="Genre"
@@ -600,7 +570,6 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
             placeholder="Any"
             searchable={true}
           />
-
           {/* ── Year ── */}
           <SingleSelectDropdown
             label="Year"
@@ -614,7 +583,6 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
             searchable={true}
             allowClear={true}
           />
-
           {/* ── Status (TV only) ── */}
           {!isMovie && (
             <SingleSelectDropdown
@@ -630,7 +598,6 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
               allowClear={true}
             />
           )}
-
           {/* ── Language ── */}
           <SingleSelectDropdown
             label="Language"
@@ -644,180 +611,36 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
             searchable={true}
             allowClear={true}
           />
-
           {/* ── Date Range ── */}
-          <div className="flex flex-col gap-1 shrink-0">
-            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-              {isMovie ? 'Release Date' : 'Air Date'}
-            </label>
-            <div className="flex items-center gap-2">
-              <div className="relative group">
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  disabled={!!selectedYear}
-                  title={
-                    selectedYear
-                      ? 'Clear the Year filter to use date range'
-                      : ''
-                  }
-                  className={`relative flex items-center pl-3.5 pr-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/70 transition-all duration-200 bg-zinc-900 cursor-pointer select-none ${dateFrom ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400'} ${selectedYear ? 'opacity-40 cursor-not-allowed' : ''}`}
-                />
-              </div>
-              <span className="text-zinc-500 text-xs">to</span>
-              <div className="relative group">
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  disabled={!!selectedYear}
-                  title={
-                    selectedYear
-                      ? 'Clear the Year filter to use date range'
-                      : ''
-                  }
-                  className={`relative flex items-center pl-3.5 pr-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/70 transition-all duration-200 bg-zinc-900 cursor-pointer select-none ${dateFrom ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400'} ${selectedYear ? 'opacity-40 cursor-not-allowed' : ''}`}
-                />
-              </div>
-            </div>
-          </div>
-
+          <DateRangeFilter
+            label={isMovie ? 'Release Date' : 'Air Date'}
+            from={dateFrom}
+            to={dateTo}
+            onFromChange={setDateFrom}
+            onToChange={setDateTo}
+            disabled={!!selectedYear}
+            disabledTitle="Clear the Year filter to use date range"
+          />
           {/* ── Runtime ── */}
-          <div className="relative flex items-center gap-2 pl-3.5 pr-3 py-2.5 border rounded-xl text-sm border-zinc-700 bg-zinc-900 transition-all duration-200 select-none min-w-45">
-            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-              Runtime (min)
-            </label>
-            <div className="bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-xl px-4 py-3 flex flex-col gap-2 min-w-55">
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <div
-                    onClick={() => setRuntimeEnabled((prev) => !prev)}
-                    className={`relative w-8 h-4 rounded-full transition-colors duration-200 cursor-pointer ${runtimeEnabled ? 'bg-blue-500' : 'bg-zinc-600'}`}
-                  >
-                    <div
-                      className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform duration-200 ${runtimeEnabled ? 'translate-x-4' : 'translate-x-0.5'}`}
-                    />
-                  </div>
-                  <span
-                    className={`text-xs ${runtimeEnabled ? 'text-white' : 'text-zinc-500'}`}
-                  >
-                    {runtimeEnabled
-                      ? `${runtimeMin} – ${runtimeMax} min`
-                      : 'Any'}
-                  </span>
-                </label>
-              </div>
-
-              {runtimeEnabled && (
-                <div className="flex flex-col gap-2 pt-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-zinc-500 text-xs w-6">Min</span>
-                    <input
-                      type="range"
-                      min={0}
-                      max={360}
-                      step={5}
-                      value={runtimeMin}
-                      onChange={(e) =>
-                        setRuntimeMin(
-                          Math.min(Number(e.target.value), runtimeMax - 5),
-                        )
-                      }
-                      className="flex-1 accent-blue-500 cursor-pointer"
-                    />
-                    <span className="text-white text-xs w-10 text-right">
-                      {runtimeMin}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-zinc-500 text-xs w-6">Max</span>
-                    <input
-                      type="range"
-                      min={0}
-                      max={360}
-                      step={5}
-                      value={runtimeMax}
-                      onChange={(e) =>
-                        setRuntimeMax(
-                          Math.max(Number(e.target.value), runtimeMin + 5),
-                        )
-                      }
-                      className="flex-1 accent-blue-500 cursor-pointer"
-                    />
-                    <span className="text-white text-xs w-10 text-right">
-                      {runtimeMax === 360 ? '360+' : runtimeMax}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          {/* <RuntimeFilter
+            enabled={runtimeEnabled}
+            min={runtimeMin}
+            max={runtimeMax}
+            onToggle={() => setRuntimeEnabled((p) => !p)}
+            onMinChange={setRuntimeMin}
+            onMaxChange={setRuntimeMax}
+          /> */}
 
           {/* ── Keywords ── */}
-          <div className="flex flex-col gap-1 shrink-0">
-            <label className="text-zinc-500 text-xs font-medium uppercase tracking-wider pl-1">
-              Keywords
-            </label>
-            <div className="relative">
-              <div className="relative group">
-                <input
-                  ref={keywordInputRef}
-                  type="text"
-                  placeholder="e.g. time travel..."
-                  value={keywordInput}
-                  onChange={(e) => {
-                    setKeywordInput(e.target.value);
-                    setShowKeywordDropdown(true);
-                    setKeywordDropdownIndex(-1);
-                  }}
-                  onFocus={() => {
-                    if (keywordInput.trim()) setShowKeywordDropdown(true);
-                  }}
-                  onKeyDown={handleKeywordKeyDown}
-                  className={`relative flex items-center gap-2 pl-3.5 pr-9 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/70 transition-all duration-200 bg-zinc-900 cursor-pointer select-none w-45 ${selectedKeywords.length > 0 ? 'border-blue-500 text-white' : 'border-zinc-700 text-zinc-400 placeholder-zinc-500'}`}
-                />
-              </div>
-
-              {showKeywordDropdown && keywordInput.trim().length > 0 && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowKeywordDropdown(false)}
-                  />
-                  <div className="absolute top-full mt-2 left-0 z-50 w-64 bg-zinc-800 border border-zinc-700 rounded-xl shadow-2xl flex flex-col overflow-hidden">
-                    {isFetchingKeywords ? (
-                      <div className="flex items-center gap-2 px-4 py-3 text-sm text-zinc-400">
-                        <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                        Searching keywords...
-                      </div>
-                    ) : availableKeywords.length === 0 ? (
-                      <p className="px-4 py-3 text-sm text-zinc-500">
-                        No keywords found
-                      </p>
-                    ) : (
-                      <div className="max-h-60 overflow-y-auto">
-                        {availableKeywords.map(
-                          (kw: { id: number; name: string }, idx: number) => (
-                            <button
-                              key={kw.id}
-                              type="button"
-                              onClick={() => addKeyword(kw)}
-                              onMouseEnter={() => setKeywordDropdownIndex(idx)}
-                              className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-700 transition-colors flex items-center gap-2 ${keywordDropdownIndex === idx ? 'bg-blue-600/30' : ''} text-white`}
-                            >
-                              <span className="text-zinc-400 text-xs">🏷</span>
-                              {kw.name}
-                            </button>
-                          ),
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+          <KeywordsFilter
+            selected={selectedKeywords}
+            suggestions={availableKeywords}
+            isFetching={isFetchingKeywords}
+            inputValue={keywordInput}
+            onInputChange={setKeywordInput}
+            onAdd={addKeyword}
+            onRemove={removeKeyword}
+          />
         </div>
 
         {/* ── Active Filter Chips ── */}
