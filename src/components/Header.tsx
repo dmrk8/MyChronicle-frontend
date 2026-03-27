@@ -150,7 +150,7 @@ const Header = () => {
     'text-sm font-medium text-zinc-300 hover:text-white';
   const dropdownSubClass = 'text-xs text-zinc-500';
   const mobileItemClass =
-    'w-full text-left px-3 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800/30 rounded-lg transition-colors';
+    'block w-full text-left px-3 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800/30 rounded-lg transition-colors';
 
   return (
     <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-2xl border-b border-zinc-800/50">
@@ -482,7 +482,7 @@ const Header = () => {
                   <NavigationLink
                     href={`/${media.path}/search`}
                     onClick={() => handleMobileTitleNavigate(media.path)}
-                    className="w-full text-left mb-2 text-white font-semibold text-sm hover:text-blue-400 transition-colors cursor-pointer"
+                    className="w-full text-left mb-2 text-zinc-400 font-semibold text-sm hover:text-white transition-colors cursor-pointer"
                     label={media.name}
                   />
 
@@ -664,3 +664,4 @@ const Header = () => {
 };
 
 export default Header;
+
