@@ -24,7 +24,7 @@ import {
 } from '../../../hooks/useTmdb';
 import useSessionState from '../hooks/useSessionState';
 import SearchResults from './SearchResults';
-import SearchBar from './SearchBar';
+import SearchBar from '../../../components/ui/SearchBar';
 import {
   MultiSelectDropdown,
   SingleSelectDropdown,
@@ -36,6 +36,8 @@ import {
 import { DateRangeFilter } from '../../../components/ui/DaterangeFilter';
 import { KeywordsFilter } from '../../../components/ui/KeywordsFilter';
 import FilterHolder from './FilterHolder';
+import PageHolder from '../../../components/PageHolder';
+import PageTitle from '../../../components/ui/PageTitle';
 const STORAGE_KEY_PREFIX = 'searchTmdb';
 
 // storageKey uses lowercase path to match what Header writes (searchTmdb_movie)
@@ -524,10 +526,20 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
   ]);
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-zinc-900 via-black to-zinc-900">
+    <PageHolder>
+      <PageTitle
+        title="Search"
+        highlight={mediaType}
+        subtitle="Explore trending, popular, and upcoming titles"
+      />
+      {/* Search Bar */}
       <SearchBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onClearSearch={() => {
+          setSearchQuery('');
+          setDebouncedSearchQuery('');
+        }}
         mediaType={mediaType}
       />
 
@@ -657,7 +669,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
         sentinelRef={sentinelRef}
         onMediaClick={openDetails}
       />
-    </div>
+    </PageHolder>
   );
 };
 

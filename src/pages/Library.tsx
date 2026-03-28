@@ -13,7 +13,13 @@ import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import SearchResults from './SearchMedia/components/SearchResults';
 import { ToggleButton } from '../components/ui/ToggleButton';
 import { SingleSelectDropdown } from '../components/ui/dropdowns';
-import { ActiveFilterChips, type ActiveChip } from '../components/ui/ActiveFilterChips';
+import {
+  ActiveFilterChips,
+  type ActiveChip,
+} from '../components/ui/ActiveFilterChips';
+import SearchBar from '../components/ui/SearchBar';
+import PageTitle from '../components/ui/PageTitle';
+import PageHolder from '../components/PageHolder';
 
 const STORAGE_KEY = 'library';
 
@@ -224,13 +230,13 @@ const LibraryPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-zinc-900 via-black to-zinc-900">
+    <PageHolder>
       {/* Hero Section */}
       <div className="relative">
         <div className="absolute inset-0 bg-linear-to-b from-purple-600/10 via-transparent to-transparent" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-purple-900/20 via-transparent to-transparent" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
           {/* ── Media Type Header Bar ── */}
           <div className="border-b border-zinc-800 mb-10">
             <div className="flex items-center overflow-x-auto sm:overflow-hidden scrollbar-none">
@@ -254,64 +260,24 @@ const LibraryPage = () => {
           </div>
 
           {/* Title */}
-          <div className="text-center mb-8">
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-3">
-              My{' '}
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-400 via-pink-500 to-purple-600">
-                Library
-              </span>
-            </h1>
-            <p className="text-zinc-400 text-base">
-              Track and manage your media collection
-            </p>
-          </div>
+          <PageTitle
+            title="My"
+            highlight="Library"
+            subtitle="Track and manage your media collection"
+            gradient="from-purple-400 via-pink-500 to-purple-600"
+          />
 
           {/* Search Bar */}
-          <div className="max-w-2xl mx-auto mb-8">
-            <div className="relative group flex-1">
-              <div className="absolute inset-0 bg-linear-to-r from-purple-500 to-pink-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity" />
-              <div className="relative flex items-center">
-                <span className="absolute left-5 text-zinc-400 text-xl pointer-events-none">
-                  🔍
-                </span>
-                <input
-                  type="text"
-                  placeholder={`Search your ${selectedType} library...`}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-14 pr-10 py-4 bg-zinc-800/80 backdrop-blur-xl border border-zinc-700 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-base"
-                />
-                <div className="absolute right-4 flex items-center gap-1.5">
-                  {searchQuery !== debouncedSearchQuery && (
-                    <div className="w-4 h-4 border-2 border-purple-500/50 border-t-purple-500 rounded-full animate-spin" />
-                  )}
-                  {searchQuery && (
-                    <button
-                      onClick={() => {
-                        setSearchQuery('');
-                        setDebouncedSearchQuery('');
-                      }}
-                      className="text-zinc-500 hover:text-white transition-colors"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          <SearchBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onClearSearch={() => {
+              setSearchQuery('');
+              setDebouncedSearchQuery('');
+            }}
+            mediaType={selectedType}
+            accentColor="purple"
+          />
 
           {/*Filters  */}
           <div className="max-w-4xl mx-auto">
@@ -395,7 +361,7 @@ const LibraryPage = () => {
           if (entry) openDetails(id, entry.mediaType);
         }}
       />
-    </div>
+    </PageHolder>
   );
 };
 

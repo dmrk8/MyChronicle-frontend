@@ -30,7 +30,7 @@ import type {
 } from '../../../api/anilistApi';
 import useSessionState from '../hooks/useSessionState';
 import SearchResults from './SearchResults';
-import SearchBar from './SearchBar';
+import SearchBar from '../../../components/ui/SearchBar';
 import {
   MultiExcludeDropdown,
   SingleSelectDropdown,
@@ -41,6 +41,8 @@ import {
   type ActiveChip,
 } from '../../../components/ui/ActiveFilterChips';
 import FilterHolder from './FilterHolder';
+import PageHolder from '../../../components/PageHolder';
+import PageTitle from '../../../components/ui/PageTitle';
 
 const STORAGE_KEY_PREFIX = 'searchAnilist';
 
@@ -505,11 +507,20 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   ]);
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-zinc-900 via-black to-zinc-900">
+    <PageHolder>
+      <PageTitle
+        title="Search"
+        highlight={mediaType}
+        subtitle="Explore trending, popular, and upcoming titles"
+      />
       {/* Search Bar */}
       <SearchBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onClearSearch={() => {
+          setSearchQuery('');
+          setDebouncedSearchQuery('');
+        }}
         mediaType={mediaType}
       />
 
@@ -934,7 +945,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
         sentinelRef={sentinelRef}
         onMediaClick={openDetails}
       />
-    </div>
+    </PageHolder>
   );
 };
 
