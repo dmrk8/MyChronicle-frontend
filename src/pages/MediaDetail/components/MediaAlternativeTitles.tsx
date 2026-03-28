@@ -24,13 +24,15 @@ export const MediaAlternativeTitles = ({
   if (!media.synonyms || media.synonyms.length === 0) return null;
 
   return (
-    <div className="mt-4 bg-zinc-800/50 rounded-lg p-4">
-      <h3 className="text-sm font-semibold mb-2 text-zinc-400">
+    <div className="bg-white/4 backdrop-blur-sm border border-white/10 rounded-xl p-4 mt-5">
+      <h3 className="text-sm font-semibold mb-2 text-zinc-500">
         Alternative Titles
       </h3>
-      <div className="text-zinc-300 text-xs space-y-1">
+      <div className="space-y-1.5">
         {media.synonyms.map((synonym: string, index: number) => (
-          <div key={index}>{synonym}</div>
+          <div key={index} className="text-xs text-zinc-300 leading-relaxed">
+            {synonym}
+          </div>
         ))}
       </div>
     </div>

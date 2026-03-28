@@ -42,15 +42,15 @@ export const MediaTabs = ({
   return (
     <div className="space-y-4">
       {/* Tab Navigation */}
-      <div className="bg-zinc-800/50 rounded-lg p-1 flex gap-1">
+      <div className="flex gap-1 border-b border-white/10">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 px-4 py-2.5 rounded-md font-medium transition-all duration-200 ${
+            className={`px-5 py-2.5 text-sm font-medium transition-all duration-200 relative ${
               activeTab === tab.id
-                ? 'bg-zinc-700 text-white shadow-lg'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/50'
+                ? 'text-white'
+                : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             {tab.label}

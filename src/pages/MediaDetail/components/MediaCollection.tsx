@@ -2,6 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTmdbCollectionDetail } from '../../../hooks/useTmdb';
 import type { MediaBelongsToCollection } from '../../../types/Media';
+import {
+  ChevronRightIcon,
+  ChevronUpIcon,
+  FilmIcon,
+} from '@heroicons/react/24/outline';
 
 interface MediaCollectionProps {
   collection: MediaBelongsToCollection;
@@ -24,13 +29,13 @@ export const MediaCollection = ({ collection }: MediaCollectionProps) => {
   if (!collection) return null;
 
   return (
-    <div className="bg-zinc-800/50 rounded-lg p-4">
+    <div className="bg-white/4 backdrop-blur-sm border border-white/10 rounded-xl p-4">
       <h3 className="text-lg font-semibold mb-4 text-white">
         Part of Collection
       </h3>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full bg-zinc-900/50 rounded-lg overflow-hidden border border-zinc-700/50 hover:border-zinc-600 transition-colors"
+        className="w-full bg-white/3 rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-colors"
       >
         <div className="relative h-48">
           {collection.backdropPath ? (
@@ -44,18 +49,25 @@ export const MediaCollection = ({ collection }: MediaCollectionProps) => {
             </>
           ) : (
             <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-              <span className="text-zinc-600 text-4xl">🎬</span>
+              <FilmIcon className="w-10 h-10 text-zinc-600" />
             </div>
           )}
-          <div className="absolute bottom-0 left-0 right-0 p-4 text-left">
+          <div className="absolute bottom-0 left-0 right-0 p-4 text-left flex items-end justify-between">
             <div className="text-lg font-semibold text-white mb-1">
               {collection.name}
             </div>
-            <div className="text-xs text-emerald-400 font-medium hover:text-emerald-300 transition-colors flex items-center gap-1">
-              {expanded
-                ? 'Click to collapse'
-                : 'View all movies in this collection'}
-              <span className="text-sm">{expanded ? '▲' : '→'}</span>
+            <div className="flex items-center gap-1 text-xs text-blue-400">
+              {expanded ? (
+                <>
+                  <span>Collapse</span>
+                  <ChevronUpIcon className="w-3.5 h-3.5" />
+                </>
+              ) : (
+                <>
+                  <span>View all</span>
+                  <ChevronRightIcon className="w-3.5 h-3.5" />
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -65,14 +77,14 @@ export const MediaCollection = ({ collection }: MediaCollectionProps) => {
       {expanded && (
         <div className="mt-4 space-y-4">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
+            <div className="flex items-center justify-center py-8 gap-2 text-zinc-500 text-sm">
               <div className="text-white">Loading collection details...</div>
             </div>
           ) : collectionDetails ? (
             <>
               {/* Overview */}
               {collectionDetails.overview && (
-                <div className="bg-zinc-900/50 rounded-lg p-4 border border-zinc-700/50">
+                <div className="bg-white/3 rounded-xl p-4 border border-white/10">
                   <p className="text-sm text-zinc-300 leading-relaxed">
                     {collectionDetails.overview}
                   </p>
@@ -93,7 +105,7 @@ export const MediaCollection = ({ collection }: MediaCollectionProps) => {
                           onClick={() =>
                             handleNavigate(part.id, part.mediaType)
                           }
-                          className="group relative rounded-lg overflow-hidden bg-zinc-900/50 border border-zinc-700/50 hover:border-emerald-500 transition-all hover:scale-105"
+                          className="group relative rounded-lg overflow-hidden bg-zinc-900/50 border border-zinc-700/50 hover:border-white/25 transition-all hover:scale-105"
                         >
                           {part.posterPath || part.backdropPath ? (
                             <img
@@ -103,7 +115,7 @@ export const MediaCollection = ({ collection }: MediaCollectionProps) => {
                             />
                           ) : (
                             <div className="w-full aspect-2/3 bg-zinc-800 flex items-center justify-center">
-                              <span className="text-zinc-600 text-2xl">🎬</span>
+                              <FilmIcon className="w-6 h-6 text-zinc-600" />
                             </div>
                           )}
 
@@ -113,7 +125,7 @@ export const MediaCollection = ({ collection }: MediaCollectionProps) => {
                               {part.title}
                             </div>
                             {part.releaseDate && (
-                              <div className="text-[10px] text-emerald-400">
+                              <div className="text-[10px] text-white">
                                 {new Date(part.releaseDate).getFullYear()}
                               </div>
                             )}

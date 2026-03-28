@@ -47,7 +47,7 @@ const RelationCard = ({ relation }: { relation: MediaRelation }) => (
 
 // Info panel that appears beside the image on hover
 const RelationInfoPanel = ({ relation }: { relation: MediaRelation }) => (
-  <div className="w-60 bg-zinc-900/95 backdrop-blur-sm border border-zinc-700 rounded flex flex-col justify-between p-2 h-full">
+  <div className="w-60 bg-zinc-950  border border-zinc-700 rounded flex flex-col justify-between p-2 h-full">
     <div className="text-[14px] text-emerald-400 font-semibold tracking-wide text-left">
       {formatStatusDisplay(relation.relationType)}
     </div>
@@ -56,13 +56,17 @@ const RelationInfoPanel = ({ relation }: { relation: MediaRelation }) => (
     </div>
     <div className="flex gap-2 text-[14px] mt-1 justify-start">
       {relation.format && (
-        <div className="text-zinc-400">{formatStatusDisplay(relation.format)}</div>
+        <div className="text-zinc-400">
+          {formatStatusDisplay(relation.format)}
+        </div>
       )}
       {relation.format && relation.status && (
         <div className="text-zinc-600">•</div>
       )}
       {relation.status && (
-        <div className="text-zinc-500">{formatStatusDisplay(relation.status)}</div>
+        <div className="text-zinc-500">
+          {formatStatusDisplay(relation.status)}
+        </div>
       )}
     </div>
   </div>
@@ -97,7 +101,7 @@ export const MediaRelations = ({ relations }: MediaRelationsProps) => {
   };
 
   return (
-    <div className="bg-zinc-800/50 rounded-lg p-4">
+    <div className=" bg-white/3 backdrop-blur-sm border-zinc-800 rounded-lg p-4">
       <h3 className="text-lg font-semibold mb-4 text-white">Relations</h3>
       <div
         ref={containerRef}

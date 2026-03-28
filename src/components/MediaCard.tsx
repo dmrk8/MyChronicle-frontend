@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import type { MediaMinimal } from '../types/Media';
+import { FilmIcon } from '@heroicons/react/24/outline';
+import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 
 interface MediaCardProps {
   media: MediaMinimal;
@@ -29,7 +31,7 @@ const MediaCard = ({ media, onClick, href }: MediaCardProps) => {
       className="group cursor-pointer h-full block"
     >
       {/* Card Container */}
-      <div className="relative h-full flex flex-col bg-zinc-900/80 rounded-xl overflow-hidden border border-zinc-800 hover:border-blue-500/50 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/10">
+      <div className="relative h-full flex flex-col bg-white/3 backdrop-blur-sm border-zinc-800 rounded-xl overflow-hidden border hover:border-blue-500/50 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/10">
         {/* Image Container */}
         <div className="relative aspect-2/3 overflow-hidden bg-zinc-800 shrink-0">
           {media.coverImage ? (
@@ -50,7 +52,7 @@ const MediaCard = ({ media, onClick, href }: MediaCardProps) => {
             </>
           ) : (
             <div className="w-full h-full flex items-center justify-center text-zinc-600">
-              <span className="text-4xl">🎬</span>
+              <FilmIcon className="w-10 h-10" />
             </div>
           )}
 
@@ -58,7 +60,7 @@ const MediaCard = ({ media, onClick, href }: MediaCardProps) => {
           {media.averageScore && (
             <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-sm px-2 py-1 rounded-lg border border-zinc-700">
               <div className="flex items-center gap-1">
-                <span className="text-yellow-400 text-sm">⭐</span>
+                <StarIconSolid className="w-3.5 h-3.5 text-yellow-400" />
                 <span className="text-white text-xs font-semibold">
                   {media.averageScore}
                 </span>

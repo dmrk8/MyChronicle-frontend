@@ -7,6 +7,7 @@ import type {
   MovieDetailed,
   TVDetailed,
 } from '../../../types/Media';
+import { ui } from '../../../styles/ui';
 
 interface MediaInfoProps {
   anime?: AnimeDetailed;
@@ -98,8 +99,8 @@ export const MediaTags = ({ anime, manga, movie, tv }: MediaInfoProps) => {
     'px-3 py-1 rounded-full text-xs font-medium bg-zinc-700/50 text-zinc-300 border border-zinc-600/30 cursor-pointer hover:bg-zinc-600/50 hover:text-white transition-colors relative group';
 
   return (
-    <div className="mt-4 bg-zinc-800/50 rounded-lg p-4">
-      <h3 className="text-sm font-semibold mb-3 text-zinc-400">Tags</h3>
+    <div className={`mt-4 ${ui.card} p-4`}>
+      <h3 className={ui.sectionTitle}>Tags</h3>
 
       {/* Regular Tags */}
       {allTags.length > 0 && (

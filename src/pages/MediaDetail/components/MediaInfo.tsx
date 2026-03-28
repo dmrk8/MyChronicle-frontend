@@ -6,6 +6,7 @@ import type {
   TVDetailed,
 } from '../../../types/Media';
 import { formatStatusDisplay } from '../../../constants/anilistFilters';
+import { ui } from '../../../styles/ui';
 interface InfoItemProps {
   label: string;
   value: string | number | null;
@@ -15,7 +16,7 @@ const InfoItem = ({ label, value }: InfoItemProps) => {
   if (value === null || value === undefined) return null;
 
   return (
-    <div className="border-b border-zinc-700/50 pb-2 last:border-b-0">
+    <div className="border-b border-white/6 pb-2 last:border-b-0">
       {' '}
       <div className="text-zinc-400 text-xs mb-1">{label}</div>{' '}
       <div className="text-white text-sm font-medium wrap-break-word whitespace-pre-line">
@@ -60,7 +61,7 @@ export const MediaInfo = ({ anime, manga, movie, tv }: MediaInfoProps) => {
   };
 
   return (
-    <div className="bg-zinc-800/50 rounded-lg p-4 space-y-3">
+    <div className={`${ui.card} p-4 space-y-3`}>
       {/* Anime Specific */}
       {anime && (
         <>

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import type { MediaRecommendation } from '../../../types/Media';
+import { FilmIcon } from '@heroicons/react/24/outline';
 
 interface MediaRecommendationsProps {
   recommendations: MediaRecommendation[];
@@ -17,7 +18,7 @@ export const MediaRecommendations = ({
   };
 
   return (
-    <div className="bg-zinc-800/50 rounded-lg p-4">
+    <div className="bg-white/4 backdrop-blur-sm border border-white/10 rounded-xl p-4">
       <h3 className="text-lg font-semibold mb-4 text-white">Recommendations</h3>
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3">
         {recommendations.map((recommendation) => (
@@ -31,7 +32,7 @@ export const MediaRecommendations = ({
             className="group flex flex-col gap-1.5"
           >
             {/* Image box */}
-            <div className="rounded-lg overflow-hidden bg-zinc-900/50 border border-zinc-700/50 group-hover:border-zinc-500 transition-all group-hover:scale-105">
+            <div className="rounded-lg overflow-hidden bg-white/3 border border-white/10 group-hover:border-white/25 transition-all group-hover:scale-105">
               {recommendation.coverImage ? (
                 <img
                   src={recommendation.coverImage}
@@ -40,7 +41,7 @@ export const MediaRecommendations = ({
                 />
               ) : (
                 <div className="w-full aspect-2/3 bg-zinc-800 flex items-center justify-center">
-                  <span className="text-zinc-600 text-2xl">📺</span>
+                  <FilmIcon className="w-6 h-6 text-zinc-600" />
                 </div>
               )}
             </div>

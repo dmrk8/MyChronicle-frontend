@@ -8,14 +8,13 @@ export const MediaCharacters = ({ characters }: MediaCharactersProps) => {
   if (!characters || characters.length === 0) return null;
 
   return (
-    <div className="bg-zinc-800/50 rounded-lg p-4">
+    <div className="bg-white/4 backdrop-blur-sm border border-white/10 rounded-xl p-4">
       <h3 className="text-lg font-semibold mb-4 text-white">Characters</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {characters.slice(0, 12).map((character, index) => (
           <div
             key={index}
-            className="bg-zinc-900/50 rounded-lg overflow-hidden border border-zinc-700/50 hover:border-zinc-600 transition-colors"
-          >
+            className="bg-white/3 rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-colors"   >
             <div className="flex justify-between">
               {/* Left side - Character */}
               <div className="flex flex-1 min-w-0">

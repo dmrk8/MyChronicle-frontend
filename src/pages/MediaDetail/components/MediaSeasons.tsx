@@ -1,9 +1,52 @@
 import { useState } from 'react';
 import type { MediaSeason } from '../../../types/Media';
+import { ChevronLeftIcon, TvIcon } from '@heroicons/react/24/outline';
 
 interface MediaSeasonsProps {
   seasons: MediaSeason[];
 }
+
+const SeasonCard = ({
+  season,
+  compact = false,
+}: {
+  season: MediaSeason;
+  compact?: boolean;
+}) => (
+  <div className={`flex gap-4 ${compact ? '' : 'p-4'}`}>
+    {season.posterPath ? (
+      <img
+        src={season.posterPath}
+        alt={season.name}
+        className={`${compact ? 'w-20 h-30' : 'w-24 h-36'} object-cover rounded-lg shrink-0`}
+      />
+    ) : (
+      <div
+        className={`${compact ? 'w-20 h-30' : 'w-24 h-36'} bg-white/5 flex items-center justify-center rounded-lg shrink-0`}
+      >
+        <TvIcon className="w-8 h-8 text-zinc-600" />
+      </div>
+    )}
+    <div className="flex-1 min-w-0 text-left">
+      <div
+        className={`font-semibold text-white mb-1 ${compact ? 'text-sm' : 'text-base'}`}
+      >
+        {season.name}
+      </div>
+      <div className={`text-zinc-400 mb-2 ${compact ? 'text-xs' : 'text-sm'}`}>
+        {season.episodeCount} episodes
+        {season.airDate && ` • ${new Date(season.airDate).getFullYear()}`}
+      </div>
+      {season.overview && (
+        <div
+          className={`text-zinc-400 line-clamp-3 ${compact ? 'text-sm' : 'text-sm'}`}
+        >
+          {season.overview}
+        </div>
+      )}
+    </div>
+  </div>
+);
 
 export const MediaSeasons = ({ seasons }: MediaSeasonsProps) => {
   const [showAllSeasons, setShowAllSeasons] = useState(false);
@@ -17,89 +60,35 @@ export const MediaSeasons = ({ seasons }: MediaSeasonsProps) => {
   if (!lastSeason) return null;
 
   return (
-    <div className="bg-zinc-800/50 rounded-lg p-4">
+    <div className="bg-white/4 backdrop-blur-sm border border-white/10 rounded-xl p-4">
       <h3 className="text-lg font-semibold mb-4 text-white">Last Season</h3>
 
       {!showAllSeasons ? (
         // Collapsed view - show only last season
         <button
           onClick={() => setShowAllSeasons(true)}
-          className="w-full bg-zinc-900/50 rounded-lg overflow-hidden border border-zinc-700/50 hover:border-zinc-600 transition-colors"
+          className="w-full bg-white/3 rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-colors p-4"
         >
-          <div className="flex gap-4 p-4">
-            {lastSeason.posterPath ? (
-              <img
-                src={lastSeason.posterPath}
-                alt={lastSeason.name}
-                className="w-24 h-36 object-cover rounded shrink-0"
-              />
-            ) : (
-              <div className="w-24 h-36 bg-zinc-800 flex items-center justify-center rounded shrink-0">
-                <span className="text-zinc-600 text-3xl">📺</span>
-              </div>
-            )}
-            <div className="flex-1 min-w-0 text-left">
-              <div className="text-lg font-semibold text-white mb-2">
-                {lastSeason.name}
-              </div>
-              <div className="text-sm text-zinc-300 mb-3">
-                {lastSeason.episodeCount} episodes
-                {lastSeason.airDate &&
-                  ` • ${new Date(lastSeason.airDate).getFullYear()}`}
-              </div>
-              {lastSeason.overview && (
-                <div className="text-sm text-zinc-400 line-clamp-3 mb-3">
-                  {lastSeason.overview}
-                </div>
-              )}
-              <div className="text-sm text-emerald-400">
-                Click to view all {regularSeasons.length} seasons →
-              </div>
-            </div>
+          <SeasonCard season={lastSeason} />
+          <div className="text-xs text-gray-400 mt-3 text-left">
+            View all {regularSeasons.length} seasons →
           </div>
         </button>
       ) : (
-        // Expanded view - show all seasons
         <div className="space-y-3">
           <button
             onClick={() => setShowAllSeasons(false)}
-            className="text-sm text-emerald-400 hover:text-emerald-300 mb-2 flex items-center gap-2"
+            className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors mb-1"
           >
-            ← Back to last season
+            <ChevronLeftIcon className="w-3 h-3" />
+            Back to last season
           </button>
           {regularSeasons.map((season) => (
             <div
               key={season.seasonNumber}
-              className="bg-zinc-900/50 rounded-lg overflow-hidden border border-zinc-700/50 hover:border-zinc-600 transition-colors"
+              className="bg-white/3 rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-colors p-4"
             >
-              <div className="flex gap-4 p-4">
-                {season.posterPath ? (
-                  <img
-                    src={season.posterPath}
-                    alt={season.name}
-                    className="w-20 h-30 object-cover rounded shrink-0"
-                  />
-                ) : (
-                  <div className="w-20 h-30 bg-zinc-800 flex items-center justify-center rounded shrink-0">
-                    <span className="text-zinc-600 text-2xl">📺</span>
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-white mb-1">
-                    {season.name}
-                  </div>
-                  <div className="text-xs text-zinc-400 mb-2">
-                    {season.episodeCount} episodes
-                    {season.airDate &&
-                      ` • ${new Date(season.airDate).getFullYear()}`}
-                  </div>
-                  {season.overview && (
-                    <div className="text-xs text-zinc-300 line-clamp-3">
-                      {season.overview}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <SeasonCard season={season} compact />
             </div>
           ))}
         </div>

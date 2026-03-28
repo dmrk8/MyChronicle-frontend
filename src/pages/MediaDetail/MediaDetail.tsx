@@ -274,7 +274,7 @@ export const MediaDetailPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-linear-to-b from-zinc-900 to-black text-white mb-30">
+      <div className="min-h-screen bg-linear-to-b from-zinc-950 to-black text-white mb-30">
         {/* Banner Skeleton */}
         <BannerSkeleton />
 
@@ -308,7 +308,7 @@ export const MediaDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-zinc-900 to-black text-white mb-30">
+    <div className="min-h-screen bg-linear-to-b from-zinc-950 to-black text-white mb-30">
       {/* Banner Section */}
       {(media.bannerImage || media.coverImage) && (
         <div className="relative h-96 w-full">
