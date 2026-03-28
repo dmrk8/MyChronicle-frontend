@@ -40,6 +40,7 @@ import {
   ActiveFilterChips,
   type ActiveChip,
 } from '../../../components/ui/ActiveFilterChips';
+import FilterHolder from './FilterHolder';
 
 const STORAGE_KEY_PREFIX = 'searchAnilist';
 
@@ -513,7 +514,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       />
 
       {/* Filters*/}
-      <div className="max-w-3xl mx-auto">
+      <FilterHolder>
         <div className="flex items-center justify-between mb-3 pl-1">
           <p className="text-zinc-500 text-xs font-semibold uppercase tracking-widest">
             Filters
@@ -922,7 +923,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
           </div>
           <ActiveFilterChips chips={activeChips} onClearAll={clearFilters} />
         </div>
-      </div>
+      </FilterHolder>
 
       {/* Results */}
       <SearchResults

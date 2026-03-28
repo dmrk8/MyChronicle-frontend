@@ -35,6 +35,7 @@ import {
 } from '../../../components/ui/ActiveFilterChips';
 import { DateRangeFilter } from '../../../components/ui/DaterangeFilter';
 import { KeywordsFilter } from '../../../components/ui/KeywordsFilter';
+import FilterHolder from './FilterHolder';
 const STORAGE_KEY_PREFIX = 'searchTmdb';
 
 // storageKey uses lowercase path to match what Header writes (searchTmdb_movie)
@@ -531,7 +532,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
       />
 
       {/* Filters */}
-      <div className="max-w-3xl mx-auto">
+      <FilterHolder>
         <div className="flex items-center justify-between mb-3 pl-1">
           <p className="text-zinc-500 text-xs font-semibold uppercase tracking-widest">
             Filters
@@ -645,7 +646,7 @@ const SearchTmdb = ({ mediaType }: { mediaType: MediaType }) => {
 
         {/* ── Active Filter Chips ── */}
         <ActiveFilterChips chips={activeChips} onClearAll={clearFilters} />
-      </div>
+      </FilterHolder>
 
       {/* Results */}
       <SearchResults
