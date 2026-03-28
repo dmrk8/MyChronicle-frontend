@@ -507,7 +507,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
   ]);
 
   return (
-    <PageHolder>
+    <PageHolder className='pt-20'>
       <PageTitle
         title="Search"
         highlight={mediaType}
