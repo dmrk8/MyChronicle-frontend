@@ -15,7 +15,10 @@ export interface UserUpdateRequest {
   password?: string;
 }
 
-export interface UserResponse {
-  message: string;
-  acknowledged?: boolean;
+export interface User {
+  id: string;
+  username: string;
+  role: UserRole;
+  createdAt: string;
+  updatedAt: string;
 }
