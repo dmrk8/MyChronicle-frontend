@@ -7,6 +7,7 @@ import {
   UserMediaEntrySortOptions,
   sortFieldLabels,
   statusLabels,
+  statuses,
 } from '../types/UserMediaEntry';
 import { MediaType } from '../constants/mediaConstants';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
@@ -279,14 +280,39 @@ const LibraryPage = () => {
             accentColor="purple"
           />
 
+          {/* ── Status Filter — Browser Tab Style ── */}
+          <div className="mb-8 mt-10 -mx-4 sm:mx-0 px-4 sm:px-0 sm:flex sm:justify-center">
+            <div className="flex items-end gap-0 border-b border-zinc-700 overflow-x-auto sm:overflow-hidden overflow-y-hidden scrollbar-none">
+              {statuses.map((status: UserMediaEntryStatus | 'all') => {
+                const isActive = selectedStatus === status;
+                return (
+                  <button
+                    key={status}
+                    onClick={() => setSelectedStatus(status)}
+                    className={`relative shrink-0 px-4 py-2.5 text-xs font-semibold transition-all duration-200 whitespace-nowrap rounded-t-lg border-t border-l border-r -mb-px ${
+                      isActive
+                        ? 'bg-zinc-800 border-zinc-700 text-white z-10'
+                        : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/40'
+                    }`}
+                  >
+                    {isActive && (
+                      <span
+                        className={`absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-purple-500 to-pink-500 rounded-full}`}
+                      />
+                    )}
+                    {statusLabels[status]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/*Filters  */}
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-center mb-4">
-              <div className="flex-1 border-t border-zinc-700" />
-              <p className="text-zinc-500 text-xs font-semibold uppercase tracking-widest px-4">
+            <div className="flex flex-col gap-2">
+              <p className="text-zinc-500 text-xs font-semibold uppercase tracking-widest">
                 Filters
               </p>
-              <div className="flex-1 border-t border-zinc-700" />
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch gap-3 justify-center overflow-visible">
@@ -298,21 +324,7 @@ const LibraryPage = () => {
                 searchable={false}
                 allowClear={false}
               />
-              {/* Status Dropdown */}
-              {selectedStatus !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-pink-600/20 border border-pink-500/30 rounded-full text-xs text-pink-300">
-                  {(() => {
-                    const status = selectedStatus as UserMediaEntryStatus;
-                    return statusLabels[status];
-                  })()}
-                  <button
-                    onClick={() => setSelectedStatus('all')}
-                    className="hover:text-white ml-0.5"
-                  >
-                    ✕
-                  </button>
-                </span>
-              )}
+              
               {/* Favorites Toggle */}
               <div className="flex flex-col gap-1 shrink-0">
                 <ToggleButton
@@ -335,12 +347,15 @@ const LibraryPage = () => {
                 />
               </div>
             </div>
-          </div>
 
-          {/* Active Filters Pills */}
-          {hasActiveFilters && (
-            <ActiveFilterChips chips={chips} onClearAll={handleClearFilters} />
-          )}
+            {/* Active Filters Pills */}
+            {hasActiveFilters && (
+              <ActiveFilterChips
+                chips={chips}
+                onClearAll={handleClearFilters}
+              />
+            )}
+          </div>
         </div>
       </div>
 
