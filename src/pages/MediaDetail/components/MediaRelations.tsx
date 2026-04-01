@@ -164,7 +164,7 @@ export const MediaRelations = ({ relations }: MediaRelationsProps) => {
               <div
                 className={`absolute top-0 bottom-0 z-50 pointer-events-none flex ${
                   hoverPosition === 'left'
-                    ? 'right-full pr-0.5'
+                    ? 'right-full pr-24.5'
                     : 'left-full pl-0.5'
                 }`}
               >
