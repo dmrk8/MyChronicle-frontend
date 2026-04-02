@@ -79,14 +79,6 @@ export type AnilistAiringStatus = (typeof ANILIST_AIRING_STATUS)[number];
 export type AnilistPublishingStatus = (typeof ANILIST_PUBLISHING_STATUS)[number];
 export type AnilistCountry = (typeof ANILIST_COUNTRIES)[number];
 
-// Utility function to format status strings for display
-export const formatStatusDisplay = (status: string): string => {
-  return status
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-};
-
 // Helper function to get current season and year
 export const getCurrentSeason = (date?: Date): { season: AnilistSeason; year: number } => {
   const now = date || new Date();

@@ -12,7 +12,6 @@ import {
   ANILIST_COUNTRIES,
   ANILIST_TAGS_BY_CATEGORY,
   ANILIST_TAG_CATEGORY_ORDER,
-  formatStatusDisplay,
   type AnilistSortOptions,
   type AnilistSeason,
   type AnilistGenre,
@@ -436,7 +435,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
       ? [
           {
             key: 'status',
-            label: formatStatusDisplay(selectedStatus),
+            label: selectedStatus,
             onRemove: () => setSelectedStatus(''),
           },
         ]
@@ -903,7 +902,7 @@ const SearchAnilist = ({ mediaType }: { mediaType: MediaType }) => {
               }
               options={statusOptions.map((status) => ({
                 value: status,
-                label: formatStatusDisplay(status),
+                label: status,
               }))}
               placeholder="Any"
               searchable={false}

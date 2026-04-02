@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import type { MediaRelation } from '../../../types/Media';
 import { useNavigate } from 'react-router-dom';
-import { formatStatusDisplay } from '../../../constants/anilistFilters';
 interface MediaRelationsProps {
   relations: MediaRelation[];
 }
@@ -24,7 +23,7 @@ const RelationCard = ({ relation }: { relation: MediaRelation }) => (
       </div>
       <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
         <div className="text-[10px] text-emerald-400 uppercase font-semibold tracking-wide mb-1 text-left">
-          {formatStatusDisplay(relation.relationType)}
+          {relation.relationType}
         </div>
         <div className="text-xs text-white font-semibold line-clamp-2 flex-1 text-left">
           {relation.title}
@@ -49,7 +48,7 @@ const RelationCard = ({ relation }: { relation: MediaRelation }) => (
 const RelationInfoPanel = ({ relation }: { relation: MediaRelation }) => (
   <div className="w-60 bg-zinc-950  border border-zinc-700 rounded flex flex-col justify-between p-2 h-full">
     <div className="text-[14px] text-emerald-400 font-semibold tracking-wide text-left">
-      {formatStatusDisplay(relation.relationType)}
+      {relation.relationType}
     </div>
     <div className="text-[14px] text-white font-semibold line-clamp-3 text-left mt-1 flex-1">
       {relation.title}
@@ -57,7 +56,7 @@ const RelationInfoPanel = ({ relation }: { relation: MediaRelation }) => (
     <div className="flex gap-2 text-[14px] mt-1 justify-start">
       {relation.format && (
         <div className="text-zinc-400">
-          {formatStatusDisplay(relation.format)}
+          {relation.format}
         </div>
       )}
       {relation.format && relation.status && (
@@ -65,7 +64,7 @@ const RelationInfoPanel = ({ relation }: { relation: MediaRelation }) => (
       )}
       {relation.status && (
         <div className="text-zinc-500">
-          {formatStatusDisplay(relation.status)}
+          {relation.status}
         </div>
       )}
     </div>
@@ -152,7 +151,7 @@ export const MediaRelations = ({ relations }: MediaRelationsProps) => {
                     }`}
                   >
                     <div className="text-[11px] text-white font-semibold tracking-wide text-center truncate drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">
-                      {formatStatusDisplay(relation.relationType)}
+                      {relation.relationType}
                     </div>
                   </div>
                 </div>
