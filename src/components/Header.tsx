@@ -368,11 +368,6 @@ const Header = () => {
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center gap-3 px-4 py-2.5 bg-zinc-900/80 hover:bg-zinc-800/80 rounded-xl transition-all duration-300 border border-zinc-800 hover:border-zinc-700"
                 >
-                  <div className="w-9 h-9 bg-linear-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">
-                      {user?.username.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
                   <div className="text-left">
                     <p className="text-sm font-semibold text-white">
                       {user?.username}
@@ -410,7 +405,10 @@ const Header = () => {
                       <div className="py-2">
                         <NavigationLink
                           href="/profile"
-                          onClick={() => setIsUserMenuOpen(false)}
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            navigate('/profile');
+                          }}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-zinc-300 hover:bg-zinc-800/50 hover:text-white transition-colors cursor-pointer"
                           label="Profile Settings"
                         />
@@ -664,4 +662,3 @@ const Header = () => {
 };
 
 export default Header;
-
