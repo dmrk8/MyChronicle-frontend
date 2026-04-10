@@ -5,14 +5,9 @@ export const UserRole = {
 
 export type UserRole = typeof UserRole[keyof typeof UserRole];
 
-export interface UserCreate {
-  username: string;
-  password: string;
-}
-
-export interface UserUpdateRequest {
-  username?: string;
-  password?: string;
+export interface UpdatePassword {
+  currentPassword: string;
+  newPassword: string;
 }
 
 export interface User {

@@ -1,27 +1,25 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createUser, updateUser, deleteUser } from '../api/userApi';
-import type { UserCreate, UserUpdateRequest } from '../types/User';
+import { deleteUser, updateUsername, changePassword } from '../api/userApi';
+import type { UpdatePassword } from '../types/User';
 
-export const useCreateUser = () => {
+export const useUpdateUsername = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (userData: UserCreate) => createUser(userData),
+    mutationFn: (username: string) => updateUsername(username),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
     },
   });
 };
 
-export const useUpdateUser = () => {
+export const useChangePassword = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (updateData: UserUpdateRequest) => updateUser(updateData),
+    mutationFn: (passwordData: UpdatePassword) => changePassword(passwordData),
     onSuccess: () => {
-      // Invalidate current user and users list
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-      queryClient.invalidateQueries({ queryKey: ['users'] });
     },
   });
 };

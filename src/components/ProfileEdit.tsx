@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { useUpdateUser } from '../hooks/useUser';
-import type { UserUpdateRequest } from '../types/User';
+import { useUpdateUsername } from '../hooks/useUser';
+import { useChangePassword } from '../hooks/useUser';
+import type { UpdatePassword } from '../types/User';
+import type { AxiosError } from 'axios';
 
 const ProfileEdit: React.FC = () => {
   const { user } = useAuth();
   const [username, setUsername] = useState(user?.username || '');
-  const [password, setPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
-  const { mutateAsync: updateUser, isPending } = useUpdateUser();
+  const { mutateAsync: updateUsername, isPending: isUpdatingUsername } =
+    useUpdateUsername();
+  const { mutateAsync: changePassword, isPending: isChangingPassword } =
+    useChangePassword();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,28 +24,40 @@ const ProfileEdit: React.FC = () => {
     setSuccess('');
 
     try {
-      const updateData: UserUpdateRequest = {};
+      let changes = false;
 
-      // Only add fields that have changed
       if (username !== user?.username && username.trim()) {
-        updateData.username = username.trim();
-      }
-      if (password.trim()) {
-        updateData.password = password;
+        await updateUsername(username.trim());
+        changes = true;
       }
 
-      if (Object.keys(updateData).length === 0) {
+      if (currentPassword.trim() && newPassword.trim()) {
+        const passwordData: UpdatePassword = {
+          currentPassword: currentPassword.trim(),
+          newPassword: newPassword.trim(),
+        };
+        await changePassword(passwordData);
+        changes = true;
+      } else if (currentPassword.trim() || newPassword.trim()) {
+        setError('Please provide both current and new password');
+        return;
+      }
+
+      if (!changes) {
         setError('No changes to save');
         return;
       }
 
-      await updateUser(updateData);
       setSuccess('Profile updated successfully!');
-      setPassword(''); // Clear password field
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to update profile');
+      setCurrentPassword('');
+      setNewPassword('');
+    } catch (err) {
+      const axiosError = err as AxiosError<{ detail: string }>;
+      setError(axiosError.response?.data?.detail || 'Failed to update profile');
     }
   };
+
+  const isPending = isUpdatingUsername || isChangingPassword;
 
   return (
     <div className="bg-zinc-900/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-zinc-800 p-8">
@@ -60,12 +78,25 @@ const ProfileEdit: React.FC = () => {
 
         <div>
           <label className="block text-sm font-medium text-zinc-300 mb-2">
+            Current Password
+          </label>
+          <input
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            placeholder="Required to change password"
+            className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-zinc-300 mb-2">
             New Password
           </label>
           <input
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
             placeholder="Leave blank to keep current"
             className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
