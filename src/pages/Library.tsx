@@ -112,7 +112,7 @@ const LibraryPage = () => {
       sortBy: sortBy,
       sortOrder: sortOrder,
       titleSearch: debouncedSearchQuery || undefined,
-      isAdult: includeAdult ? 'true' : 'false',
+      isAdult: includeAdult,
       page: 1,
       perPage: 20,
     });

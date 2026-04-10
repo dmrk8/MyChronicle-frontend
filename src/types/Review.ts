@@ -1,12 +1,3 @@
-export interface ReviewCreate extends ReviewUpdate{
-  userMediaEntryId: string;
-}
-
-export interface Review extends ReviewCreate {
-  id: string; 
-  createdAt: string;
-  updatedAt: string;
-}
 
 export interface ReviewUpdate {
   review?: string;
@@ -16,4 +7,18 @@ export interface ReviewUpdate {
 }
 
 
-export type ReviewDeleteResponse = { success: boolean };
+export interface Review  {
+  id: string;
+  userMediaEntryId: string;
+  userId: string;
+
+  review?: string;
+  rating?: number;
+  reviewProgress?: number;
+  writtenAt?: string;
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+

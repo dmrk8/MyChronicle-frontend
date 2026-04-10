@@ -11,9 +11,9 @@ import type { ReviewUpdate } from '../../../types/Review';
 import {
   useCreateReview,
   useDeleteReview,
-  useGetReviewsByUserMediaEntryId,
+  useGetReviewsForEntry,
   useUpdateReview,
-} from '../../../hooks/useReview';
+} from '../../../hooks/useUserMediaEntry';
 import { useUpdateUserMediaEntry } from '../../../hooks/useUserMediaEntry';
 
 interface MediaNotesCarouselProps {
@@ -30,9 +30,7 @@ export const MediaNotesCarousel = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [repeatInput, setRepeatInput] = useState(String(repeatCount));
 
-  const { data: mediaNotes } = useGetReviewsByUserMediaEntryId(
-    userMediaEntryId || '',
-  );
+  const { data: mediaNotes } = useGetReviewsForEntry(userMediaEntryId || '');
   const createReview = useCreateReview();
   const updateReview = useUpdateReview();
   const deleteReview = useDeleteReview();
@@ -68,13 +66,14 @@ export const MediaNotesCarousel = ({
     try {
       if (reviewId) {
         await updateReview.mutateAsync({
+          entryId: userMediaEntryId,
           reviewId,
           update,
         });
       } else {
         await createReview.mutateAsync({
-          userMediaEntryId: userMediaEntryId,
-          ...update,
+          entryId: userMediaEntryId,
+          review: update,
         });
       }
     } catch (error) {
@@ -87,8 +86,8 @@ export const MediaNotesCarousel = ({
 
     try {
       await deleteReview.mutateAsync({
+        entryId: userMediaEntryId,
         reviewId,
-        userMediaEntryId: userMediaEntryId,
       });
     } catch (error) {
       console.error('Failed to delete review:', error);
@@ -120,7 +119,6 @@ export const MediaNotesCarousel = ({
   const currentNote =
     hasReviews && !isOnNewReviewSlot ? mediaNotes[currentIndex] : undefined;
 
-    
   return (
     <div className="space-y-4">
       {/* Repeat Count */}

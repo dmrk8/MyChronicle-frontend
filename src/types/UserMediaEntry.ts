@@ -15,8 +15,8 @@ export interface UserMediaEntryCreate {
   externalSource: MediaExternalSource;
   mediaType: MediaType;
   title: string;
-  isAdult?: boolean;
   coverImage?: string;
+  isAdult?: boolean;
   status?: UserMediaEntryStatus;
   repeatCount?: number;
   isFavorite?: boolean;
@@ -24,7 +24,7 @@ export interface UserMediaEntryCreate {
 }
 
 export interface UserMediaEntry extends UserMediaEntryCreate {
-  id?: string;
+  id: string;
   userId: string;
   createdAt: string;
   updatedAt: string;
@@ -35,9 +35,6 @@ export interface UserMediaEntryUpdate {
   repeatCount?: number;
   isFavorite?: boolean;
   inLibrary?: boolean;
-  title?: string;
-  coverImage?: string;
-  isAdult?: boolean;
 }
 
 export interface UserMediaEntryPagination {
@@ -48,11 +45,17 @@ export interface UserMediaEntryPagination {
   total: number;
 }
 
+
+export interface UserMediaEntrySyncMetadata {
+  title?: string;
+  coverImage?: string;
+  isAdult?: boolean;
+}
+
 export const UserMediaEntrySortFields = {
   CREATED_AT: "created_at",
   UPDATED_AT: "updated_at",
   TITLE: "title",
-  //RATING: "rating",
 } as const;
 
 export type UserMediaEntrySortFields = typeof UserMediaEntrySortFields[keyof typeof UserMediaEntrySortFields];
@@ -64,8 +67,6 @@ export const UserMediaEntrySortOptions = {
   UPDATED_AT_DESC: -1,
   TITLE_ASC: 1,
   TITLE_DESC: -1,
-  //RATING_ASC: 1,
-  //RATING_DESC: -1,
 } as const;
 
 export type UserMediaEntrySortOptions = typeof UserMediaEntrySortOptions[keyof typeof UserMediaEntrySortOptions];

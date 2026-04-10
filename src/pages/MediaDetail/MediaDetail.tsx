@@ -15,6 +15,7 @@ import {
   useCreateUserMediaEntry,
   useUpdateUserMediaEntry,
   useDeleteUserMediaEntry,
+  useSyncUserMediaEntryMetadata,
 } from '../../hooks/useUserMediaEntry';
 import { MediaExternalSource, MediaType } from '../../constants/mediaConstants';
 import { MediaInfo } from './components/MediaInfo';
@@ -140,6 +141,7 @@ export const MediaDetailPage = () => {
   const createEntry = useCreateUserMediaEntry();
   const updateEntry = useUpdateUserMediaEntry();
   const deleteEntry = useDeleteUserMediaEntry();
+  const syncMetadata = useSyncUserMediaEntryMetadata();
 
   const storedTitle = userEntry?.title;
   const storedCoverImage = userEntry?.coverImage;
@@ -158,11 +160,11 @@ export const MediaDetailPage = () => {
       storedCoverImage !== latestCoverImage ||
       storedIsAdult !== latestIsAdult;
 
-    if (!needsUpdate || updateEntry.isPending) return;
+    if (!needsUpdate || syncMetadata.isPending) return;
 
-    updateEntry.mutate({
+    syncMetadata.mutate({
       entryId: userEntry.id,
-      update: {
+      metadata: {
         title: latestTitle,
         coverImage: latestCoverImage,
         isAdult: latestIsAdult,
@@ -176,7 +178,7 @@ export const MediaDetailPage = () => {
     latestTitle,
     latestCoverImage,
     latestIsAdult,
-    updateEntry,
+    syncMetadata,
   ]);
 
   useEffect(() => {
