@@ -1,7 +1,6 @@
 import React from 'react';
 import { AuthContext, type AuthContextType } from '../contexts/AuthContext';
 import { useCurrentUser, useLogin, useLogout } from '../hooks/useAuthQueries';
-import { type LoginRequest } from '../types/Auth';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -10,8 +9,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const loginMutation = useLogin();
   const logoutMutation = useLogout();
 
-  const login = async (credentials: LoginRequest) => {
-    await loginMutation.mutateAsync(credentials);
+  const login = async (username: string, password: string) => {
+    await loginMutation.mutateAsync({ username, password });
     await refetch();
   };
 

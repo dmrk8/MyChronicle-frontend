@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCreateUser } from '../hooks/useUser';
+import { useRegister } from '../hooks/useAuthQueries';
 import { useAuth } from '../hooks/useAuth';
 import { AxiosError } from 'axios';
 
@@ -16,7 +16,7 @@ const SignUpPage: React.FC = () => {
   }>({});
 
   const navigate = useNavigate();
-  const { mutateAsync: createUser, isPending } = useCreateUser();
+  const { mutateAsync: register, isPending } = useRegister();
   const { login } = useAuth();
 
   // Validation functions
@@ -51,7 +51,7 @@ const SignUpPage: React.FC = () => {
 
   const validateConfirmPassword = (
     password: string,
-    confirmPass: string
+    confirmPass: string,
   ): string | undefined => {
     if (!confirmPass) return 'Please confirm your password';
     if (password !== confirmPass) return 'Passwords do not match';
@@ -83,7 +83,7 @@ const SignUpPage: React.FC = () => {
     const passwordError = validatePassword(password);
     const confirmPasswordError = validateConfirmPassword(
       password,
-      confirmPassword
+      confirmPassword,
     );
 
     setFieldErrors({
@@ -99,16 +99,15 @@ const SignUpPage: React.FC = () => {
     }
 
     try {
-      await createUser({ username, password });
+      await register({ username, password });
 
       // Auto-login after successful registration
-      await login({ username, password });
+      await login(username, password);
       navigate('/home');
     } catch (err) {
-      if (err instanceof AxiosError && err.response) {
-        setError(
-          err.response?.data?.detail || 'Sign up failed. Please try again.'
-        );
+      const axiosError = err as AxiosError<{ detail: string }>;
+      if (axiosError.response?.data?.detail) {
+        setError(axiosError.response.data.detail);
       } else {
         setError('Sign up failed. Please try again.');
       }

@@ -20,12 +20,12 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await login({ username, password });
+      await login(username, password);
       navigate(from, { replace: true });
     } catch (err) {
       if (err instanceof AxiosError && err.response) {
         setError(
-          err.response?.data?.detail || 'Login failed. Please try again.'
+          err.response?.data?.detail || 'Login failed. Please try again.',
         );
       } else {
         setError('Login failed. Please try again.');
