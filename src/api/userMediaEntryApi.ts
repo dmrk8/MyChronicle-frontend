@@ -43,7 +43,7 @@ export const getUserMediaEntryByExternalId = async (
   externalSource: string
 ): Promise<UserMediaEntry> => {
   const response = await backendApi.get(
-    `/user-media-entries/by-external/${externalSource}/${externalId}`
+    `/user-media-entries/external/${externalSource}/${externalId}`
   );
   return response.data;
 };
