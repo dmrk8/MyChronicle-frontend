@@ -21,7 +21,7 @@ import { MediaExternalSource, MediaType } from '../../constants/mediaConstants';
 import { MediaInfo } from './components/MediaInfo';
 import { MainMediaInfo } from './components/MainMediaInfo';
 import { UserMediaEntryStatus } from '../../types/UserMediaEntry';
-import { useAnimeDetail, useMangaDetail } from '../../hooks/useAnilist';
+import { useMediaDetail } from '../../hooks/useAnilist';
 import { useTmdbMovieDetail, useTmdbTvDetail } from '../../hooks/useTmdb';
 import type {
   AnimeDetailed,
@@ -106,10 +106,10 @@ export const MediaDetailPage = () => {
   const validMediaTypes = Object.values(MediaType);
   const isValidMediaType = mediaType && validMediaTypes.includes(mediaType);
 
-  const animeQuery = useAnimeDetail(mediaId, {
+  const animeQuery = useMediaDetail('ANIME', mediaId, {
     enabled: mediaType === MediaType.ANIME && isValidMediaType && !!mediaId,
   });
-  const mangaQuery = useMangaDetail(mediaId, {
+  const mangaQuery = useMediaDetail('MANGA', mediaId, {
     enabled: mediaType === MediaType.MANGA && isValidMediaType && !!mediaId,
   });
   const movieQuery = useTmdbMovieDetail(mediaId, undefined, {

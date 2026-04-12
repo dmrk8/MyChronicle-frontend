@@ -36,13 +36,6 @@ export interface MediaPagination {
   total?: number;
 }
 
-export interface MediaFeaturedBulk {
-  trending?: MediaMinimal[] | null;
-  popularSeason?: MediaMinimal[] | null;
-  upcoming?: MediaMinimal[] | null;
-  allTime?: MediaMinimal[] | null;
-  allTimeManhwa?: MediaMinimal[] | null;
-}
 
 export interface NextAiringEpisode {
   episode?: number;
