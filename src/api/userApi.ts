@@ -1,12 +1,12 @@
 import backendApi from './backendApi';
-import type {  UpdatePassword } from '../types/User';
+import type {  UpdatePassword, UpdateUsername } from '../types/User';
 
 
 export const deleteUser = async (): Promise<void> => {
   await backendApi.delete('/users/');
 };
 
-export const updateUsername = async (username: string): Promise<void> => {
+export const updateUsername = async (username: UpdateUsername): Promise<void> => {
   await backendApi.patch('/users/username', username);
 };
 

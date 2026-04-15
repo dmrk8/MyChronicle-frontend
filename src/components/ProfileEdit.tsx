@@ -27,7 +27,7 @@ const ProfileEdit: React.FC = () => {
       let changes = false;
 
       if (username !== user?.username && username.trim()) {
-        await updateUsername(username.trim());
+        await updateUsername({ username: username.trim() });
         changes = true;
       }
 

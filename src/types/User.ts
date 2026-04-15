@@ -9,6 +9,9 @@ export interface UpdatePassword {
   currentPassword: string;
   newPassword: string;
 }
+export interface UpdateUsername{
+  username: string;
+}
 
 export interface User {
   id: string;

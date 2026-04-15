@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteUser, updateUsername, changePassword } from '../api/userApi';
-import type { UpdatePassword } from '../types/User';
+import type { UpdatePassword, UpdateUsername } from '../types/User';
 
 export const useUpdateUsername = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (username: string) => updateUsername(username),
+    mutationFn: (usernameData: UpdateUsername) => updateUsername(usernameData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
     },
